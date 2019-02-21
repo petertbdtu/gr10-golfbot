@@ -21,17 +21,17 @@ public class RobotMain {
 		}
 		
 		KSTest kst1 = new KSTest("hi");
-		if(!kst1.connect("localhost", 3001)) {
+		if(!kst1.connect(ip, port++)) {
 			System.out.println("couldn't connect kst1");
 		}
 		
 		KSTest kst2 = new KSTest("hiii");
-		if(!kst2.connect("localhost", 3002)) {
+		if(!kst2.connect(ip, port++)) {
 			System.out.println("couldn't connect kst2");
 		}
 		
 		KSTest kst3 = new KSTest("hiiiiii");
-		if(!kst3.connect("localhost", 3003)) {
+		if(!kst3.connect(ip, port++)) {
 			System.out.println("couldn't connect kst3");
 		}
 		
@@ -43,7 +43,6 @@ public class RobotMain {
 			try {
 				msg = (String) ois.readObject();
 			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
 				break;
 			}
 			

@@ -29,7 +29,6 @@ public abstract class KnowledgeSource<E> extends Thread {
 				try {
 					oos.writeObject(knowledge);
 				} catch (IOException e) {
-					e.printStackTrace();
 					closeConnection();
 					break;
 				}
@@ -41,10 +40,10 @@ public abstract class KnowledgeSource<E> extends Thread {
 	
 	public void closeConnection() {
 		try { oos.close(); } 
-		catch (IOException e) { e.printStackTrace(); }
+		catch (IOException e) {}
 		
 		try { socket.close(); } 
-		catch (IOException e) { e.printStackTrace(); }
+		catch (IOException e) {}
 	}
 	
 }

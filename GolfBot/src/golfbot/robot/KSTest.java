@@ -10,13 +10,7 @@ public class KSTest extends KnowledgeSource<String> {
 	
 	@Override
 	protected String getKnowledge() {
-		try {
-			this.wait(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		String msg = "Hi : " + System.currentTimeMillis();
-		return msg;
+		return msg + " : " + System.currentTimeMillis();
 	}
 
 	
