@@ -5,67 +5,75 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class ServerReceiver extends Thread{
 	
-	private ArrayList<ConnectionWrapper> lConnections;
+	private ArrayList<ConnectionWrapper> cwConnections;
+	private Iterator<ConnectionWrapper> cwIterator;
 	private Blackboard bb;
 
 	public ServerReceiver() {
 		super();
-		lConnections = new ArrayList<ConnectionWrapper>();
+		cwConnections = new ArrayList<ConnectionWrapper>();
 	}
 	
 	public void addSocket(ServerSocket serverSocket, Socket socket) {
 		try {
 			ConnectionWrapper cw = new ConnectionWrapper(serverSocket, socket);
-			lConnections.add(cw);
+			cwConnections.add(cw);
 		} catch (IOException e) { e.printStackTrace(); }
 	}
 	
 	@Override
 	public void run() {
-		int count = 0;
-		Blackboard bb = Blackboard.getInstance();
-		while(lConnections.size() > 0) {
-			if(count == lConnections.size()-1) { count = 0; }
-			ConnectionWrapper cw = lConnections.get(count);
-			Object obj = null;
-			try { obj = cw.ois.readObject(); } 
-			catch (ClassNotFoundException | IOException e) { 
-				closeConnection(cw);
-				lConnections.remove(count);
-				continue;
+		bb = Blackboard.getInstance();
+		
+		while(!cwConnections.isEmpty()) {
+			cwIterator = cwConnections.iterator();
+			while(cwIterator.hasNext()) {
+				ConnectionWrapper cw = cwIterator.next();
+				
+				Object obj = null;
+				try { obj = cw.ois.readObject(); } 
+				catch (ClassNotFoundException | IOException e) { 
+					cwIterator.remove();
+					closeConnection(cw);
+					continue;
+				}
+				if(obj != null)
+					receiveLogic(obj);
 			}
-			if(obj != null)
-				receiveLogic(obj);
 		}
 	}
 	
 	private void receiveLogic(Object obj) {
 		if (obj instanceof Blackboard) {
-			
+			bb.getClass();
 		} 
 		else if (obj instanceof String) {
-			
+			System.out.println((String)obj);
 		}
 	}
 	
 	public void closeConnections() {
-		for(ConnectionWrapper cw : lConnections) {
+		cwIterator = cwConnections.iterator();
+		while(cwIterator.hasNext()) {
+			ConnectionWrapper cw = cwIterator.next();
+			cwIterator.remove();
 			closeConnection(cw);
 		}
 	}
 	
 	private void closeConnection(ConnectionWrapper cw) {
 		try { cw.ois.close(); } 
-		catch (IOException e) { e.printStackTrace(); }
+		catch (IOException e) {}
 		
 		try { cw.socket.close(); } 
-		catch (IOException e) { e.printStackTrace(); }
+		catch (IOException e) {}
 		
 		try { cw.serverSocket.close(); } 
-		catch (IOException e) { e.printStackTrace(); }
+		catch (IOException e) {}
 	}
 	
 	private class ConnectionWrapper {
