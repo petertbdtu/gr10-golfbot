@@ -10,12 +10,17 @@ public class RemoteMain {
 	public static void main(String[] args) {
 		int port = 3000;
 		ServerTransmitter st = new ServerTransmitter(port++);
+		
+		ServerReceiver sr = null;
+		Scanner sc = null;
+		
 		if(st.connect()) {
-			ServerReceiver sr = startReceiver(port);
-			Scanner sc = new Scanner(System.in);
-			String input = null;
+			st.start();
+			sr = startReceiver(port);
+			sc = new Scanner(System.in);
+			
 			while(true) {
-				input = sc.nextLine();
+				String input = sc.nextLine();
 				
 				if(input.toLowerCase().equals("exit")) {
 					break;
@@ -25,10 +30,11 @@ public class RemoteMain {
 					st.sendObject(input);
 				}
 			}
+			
 			sc.close();
 			sr.closeConnections();
+			st.closeConnection();
 		}
-		st.closeConnection();
 	}
 	
 	public static ServerReceiver startReceiver(int port) {
@@ -45,7 +51,7 @@ public class RemoteMain {
 				e.printStackTrace();
 			}
 		}
-
+		sr.start();
 		return sr;
 	}
 
