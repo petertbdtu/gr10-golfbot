@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class ServerReceiver extends Thread{
 	
 	private ArrayList<ConnectionWrapper> lConnections;
+	private Blackboard bb;
 
 	public ServerReceiver() {
 		super();
@@ -29,20 +30,30 @@ public class ServerReceiver extends Thread{
 		while(lConnections.size() > 0) {
 			if(count == lConnections.size()-1) { count = 0; }
 			ConnectionWrapper cw = lConnections.get(count);
-			
-			Object tmp = null;
-			try { tmp = cw.ois.readObject(); } 
+			Object obj = null;
+			try { obj = cw.ois.readObject(); } 
 			catch (ClassNotFoundException | IOException e) { 
 				closeConnection(cw);
 				lConnections.remove(count);
 				continue;
 			}
+			if(obj != null)
+				receiveLogic(obj);
+		}
+	}
+	
+	private void receiveLogic(Object obj) {
+		if (obj instanceof Blackboard) {
 			
-			if(tmp == null) {
-				continue;
-			} else if (tmp instanceof Blackboard) {
-				
-			}
+		} 
+		else if (obj instanceof String) {
+			
+		}
+	}
+	
+	public void closeConnections() {
+		for(ConnectionWrapper cw : lConnections) {
+			closeConnection(cw);
 		}
 	}
 	
@@ -57,7 +68,7 @@ public class ServerReceiver extends Thread{
 		catch (IOException e) { e.printStackTrace(); }
 	}
 	
-	protected class ConnectionWrapper {
+	private class ConnectionWrapper {
 		ServerSocket serverSocket;
 		Socket socket;
 		ObjectInputStream ois;
@@ -68,5 +79,4 @@ public class ServerReceiver extends Thread{
 			this.ois = new ObjectInputStream(socket.getInputStream());
 		}
 	}
-	
 }
