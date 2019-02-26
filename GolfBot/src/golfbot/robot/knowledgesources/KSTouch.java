@@ -1,6 +1,6 @@
 package golfbot.robot.knowledgesources;
 
-import golfbot.sharedObjects.TouchSample;
+import golfbot.samples.TouchSample;
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3TouchSensor;
 

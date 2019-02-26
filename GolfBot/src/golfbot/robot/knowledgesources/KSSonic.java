@@ -1,6 +1,6 @@
 package golfbot.robot.knowledgesources;
 
-import golfbot.sharedObjects.SonicSample;
+import golfbot.samples.SonicSample;
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
 

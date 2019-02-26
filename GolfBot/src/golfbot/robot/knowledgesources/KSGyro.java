@@ -1,6 +1,6 @@
 package golfbot.robot.knowledgesources;
 
-import golfbot.sharedObjects.GyroSample;
+import golfbot.samples.GyroSample;
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3GyroSensor;
 

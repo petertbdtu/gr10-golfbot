@@ -1,6 +1,6 @@
 package golfbot.robot.knowledgesources;
 
-import golfbot.sharedObjects.IRSample;
+import golfbot.samples.IRSample;
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3IRSensor;
 

@@ -1,6 +1,6 @@
 package golfbot.robot.knowledgesources;
 
-import golfbot.sharedObjects.DrivingMotorSample;
+import golfbot.samples.DrivingMotorSample;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.Port;
 

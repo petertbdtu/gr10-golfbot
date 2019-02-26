@@ -1,4 +1,4 @@
-package golfbot.sharedObjects;
+package golfbot.samples;
 
 public class TouchSample {
 	
