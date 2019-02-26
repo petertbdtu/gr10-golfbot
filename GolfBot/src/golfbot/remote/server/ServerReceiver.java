@@ -7,15 +7,22 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import golfbot.sharedObjects.GyroSample;
+import golfbot.sharedObjects.IRSample;
+import golfbot.sharedObjects.DrivingMotorSample;
+import golfbot.sharedObjects.SonicSample;
+import golfbot.sharedObjects.TouchSample;
+
 public class ServerReceiver extends Thread{
 	
 	private ArrayList<ConnectionWrapper> cwConnections;
-	private Iterator<ConnectionWrapper> cwIterator;
+	private ArrayList<ConnectionWrapper> cwToBeClosed;
 	private Blackboard bb;
 
 	public ServerReceiver() {
 		super();
 		cwConnections = new ArrayList<ConnectionWrapper>();
+		cwToBeClosed = new ArrayList<ConnectionWrapper>();
 	}
 	
 	public void addSocket(ServerSocket serverSocket, Socket socket) {
@@ -30,34 +37,50 @@ public class ServerReceiver extends Thread{
 		bb = Blackboard.getInstance();
 		
 		while(!cwConnections.isEmpty()) {
-			cwIterator = cwConnections.iterator();
+			Iterator<ConnectionWrapper> cwIterator = cwConnections.iterator();
 			while(cwIterator.hasNext()) {
 				ConnectionWrapper cw = cwIterator.next();
 				
 				Object obj = null;
 				try { obj = cw.ois.readObject(); } 
 				catch (ClassNotFoundException | IOException e) { 
-					cwIterator.remove();
-					closeConnection(cw);
+					cwToBeClosed.add(cw);
 					continue;
 				}
 				if(obj != null)
 					receiveLogic(obj);
 			}
+			
+			if( !cwToBeClosed.isEmpty() ) {
+				cwIterator = cwToBeClosed.iterator();
+				while(cwIterator.hasNext()) { 
+					closeConnection(cwIterator.next());
+					cwIterator.remove();
+				}
+			}
 		}
 	}
 	
 	private void receiveLogic(Object obj) {
-		if (obj instanceof Blackboard) {
-			bb.getClass();
+		if (obj instanceof GyroSample) {
+			System.out.println((GyroSample)obj);
 		} 
-		else if (obj instanceof String) {
-			System.out.println((String)obj);
+		else if (obj instanceof IRSample) {
+			System.out.println((IRSample)obj);
 		}
+		else if (obj instanceof DrivingMotorSample) {
+			System.out.println((DrivingMotorSample)obj);
+		}
+		else if (obj instanceof SonicSample) {
+			System.out.println((SonicSample)obj);
+		}
+		else if (obj instanceof TouchSample) {
+			System.out.println((TouchSample)obj);
+		}		
 	}
 	
 	public void closeConnections() {
-		cwIterator = cwConnections.iterator();
+		Iterator<ConnectionWrapper> cwIterator = cwConnections.iterator();
 		while(cwIterator.hasNext()) {
 			ConnectionWrapper cw = cwIterator.next();
 			cwIterator.remove();

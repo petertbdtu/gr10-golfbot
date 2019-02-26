@@ -1,4 +1,4 @@
-package golfbot.robot;
+package golfbot.robot.knowledgesources;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -8,6 +8,7 @@ public abstract class KnowledgeSource<E> extends Thread {
 	
 	private Socket socket;
 	private ObjectOutputStream oos;
+	private E lastKnowledge;
 	
 	public boolean connect(String ip, int port) {
 		try {
@@ -25,9 +26,10 @@ public abstract class KnowledgeSource<E> extends Thread {
 	public void run() {
 		while(!socket.isClosed() && socket.isConnected()) {
 			E knowledge = getKnowledge();
-			if(knowledge != null) {
+			if(knowledge != null && (lastKnowledge == null || !knowledge.equals(lastKnowledge))) {
 				try {
 					oos.writeObject(knowledge);
+					lastKnowledge = knowledge;
 				} catch (IOException e) {
 					closeConnection();
 					break;
