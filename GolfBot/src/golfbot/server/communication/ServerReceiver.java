@@ -1,4 +1,4 @@
-package golfbot.remote.server;
+package golfbot.server.communication;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -12,6 +12,8 @@ import golfbot.samples.GyroSample;
 import golfbot.samples.IRSample;
 import golfbot.samples.SonicSample;
 import golfbot.samples.TouchSample;
+import golfbot.server.blackboard.Blackboard;
+import golfbot.server.blackboard.BlackboardSample;
 
 public class ServerReceiver extends Thread {
 	private class ConnectionWrapper {

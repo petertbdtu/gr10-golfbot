@@ -1,4 +1,4 @@
-package golfbot.remote.server;
+package golfbot.server.blackboard;
 
 public interface BlackboardListener {
 	void blackboardUpdated(BlackboardSample bbSample);

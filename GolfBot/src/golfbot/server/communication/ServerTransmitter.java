@@ -1,4 +1,4 @@
-package golfbot.remote.server;
+package golfbot.server.communication;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;

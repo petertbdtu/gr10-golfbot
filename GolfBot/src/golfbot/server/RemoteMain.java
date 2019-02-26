@@ -1,9 +1,12 @@
-package golfbot.remote.server;
+package golfbot.server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
+
+import golfbot.server.communication.ServerReceiver;
+import golfbot.server.communication.ServerTransmitter;
 
 public class RemoteMain {
 
