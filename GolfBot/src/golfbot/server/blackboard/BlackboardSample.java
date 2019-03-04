@@ -1,7 +1,6 @@
 package golfbot.server.blackboard;
 
 public class BlackboardSample {
-
 	public Long cycle;
 	public float sTouchPressed;
 	public float sSonicDistance;
