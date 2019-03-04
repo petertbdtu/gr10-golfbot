@@ -1,7 +1,8 @@
 package golfbot.server.mapping;
 
 import java.util.HashMap;
-import golfbot.server.Point;
+
+import golfbot.server.objects.Point;
 
 public class OccupancyGrid {
 	private final double OCCUPANCY_WEIGHT = 0.5;

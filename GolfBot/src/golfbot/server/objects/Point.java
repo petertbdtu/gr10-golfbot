@@ -1,4 +1,4 @@
-package golfbot.server;
+package golfbot.server.objects;
 
 public class Point {
 
