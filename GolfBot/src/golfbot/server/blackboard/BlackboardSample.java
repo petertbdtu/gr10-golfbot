@@ -1,5 +1,7 @@
 package golfbot.server.blackboard;
 
+import lejos.robotics.navigation.Pose;
+
 public class BlackboardSample {
 	public Long cycle;
 	public float sTouchPressed;
@@ -9,4 +11,5 @@ public class BlackboardSample {
 	public float sGyroAngle;
 	public float mLeftDrivingTacho;
 	public float mRightDrivingTacho;
+	public Pose rPose;
 }
