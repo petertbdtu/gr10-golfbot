@@ -17,7 +17,7 @@
                 <target>8</target>
                 <showDeprecation>true</showDeprecation>
                 <showWarnings>true</showWarnings>
-                <executable>/usr/lib/jvm/java-8-openjdk-amd64/bin/javac</executable>
+                <executable>${env.JAVA_HOME_8}/bin/javac</executable>
                 <fork>true</fork>
             </configuration>
         </plugin>
