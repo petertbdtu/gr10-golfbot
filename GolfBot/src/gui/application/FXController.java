@@ -1,18 +1,21 @@
 package gui.application;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.videoio.VideoCapture;
+	import org.opencv.videoio.VideoCapture;
 
-import com.sun.javafx.scene.control.skin.Utils;
-
+import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -63,7 +66,7 @@ public class FXController {
 						// effectively grab and process a single frame
 						Mat frame = grabFrame();
 						// convert and show the frame
-						Image imageToShow = Utils.mat2Image(frame);
+						Image imageToShow = SwingFXUtils.toFXImage(matToBufferedImage(frame), null);
 						updateImageView(currentFrame, imageToShow);
 					}
 				};
@@ -92,7 +95,29 @@ public class FXController {
 		}
 }
 	
-	
+	//STOLEN CONTENT https://github.com/opencv-java/getting-started/blob/master/FXHelloCV/src/it/polito/elite/teaching/cv/utils/Utils.java
+	private static BufferedImage matToBufferedImage(Mat original)
+	{
+		// init
+		BufferedImage image = null;
+		int width = original.width(), height = original.height(), channels = original.channels();
+		byte[] sourcePixels = new byte[width * height * channels];
+		original.get(0, 0, sourcePixels);
+		
+		if (original.channels() > 1)
+		{
+			image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+		}
+		else
+		{
+			image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+		}
+		final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
+		System.arraycopy(sourcePixels, 0, targetPixels, 0, sourcePixels.length);
+		
+		return image;
+}
+// stolen end
 	private Mat grabFrame()
 	{
 		// init everything
@@ -121,6 +146,8 @@ public class FXController {
 		}
 		
 		return frame;
+		
+		
 	}
 	
 	/**
@@ -153,7 +180,7 @@ public class FXController {
 
 	private void updateImageView(ImageView view, Image image)
 	{
-		Utils.onFXThread(view.imageProperty(), image);
+		onFXThread(view.imageProperty(), image);
 	}
 	
 	/**
@@ -164,7 +191,13 @@ public class FXController {
 		this.stopAcquisition();
 }
 	
-	
+	public static <T> void onFXThread(final ObjectProperty<T> property, final T value)
+	{
+		Platform.runLater(() -> {
+			property.set(value);
+		});
+	}
+
 	
 	
 	@FXML

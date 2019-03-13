@@ -1,5 +1,7 @@
 package gui.application;
 
+import org.opencv.core.Core;
+
 import javafx.application.Application;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXMLLoader;
@@ -29,6 +31,8 @@ public class Main extends Application {
 	}
 	
 	public static void main(String[] args) {
+		
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);  
 		launch(args);
 	}
 }
