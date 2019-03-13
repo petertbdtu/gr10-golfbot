@@ -55,6 +55,6 @@
   </dependencies>
   
   <modules>
-  	<module>mavengui</module>
+  	<module>gui</module>
   </modules>
 </project>
