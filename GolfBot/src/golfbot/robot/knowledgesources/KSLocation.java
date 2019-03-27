@@ -1,8 +1,6 @@
-package golfbot.server.localization;
+package golfbot.robot.knowledgesources;
 
 import golfbot.navigation.GyroPoseProvider;
-import golfbot.robot.knowledgesources.KSGyro;
-import golfbot.robot.knowledgesources.KnowledgeSource;
 import golfbot.samples.GyroSample;
 import golfbot.samples.PoseSample;
 import golfbot.server.blackboard.Blackboard;
