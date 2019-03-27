@@ -6,9 +6,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
-	import org.opencv.videoio.VideoCapture;
+//import org.opencv.core.Mat;
+//import org.opencv.imgproc.Imgproc;
+//	import org.opencv.videoio.VideoCapture;
 
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -41,11 +41,11 @@ public class FXController {
 		
 	
 	private ScheduledExecutorService timer; 
-	private VideoCapture capture = new VideoCapture();
+	//private VideoCapture capture = new VideoCapture();
 	private boolean cameraActive = false;
 	private static int cameraId = 0;
 	
-	@FXML
+/*	@FXML
 	protected void startCamera(ActionEvent event) {
 		if (!this.cameraActive)
 		{
@@ -149,10 +149,10 @@ public class FXController {
 		
 		
 	}
-	
+	*/
 	/**
 	 * Stop the acquisition from the camera and release all the resources
-	 */
+	 */ /*
 	private void stopAcquisition()
 	{
 		if (this.timer!=null && !this.timer.isShutdown())
@@ -182,10 +182,10 @@ public class FXController {
 	{
 		onFXThread(view.imageProperty(), image);
 	}
-	
+	*/
 	/**
 	 * On application close, stop the acquisition from the camera
-	 */
+	 *//*
 	protected void setClosed()
 	{
 		this.stopAcquisition();
@@ -199,7 +199,7 @@ public class FXController {
 	}
 
 	
-	
+	*/
 	@FXML
 	protected void OnClickBtnTest(ActionEvent event) {
 		System.out.println("XD");
