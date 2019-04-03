@@ -8,7 +8,7 @@ import lejos.robotics.navigation.MovePilot;
 
 public class Navigation {
 	
-	double offset = 105; //distance between the two wheels divided by 2 in mm
+	double offset = 100; //distance between the two wheels divided by 2 in mm
 	double wheelDiamater = 30; //Diameter of wheels in mm
 	Wheel leftWheel = WheeledChassis.modelWheel(Motor.A, wheelDiamater).offset(offset);
 	Wheel rightWheel = WheeledChassis.modelWheel(Motor.B, wheelDiamater).offset(-offset);
@@ -16,9 +16,18 @@ public class Navigation {
 	
 	MovePilot pilot = new MovePilot(chassis);
 	
+	public MovePilot getInstance() {
+		return pilot;
+	}
+	
 	public void travelTo(double angle, double distance) {
+		pilot.setLinearSpeed(5000.00);
 		pilot.rotate(angle);
 		pilot.travel(distance);
+	}
+	
+	public void stopMoving() {
+		pilot.stop();
 	}
 	
 }

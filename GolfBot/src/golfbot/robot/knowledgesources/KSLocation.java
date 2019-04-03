@@ -1,26 +1,11 @@
 package golfbot.robot.knowledgesources;
 
 import golfbot.navigation.GyroPoseProvider;
-import golfbot.samples.GyroSample;
 import golfbot.samples.PoseSample;
-import golfbot.server.blackboard.Blackboard;
-import golfbot.server.blackboard.BlackboardController;
-import lejos.hardware.motor.Motor;
 import lejos.hardware.port.Port;
-import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3GyroSensor;
-import lejos.robotics.Gyroscope;
-import lejos.robotics.GyroscopeAdapter;
-import lejos.robotics.SampleProvider;
-import lejos.robotics.chassis.Chassis;
-import lejos.robotics.chassis.Wheel;
-import lejos.robotics.chassis.WheeledChassis;
-import lejos.robotics.localization.CompassPoseProvider;
-import lejos.robotics.localization.OdometryPoseProvider;
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Pose;
-import lejos.nxt.addon.GyroSensor;
-import lejos.utility.GyroDirectionFinder;
 
 public class KSLocation extends KnowledgeSource<PoseSample> {
 	

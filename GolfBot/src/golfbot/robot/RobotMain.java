@@ -4,13 +4,20 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
+import golfbot.navigation.GyroPoseProvider;
+import golfbot.navigation.Navigation;
 import golfbot.robot.knowledgesources.KSGyro;
 import golfbot.robot.knowledgesources.KSIR;
 import golfbot.robot.knowledgesources.KSMotor;
 import golfbot.robot.knowledgesources.KSSonic;
 import golfbot.robot.knowledgesources.KSTouch;
+import lejos.hardware.motor.Motor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
+import lejos.robotics.chassis.Chassis;
+import lejos.robotics.chassis.Wheel;
+import lejos.robotics.chassis.WheeledChassis;
+import lejos.robotics.navigation.MovePilot;
 
 public class RobotMain {
 
@@ -25,12 +32,24 @@ public class RobotMain {
 	private static KSSonic ksSonic;
 	private static KSTouch ksTouch;
 	private static KSMotor ksDrivingMotors;
+	private static Navigation navigation = new Navigation();
+	private static GyroPoseProvider provider = new GyroPoseProvider(navigation.getInstance());
+	
+	
 	
 	public static void main(String[] args) {
-		initReceiver();
-		initKnowledgeSources();	
-		mainLoop();		
-		closeConnections();
+		//initReceiver();
+		//initKnowledgeSources();	
+		//mainLoop();
+		navigation.travelTo(90, 1000);
+		System.out.println("x: " + provider.getPose().getX() + " y: " + provider.getPose().getY() + " heading: " + provider.getPose().getHeading());
+		navigation.travelTo(33, 777);
+		System.out.println("x: " + provider.getPose().getX() + " y: " + provider.getPose().getY() + " heading: " + provider.getPose().getHeading());
+		navigation.travelTo(-33, 2000);
+		System.out.println("x: " + provider.getPose().getX() + " y: " + provider.getPose().getY() + " heading: " + provider.getPose().getHeading());
+		navigation.travelTo(88, 3000);
+		System.out.println("x: " + provider.getPose().getX() + " y: " + provider.getPose().getY() + " heading: " + provider.getPose().getHeading());
+		//closeConnections();
 	}
 	
 	public static void initReceiver() {
