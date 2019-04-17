@@ -6,7 +6,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
 
-public class ServerTransmitter extends Thread {
+public class CommandTransmitter {
 	
 	private ServerSocket serverSocket;
 	private Socket socket;
@@ -14,7 +14,7 @@ public class ServerTransmitter extends Thread {
 	private int port;
 	private LinkedList<Object> transferBuffer;
 	
-	public ServerTransmitter(int port) {
+	public CommandTransmitter(int port) {
 		super();
 		this.port = port;
 		this.transferBuffer = new LinkedList<Object>();
@@ -48,8 +48,7 @@ public class ServerTransmitter extends Thread {
 		transferBuffer.add(obj);
 	}
 	
-	@Override
-	public void run() {
+	public void transmitObject() {
 		while(!socket.isClosed() && socket.isConnected()) {
 			Object obj = transferBuffer.poll();
 			if(obj != null) {
@@ -62,6 +61,18 @@ public class ServerTransmitter extends Thread {
 			}
 		}
 		closeConnection();
+	}
+	
+	public void robotTravel(double angle, double distance) {
+		sendObject("M " + angle + ":" + distance);
+	}
+	
+	public void robotStop() {
+		sendObject("S");
+	}
+	
+	public void robotCollectBall() {
+		sendObject("B");
 	}
 	
 }

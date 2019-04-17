@@ -1,7 +1,7 @@
 package golfbot.robot.knowledgesources;
 
-import golfbot.navigation.GyroPoseProvider;
 import golfbot.robot.RobotSingle;
+import golfbot.robot.navigation.GyroPoseProvider;
 import golfbot.samples.PoseSample;
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3GyroSensor;

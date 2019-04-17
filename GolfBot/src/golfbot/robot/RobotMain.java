@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
-import golfbot.navigation.GyroPoseProvider;
 import golfbot.robot.knowledgesources.KSGyro;
 import golfbot.robot.knowledgesources.KSIR;
 import golfbot.robot.knowledgesources.KSMotor;
 import golfbot.robot.knowledgesources.KSNavigation;
 import golfbot.robot.knowledgesources.KSSonic;
 import golfbot.robot.knowledgesources.KSTouch;
+import golfbot.robot.navigation.GyroPoseProvider;
 import lejos.hardware.motor.Motor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;

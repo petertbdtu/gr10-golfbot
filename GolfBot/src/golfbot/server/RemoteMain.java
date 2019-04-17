@@ -11,7 +11,7 @@ import java.util.Scanner;
 
 import golfbot.server.communication.LidarReceiver;
 import golfbot.server.communication.ServerReceiver;
-import golfbot.server.communication.ServerTransmitter;
+import golfbot.server.communication.CommandTransmitter;
 
 public class RemoteMain {
 

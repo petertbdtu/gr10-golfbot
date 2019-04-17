@@ -1,4 +1,4 @@
-package golfbot.navigation;
+package golfbot.robot.navigation;
 
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3GyroSensor;

@@ -1,9 +1,9 @@
 package golfbot.robot;
 
-import golfbot.navigation.GyroPoseProvider;
 import golfbot.robot.knowledgesources.KSBallManagement;
 import golfbot.robot.knowledgesources.KSLocation;
 import golfbot.robot.knowledgesources.KSNavigation;
+import golfbot.robot.navigation.GyroPoseProvider;
 import lejos.hardware.motor.Motor;
 import lejos.hardware.port.Port;
 import lejos.hardware.port.SensorPort;
