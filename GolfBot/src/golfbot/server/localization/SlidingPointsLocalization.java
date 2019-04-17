@@ -1,6 +1,6 @@
 package golfbot.server.localization;
 
-import golfbot.server.mapping.OccupancyGrid;
+import golfbot.server.utilities.BLOccupancyGrid;
 import lejos.robotics.geometry.Point;
 
 
@@ -9,12 +9,12 @@ public class SlidingPointsLocalization {
 	private static final String PATH = "src\\golfbot\\server\\mapping\\TestData";
 
 	public static void main(String[] args) {
-		OccupancyGrid map = OccupancyGrid.loadTestData(PATH);
+		BLOccupancyGrid map = BLOccupancyGrid.loadTestData(PATH);
 		Point location = getLocation(map, generateScan(createTestDataSample()));
 		System.out.println(location.x + "," + location.y);
 	}
 	
-	public static Point getLocation(OccupancyGrid map, OccupancyGrid scan) {
+	public static Point getLocation(BLOccupancyGrid map, BLOccupancyGrid scan) {
 		Point position = new Point(0,0);
 		//TranslateX = 
 		
@@ -41,8 +41,8 @@ public class SlidingPointsLocalization {
           //                    (windowLocation.Y + y) % arraySize.Height]);
 	}
 	
-	private static OccupancyGrid generateScan(LaserSample[] samples) {
-		OccupancyGrid scan = new OccupancyGrid();
+	private static BLOccupancyGrid generateScan(LaserSample[] samples) {
+		BLOccupancyGrid scan = new BLOccupancyGrid();
 		Point point = new Point(0,0);
 		for(LaserSample sample : samples) {
 			scan.registerOccupancy(point.pointAt(sample.distance, sample.angle), true);
@@ -51,9 +51,9 @@ public class SlidingPointsLocalization {
 		return scan;	
 	}
 	
-	private static OccupancyGrid createTestDataMap(OccupancyGrid og) {
+	private static BLOccupancyGrid createTestDataMap(BLOccupancyGrid og) {
 		if(og == null)
-			og = new OccupancyGrid();
+			og = new BLOccupancyGrid();
 		
 		for(int i=0 ; i<=1000 ; i++ ) {
 			float x1 = 0, y1 = 0, x2 = 0, y2= 0;

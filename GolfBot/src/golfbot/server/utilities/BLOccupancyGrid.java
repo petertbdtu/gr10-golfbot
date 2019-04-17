@@ -1,4 +1,4 @@
-package golfbot.server.mapping;
+package golfbot.server.utilities;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,18 +8,18 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 
-public class OccupancyGrid {
+public class BLOccupancyGrid {
 
 	private final double OCCUPANCY_WEIGHT = 0.5;
 	private HashMap<Point,OccupancyObject> map;
 	public float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = Float.MIN_VALUE, maxY = Float.MIN_VALUE;
 	
-	public OccupancyGrid() {
+	public BLOccupancyGrid() {
 		this.map = new HashMap<Point,OccupancyObject>();
 	}
 	
-	public static OccupancyGrid loadTestData(String path) {
-		OccupancyGrid og = new OccupancyGrid();
+	public static BLOccupancyGrid loadTestData(String path) {
+		BLOccupancyGrid og = new BLOccupancyGrid();
 		try {
 			FileInputStream fis = new FileInputStream(path);
 			ObjectInputStream ois = new ObjectInputStream(fis);
@@ -38,7 +38,7 @@ public class OccupancyGrid {
 		return og;
 	}
 	
-	public static void saveTestData(String path, OccupancyGrid og) {
+	public static void saveTestData(String path, BLOccupancyGrid og) {
 		try {
 			FileOutputStream fos = new FileOutputStream(path);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
