@@ -7,7 +7,7 @@ import java.net.Socket;
 import golfbot.robot.knowledgesources.KSBallManagement;
 import golfbot.robot.knowledgesources.KSNavigation;
 
-public class CommandReceiver {
+public class CommandReceiver extends Thread {
 	
 	private String[] move = new String[2];
 	private final String IP = "192.168.0.101";
@@ -15,8 +15,8 @@ public class CommandReceiver {
 	private Socket socket = null;
 	private ObjectInputStream ois = null;
 	
-	KSNavigation navigation = RobotSingle.navigation;
-	KSBallManagement manager = RobotSingle.manager;
+	KSNavigation navigation;
+	KSBallManagement manager;
 	
 	public CommandReceiver(KSNavigation navigation, KSBallManagement manager) {
 		this.navigation = navigation;
@@ -33,7 +33,8 @@ public class CommandReceiver {
 		}
 	}
 	
-	public void runCommand() {
+	@Override
+	public void run() {
 		while(!socket.isClosed() && socket.isConnected()) {
 			String msg = null;
 			try { msg = (String) ois.readObject(); } 
