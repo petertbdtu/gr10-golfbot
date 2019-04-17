@@ -2,6 +2,7 @@ package golfbot.server.communication;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.lang.ProcessBuilder.Redirect;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -14,116 +15,148 @@ import golfbot.samples.SonicSample;
 import golfbot.samples.TouchSample;
 import golfbot.server.blackboard.Blackboard;
 import golfbot.server.blackboard.BlackboardSample;
+import lejos.robotics.navigation.Pose;
 
 public class LegoReceiver extends Thread {
-	private class ConnectionWrapper {
-		ServerSocket serverSocket;
-		Socket socket;
-		ObjectInputStream ois;
-		
-		public ConnectionWrapper(ServerSocket serverSocket, Socket socket) throws IOException {
-			this.serverSocket = serverSocket;
-			this.socket = socket;
-			this.ois = new ObjectInputStream(socket.getInputStream());
-		}
-	}
+	private final int L_PORT = 3010;
+	private final int N_PORT = 3011;
+	private final int B_PORT = 3012;
 	
-	private ArrayList<ConnectionWrapper> cwConnections;
-	private ArrayList<ConnectionWrapper> cwToBeClosed;
-	private BlackboardSample bbSample;
-	private boolean blackboardUpdate;
-	private Blackboard bb;
+	private ServerSocket lServerSocket;
+	private ServerSocket nServerSocket;
+	private ServerSocket bServerSocket;
+	
+	private Socket lSocket;
+	private Socket nSocket;
+	private Socket bSocket;
+	
+	private ObjectInputStream lStream;
+	private ObjectInputStream nStream;
+	private ObjectInputStream bStream;
+	
+	private boolean switcher = true;
+	private boolean newData = false;
 
+	public Pose pose1;
+	public Boolean isMoving1;
+	public Boolean isCollecting1;
+	public Pose pose2;
+	public Boolean isMoving2;
+	public Boolean isCollecting2;
+	
 	public LegoReceiver() {
-		super();
-		blackboardUpdate = false;
-		cwConnections = new ArrayList<ConnectionWrapper>();
-		cwToBeClosed = new ArrayList<ConnectionWrapper>();
+		pose1 = new Pose();
+		isMoving1 = false;
+		isCollecting1 = false;
+		pose2 = new Pose();
+		isMoving2 = false;
+		isCollecting2 = false;
 	}
 	
-	public void addSocket(ServerSocket serverSocket, Socket socket) {
+	public boolean connect() {
 		try {
-			ConnectionWrapper cw = new ConnectionWrapper(serverSocket, socket);
-			cwConnections.add(cw);
-		} catch (IOException e) { e.printStackTrace(); }
+			lServerSocket = new ServerSocket()
+			lSocket = lServerSocket.accept();
+			lStream = new ObjectInputStream(lSocket.getInputStream());
+			nSocket = nServerSocket.accept();
+			nStream = new ObjectInputStream(nSocket.getInputStream());
+			bSocket = bServerSocket.accept();
+			bStream = new ObjectInputStream(bSocket.getInputStream());
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 	
 	@Override
 	public void run() {
-		bb = Blackboard.getInstance();
-		
-		while(!cwConnections.isEmpty()) {
-			Iterator<ConnectionWrapper> cwIterator = cwConnections.iterator();
-			while(cwIterator.hasNext()) {
-				ConnectionWrapper cw = cwIterator.next();
-				Object obj = null;
-				try { obj = cw.ois.readObject(); } 
-				catch (ClassNotFoundException | IOException e) { 
-					cwToBeClosed.add(cw);
-					continue;
-				}
-				if(obj != null) {
-					blackboardUpdate = true;
-					receiveLogic(obj);
-				}
-			}
-			
-			if(blackboardUpdate) {
-				bb.setBlackboardSample(bbSample);
-				blackboardUpdate = false;
-			}
-			
-			if( !cwToBeClosed.isEmpty() ) {
-				cwIterator = cwToBeClosed.iterator();
-				while(cwIterator.hasNext()) { 
-					closeConnection(cwIterator.next());
-					cwIterator.remove();
-				}
+		while(socketsWorking()) {
+			readLocalization();
+			readNavigator();
+			readBallCollector();
+			if(newData) {
+				
 			}
 		}
 	}
 	
-	private void receiveLogic(Object obj) {
-		if (obj instanceof GyroSample) {
-			GyroSample gs = (GyroSample)obj;
-			bbSample.sGyroAngle = gs.angle;
-			bbSample.sGyroRate = gs.rate;
-		} 
-		else if (obj instanceof IRSample) {
-			IRSample irs = (IRSample)obj;
-			bbSample.sIRDistance = irs.distance;
-		}
-		else if (obj instanceof DrivingMotorSample) {
-			DrivingMotorSample dms = (DrivingMotorSample)obj;
-			bbSample.mLeftDrivingTacho = dms.leftTachoCount;
-			bbSample.mRightDrivingTacho = dms.rightTachoCount;
-		}
-		else if (obj instanceof SonicSample) {
-			SonicSample ss = (SonicSample)obj;
-			bbSample.sSonicDistance = ss.distance;
-		}
-		else if (obj instanceof TouchSample) {
-			TouchSample ts = (TouchSample)obj;
-			bbSample.sTouchPressed = ts.pressed;
-		}		
+	private boolean socketsWorking() {
+		boolean working = true;
+		if(working)
+			working = (!lSocket.isClosed() && lSocket.isConnected());
+		if(working)
+			working = (!nSocket.isClosed() && nSocket.isConnected());
+		if(working)
+			working = (!bSocket.isClosed() && bSocket.isConnected());
+		return working;
 	}
 	
-	public void closeConnections() {
-		Iterator<ConnectionWrapper> cwIterator = cwConnections.iterator();
-		while(cwIterator.hasNext()) {
-			closeConnection(cwIterator.next());
-			cwIterator.remove();
+	private void readLocalization() {
+		Object obj = null;
+		try { obj = lStream.readObject(); } 
+		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
+		if(obj != null) {
+			Pose newPose = (Pose) obj;
+			if(newPose != pose) {
+				newData = true;
+				pose = newPose;
+			}
 		}
 	}
 	
-	private void closeConnection(ConnectionWrapper cw) {
-		try { cw.ois.close(); } 
-		catch (IOException e) {}
-		
-		try { cw.socket.close(); } 
-		catch (IOException e) {}
-		
-		try { cw.serverSocket.close(); } 
-		catch (IOException e) {}
+	private void readNavigator() {
+		Object obj = null;
+		try { obj = nStream.readObject(); } 
+		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
+		if(obj != null) {
+			Boolean newIsMoving = (Boolean) obj;
+			if(switcher) {
+				if(newIsMoving.equals(isMoving2)) {
+					newData = true;
+					isMoving = newIsMoving;
+				}
+			} else {
+				
+			}
+			if(newIsMoving.equals(isMoving)) {
+				newData = true;
+				isMoving = newIsMoving;
+			}
+		}
+	}
+	
+	private void readBallCollector() {
+		Object obj = null;
+		try { obj = bStream.readObject(); } 
+		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
+		if(obj != null) {
+			Boolean newIsCollecting = (Boolean) obj;
+			if(newIsCollecting.equals(isCollecting)) {
+				newData = true;
+				isMoving = newIsCollecting;
+			}
+		}
+	}
+	
+	public Pose getPose() {
+		if(switcher)
+			return pose1;
+		else
+			return pose2;
+	}
+
+	public Boolean getIsMoving() {
+		if(switcher)
+			return isMoving1;
+		else
+			return isMoving2;
+	}
+
+	public Boolean getIsCollecting() {
+		if(switcher)
+			return isCollecting1;
+		else
+			return isCollecting2;
 	}
 }

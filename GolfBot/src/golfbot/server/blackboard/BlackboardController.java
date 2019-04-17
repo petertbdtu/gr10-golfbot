@@ -21,9 +21,9 @@ public class BlackboardController extends Thread {
 		}
 	}
 	
-	private void notifyListeners(BlackboardSample bbSample) {
-		for (int i = 0 ; i < bbListeners.size() ; i++) {
-			bbListeners.get(i).blackboardUpdated(bbSample);
+	private void notifyListeners(BlackboardSample bs) {
+		for (BlackboardListener bl : bbListeners) {
+			bl.blackboardUpdated(bs);
 		}
 	}
 }
