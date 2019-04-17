@@ -29,14 +29,21 @@ public class LidarReceiver extends Thread {
 				byte[] buffer = new byte[100];
 				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 				try { dSocket.receive(packet); } 
-				catch (IOException e) { socketIsWorking = false; }
+				catch (IOException e) { socketIsWorking = false;}
+				System.out.println("After Try-Catch");
 				decryptPacket(packet.getData());
 			}
 		else
 			System.out.println("LidarReceiver couldn't make socketbind");
 	}
 	
-	private boolean decryptPacket(byte[] buffer) {
+	
+	public HashMap<Double, Double> getScan() {
+		if (scanIsUpdated) return scan;
+		else return null;
+	}
+	
+	public boolean decryptPacket(byte[] buffer) {
 		// Check for Zero Packet - Skip if true
 		int ct = buffer[0];
 		if(ct == 1)
@@ -83,13 +90,4 @@ public class LidarReceiver extends Thread {
 		int value = ((((int)b1)&0xff) + (((int)b2)&0xff));
 		return (value / 2.0 / 64.0) + distanceCorrection(distance);
 	}
-	
-	public HashMap<Double,Double> getScan() {
-		if(scanIsUpdated) {
-			scanIsUpdated = false;
-			return scan;
-		}
-		return null;
-	}
-	
 }

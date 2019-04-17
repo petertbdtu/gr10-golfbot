@@ -54,6 +54,4 @@ public class RemoteMain {
 			st.closeConnection();
 		}*/
 	}
-	
-
 }
