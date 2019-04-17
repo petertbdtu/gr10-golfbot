@@ -15,7 +15,7 @@ import golfbot.samples.TouchSample;
 import golfbot.server.blackboard.Blackboard;
 import golfbot.server.blackboard.BlackboardSample;
 
-public class ServerReceiver extends Thread {
+public class LegoReceiver extends Thread {
 	private class ConnectionWrapper {
 		ServerSocket serverSocket;
 		Socket socket;
@@ -34,7 +34,7 @@ public class ServerReceiver extends Thread {
 	private boolean blackboardUpdate;
 	private Blackboard bb;
 
-	public ServerReceiver() {
+	public LegoReceiver() {
 		super();
 		blackboardUpdate = false;
 		cwConnections = new ArrayList<ConnectionWrapper>();

@@ -5,7 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
 
-import golfbot.server.communication.ServerReceiver;
+import golfbot.server.communication.LegoReceiver;
 import golfbot.server.communication.ServerTransmitter;
 
 public class RemoteMain {
@@ -14,7 +14,7 @@ public class RemoteMain {
 		int port = 3000;
 		ServerTransmitter st = new ServerTransmitter(port++);
 		
-		ServerReceiver sr = null;
+		LegoReceiver sr = null;
 		Scanner sc = null;
 		
 		if(st.connect()) {
@@ -40,8 +40,8 @@ public class RemoteMain {
 		}
 	}
 	
-	public static ServerReceiver startReceiver(int port) {
-		ServerReceiver sr = new ServerReceiver();
+	public static LegoReceiver startReceiver(int port) {
+		LegoReceiver sr = new LegoReceiver();
 		ServerSocket serverSocket = null;
 		Socket socket = null;
 		

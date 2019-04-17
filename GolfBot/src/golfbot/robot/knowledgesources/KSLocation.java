@@ -1,6 +1,7 @@
 package golfbot.robot.knowledgesources;
 
 import golfbot.navigation.GyroPoseProvider;
+import golfbot.robot.RobotSingle;
 import golfbot.samples.PoseSample;
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3GyroSensor;
@@ -10,8 +11,7 @@ import lejos.robotics.navigation.Pose;
 public class KSLocation extends KnowledgeSource<PoseSample> {
 	
 	Pose currentPose;
-	
-	//NavigationPilot pilot; //Get reference to the NavigationPilot and pass it here
+	GyroPoseProvider provider = RobotSingle.localization;
 	
 	private EV3GyroSensor gyro;
 	
@@ -23,7 +23,6 @@ public class KSLocation extends KnowledgeSource<PoseSample> {
 	
 	public Pose updateLocation(MovePilot pilot) {
 		while(pilot.isMoving()) {
-			GyroPoseProvider provider = new GyroPoseProvider(pilot);
 			currentPose = provider.getPose();
 		}
 		return currentPose;
@@ -31,6 +30,6 @@ public class KSLocation extends KnowledgeSource<PoseSample> {
 
 	@Override
 	protected PoseSample getKnowledge() {
-		return null; // return updateLocation(pilot);
+		return new PoseSample(provider.getPose());
 	}
 }

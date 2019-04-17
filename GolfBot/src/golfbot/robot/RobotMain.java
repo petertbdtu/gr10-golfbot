@@ -5,10 +5,10 @@ import java.io.ObjectInputStream;
 import java.net.Socket;
 
 import golfbot.navigation.GyroPoseProvider;
-import golfbot.navigation.Navigation;
 import golfbot.robot.knowledgesources.KSGyro;
 import golfbot.robot.knowledgesources.KSIR;
 import golfbot.robot.knowledgesources.KSMotor;
+import golfbot.robot.knowledgesources.KSNavigation;
 import golfbot.robot.knowledgesources.KSSonic;
 import golfbot.robot.knowledgesources.KSTouch;
 import lejos.hardware.motor.Motor;
@@ -19,7 +19,7 @@ import lejos.robotics.chassis.Wheel;
 import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.navigation.MovePilot;
 
-public class RobotMain {
+public class RobotMain implements Runnable {
 
 	private static final String IP = "192.168.0.101";
 	private static int port = 3000;
@@ -32,10 +32,8 @@ public class RobotMain {
 	private static KSSonic ksSonic;
 	private static KSTouch ksTouch;
 	private static KSMotor ksDrivingMotors;
-	private static Navigation navigation = new Navigation();
+	private static KSNavigation navigation = new KSNavigation();
 	private static GyroPoseProvider provider = new GyroPoseProvider(navigation.getInstance());
-	
-	
 	
 	public static void main(String[] args) {
 		//initReceiver();
@@ -49,7 +47,7 @@ public class RobotMain {
 		System.out.println("x: " + provider.getPose().getX() + " y: " + provider.getPose().getY() + " heading: " + provider.getPose().getHeading());
 		navigation.travelTo(88, 3000);
 		System.out.println("x: " + provider.getPose().getX() + " y: " + provider.getPose().getY() + " heading: " + provider.getPose().getHeading());
-		//closeConnections();
+		//closeConnections();	
 	}
 	
 	public static void initReceiver() {
