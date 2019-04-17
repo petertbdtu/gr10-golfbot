@@ -7,6 +7,8 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import lejos.robotics.geometry.Point;
+
 
 public class BLOccupancyGrid {
 
@@ -87,6 +89,25 @@ public class BLOccupancyGrid {
 	public boolean isBall(lejos.robotics.geometry.Point point) {
 		OccupancyObject occObj = map.get(point);
 		return occObj.isBall;
+	}
+	
+	/***
+	 * Checks if there are points in a square around a point
+	 * @param location Position of the center of the square
+	 * @param size length of the sides of the square
+	 * @return whether there are points in the square
+	 */
+	public boolean checkCollisions(lejos.robotics.geometry.Point location, float size) {
+		float halfSize = size/2;
+		Point a = new Point(location.x-halfSize, location.y-halfSize);
+		Point b = new Point(location.x+halfSize, location.y+halfSize);
+		
+		for (Point p : map.keySet()) {
+			if (a.x <= p.x && p.x <= b.x && a.y <= p.y && p.y <= b.y)
+				return true;
+		}
+		
+		return false;
 	}
 	
 	private class Point extends lejos.robotics.geometry.Point implements Serializable {
