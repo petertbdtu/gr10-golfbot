@@ -19,7 +19,7 @@ import lejos.robotics.chassis.Wheel;
 import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.navigation.MovePilot;
 
-public class RobotMain implements Runnable {
+public class RobotMain {
 
 	private static final String IP = "192.168.0.101";
 	private static int port = 3000;
