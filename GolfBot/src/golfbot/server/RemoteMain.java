@@ -1,17 +1,33 @@
 package golfbot.server;
 
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.HashMap;
 import java.util.Scanner;
 
+import golfbot.server.communication.LidarReceiver;
 import golfbot.server.communication.ServerReceiver;
 import golfbot.server.communication.ServerTransmitter;
 
 public class RemoteMain {
 
-	public static void main(String[] args) {
-		int port = 3000;
+	public static void main(String[] args) throws IOException {
+		
+		LidarReceiver lr = new LidarReceiver();
+		lr.run();
+		
+		HashMap<Double,Double> scan = null;
+		do {
+			scan = lr.getScan();
+		} while(scan == null);
+		
+		System.out.println(scan);
+		
+		/*int port = 3000;
 		ServerTransmitter st = new ServerTransmitter(port++);
 		
 		ServerReceiver sr = null;
@@ -37,7 +53,7 @@ public class RemoteMain {
 			sc.close();
 			sr.closeConnections();
 			st.closeConnection();
-		}
+		}*/
 	}
 	
 	public static ServerReceiver startReceiver(int port) {
