@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import golfbot.server.communication.LidarReceiver;
-import golfbot.server.communication.ServerReceiver;
 import golfbot.server.communication.CommandTransmitter;
 
 public class RemoteMain {
@@ -55,7 +54,7 @@ public class RemoteMain {
 			st.closeConnection();
 		}*/
 	}
-	
+	/*
 	public static ServerReceiver startReceiver(int port) {
 		ServerReceiver sr = new ServerReceiver();
 		ServerSocket serverSocket = null;
@@ -73,5 +72,5 @@ public class RemoteMain {
 		sr.start();
 		return sr;
 	}
-
+*/
 }
