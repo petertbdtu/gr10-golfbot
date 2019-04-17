@@ -11,14 +11,7 @@ public class CommandTransmitter {
 	private ServerSocket serverSocket;
 	private Socket socket;
 	private ObjectOutputStream oos;
-	private int port;
-	private LinkedList<Object> transferBuffer;
-	
-	public CommandTransmitter(int port) {
-		super();
-		this.port = port;
-		this.transferBuffer = new LinkedList<Object>();
-	}
+	private final int port = 3000;
 	
 	public boolean connect() {
 		boolean connected = false;
@@ -33,7 +26,7 @@ public class CommandTransmitter {
 		return connected;
 	}
 	
-	public void closeConnection() {
+	public void closeConnections() {
 		try { oos.close(); } 
 		catch (IOException e) { e.printStackTrace(); }
 		
@@ -44,35 +37,32 @@ public class CommandTransmitter {
 		catch (IOException e) { e.printStackTrace(); }
 	}
 	
-	public void sendObject(Object obj) {
-		transferBuffer.add(obj);
-	}
-	
-	public void transmitObject() {
-		while(!socket.isClosed() && socket.isConnected()) {
-			Object obj = transferBuffer.poll();
-			if(obj != null) {
-				try {
-					oos.writeObject(obj);
-				} catch (IOException e) {
-					e.printStackTrace();
-					break;
-				}
-			}
-		}
-		closeConnection();
-	}
-	
 	public void robotTravel(double angle, double distance) {
-		sendObject("M " + angle + ":" + distance);
+		
+		try {
+			oos.writeObject("M " + angle + ":" + distance);
+		} catch (IOException e) {
+			e.printStackTrace();
+			closeConnections();
+		}
 	}
 	
 	public void robotStop() {
-		sendObject("S");
+		try {
+			oos.writeObject("S");
+		} catch (IOException e) {
+			e.printStackTrace();
+			closeConnections();
+		}
 	}
 	
 	public void robotCollectBall() {
-		sendObject("B");
+		try {
+			oos.writeObject("B");
+		} catch (IOException e) {
+			e.printStackTrace();
+			closeConnections();
+		}
 	}
 	
 }
