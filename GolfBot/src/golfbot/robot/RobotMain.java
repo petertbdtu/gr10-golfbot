@@ -33,7 +33,7 @@ public class RobotMain {
 	private static KSTouch ksTouch;
 	private static KSMotor ksDrivingMotors;
 	private static KSNavigation navigation = new KSNavigation();
-	private static GyroPoseProvider provider = new GyroPoseProvider(navigation.getInstance());
+	//private static GyroPoseProvider provider = new GyroPoseProvider(navigation.getInstance());
 	
 	public static void main(String[] args) {
 		//initReceiver();

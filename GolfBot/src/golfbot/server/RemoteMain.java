@@ -16,13 +16,17 @@ public class RemoteMain {
 
 	public static void main(String[] args) throws IOException {
 		
+//		CommandTransmitter transmitter = new CommandTransmitter();
+//		transmitter.connect();
+//		transmitter.robotCollectBall();
+		
 		LidarReceiver lr = new LidarReceiver();
 		lr.run();
 		
 		HashMap<Double,Double> scan = null;
 		do {
 			scan = lr.getScan();
-		} while(scan == null);
+		} while(scan.isEmpty());
 		
 		System.out.println(scan);
 		
