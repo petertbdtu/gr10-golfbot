@@ -34,15 +34,15 @@ public class LegoReceiver extends Thread {
 	private ObjectInputStream nStream;
 	private ObjectInputStream bStream;
 	
-	private boolean switcher = true;
-	private boolean newData = false;
+	private boolean switcher = false;
+	public boolean newData = false;
 
-	public Pose pose1;
-	public Boolean isMoving1;
-	public Boolean isCollecting1;
-	public Pose pose2;
-	public Boolean isMoving2;
-	public Boolean isCollecting2;
+	private Pose pose1;
+	private Pose pose2;
+	private Boolean isMoving1;
+	private Boolean isMoving2;
+	private Boolean isCollecting1;
+	private Boolean isCollecting2;
 	
 	public LegoReceiver() {
 		pose1 = new Pose();
@@ -55,11 +55,13 @@ public class LegoReceiver extends Thread {
 	
 	public boolean connect() {
 		try {
-			lServerSocket = new ServerSocket()
+			lServerSocket = new ServerSocket(L_PORT);
 			lSocket = lServerSocket.accept();
 			lStream = new ObjectInputStream(lSocket.getInputStream());
+			nServerSocket = new ServerSocket(N_PORT);
 			nSocket = nServerSocket.accept();
 			nStream = new ObjectInputStream(nSocket.getInputStream());
+			bServerSocket = new ServerSocket(B_PORT);
 			bSocket = bServerSocket.accept();
 			bStream = new ObjectInputStream(bSocket.getInputStream());
 			return true;
@@ -72,11 +74,15 @@ public class LegoReceiver extends Thread {
 	@Override
 	public void run() {
 		while(socketsWorking()) {
-			readLocalization();
-			readNavigator();
-			readBallCollector();
-			if(newData) {
-				
+			boolean gotNewData = false;
+			if(readLocalization() && !gotNewData)
+				gotNewData = true;
+			if(readNavigator() && !gotNewData)
+				gotNewData = true;
+			if(readBallCollector() && !gotNewData)
+				gotNewData = true;
+			if(gotNewData) {
+				newData = true;
 			}
 		}
 	}
