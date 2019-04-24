@@ -1,10 +1,11 @@
 package golfbot.robot.knowledgesources;
 
 import golfbot.robot.navigation.GyroPoseProvider;
+import golfbot.samples.PoseSample;
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Pose;
 
-public class KSLocation extends KnowledgeSource<Pose> {
+public class KSLocation extends KnowledgeSource<PoseSample> {
 	
 	Pose currentPose;
 	GyroPoseProvider provider;
@@ -22,7 +23,8 @@ public class KSLocation extends KnowledgeSource<Pose> {
 	}
 
 	@Override
-	protected Pose getKnowledge() {
-		return provider.getPose();
+	protected PoseSample getKnowledge() {
+		Pose curPose = provider.getPose();
+		return new PoseSample(curPose.getX(), curPose.getY(), curPose.getHeading());
 	}
 }

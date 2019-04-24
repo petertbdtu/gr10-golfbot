@@ -1,11 +1,6 @@
 package golfbot.server;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -20,27 +15,28 @@ public class RemoteMain {
 		boolean YesRobotRunYesYes = true;
 		
 		// Build Lidar receiver
+		System.out.println("Build Lidar Receiver - robot running? " + YesRobotRunYesYes);
 		LidarReceiver lidarReceiver = new LidarReceiver();
 		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000))
-			lidarReceiver.run();
+			lidarReceiver.start();
 		else
 			YesRobotRunYesYes = false;
 		
 		// Build Lego Receiver
+		System.out.println("Build Lego Receiver - robot running? " + YesRobotRunYesYes);
 		LegoReceiver legoReceiver = new LegoReceiver();
 		if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002))
-			legoReceiver.run();
+			legoReceiver.start();
 		else
 			YesRobotRunYesYes = false;
 		
 		// Command Transmitter
+		System.out.println("Build Command Transmitter - robot running? " + YesRobotRunYesYes);
 		CommandTransmitter commandTransmitter = new CommandTransmitter();
-		if(YesRobotRunYesYes && commandTransmitter.connect(3003))
-			/* nothing? */;
-		else
-			YesRobotRunYesYes = false;
+		if(YesRobotRunYesYes)
+			YesRobotRunYesYes = commandTransmitter.connect(3003);
 
-		while(true) {
+		while(YesRobotRunYesYes) {
 			Scanner scan = new Scanner(System.in);
 			String hej = scan.next();
 			if(hej.equals("f")) { commandTransmitter.robotTravel(0, 1000); }

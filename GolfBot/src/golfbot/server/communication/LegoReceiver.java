@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import golfbot.samples.PoseSample;
 import lejos.robotics.navigation.Pose;
 
 public class LegoReceiver extends Thread {
@@ -38,14 +40,14 @@ public class LegoReceiver extends Thread {
 		isCollecting2 = false;
 	}
 	
-	public boolean connect(int lPort, int nPort, int bPort) {
+	public boolean connect(int nPort, int lPort, int bPort) {
 		try {
-			lServerSocket = new ServerSocket(lPort);
-			lSocket = lServerSocket.accept();
-			lStream = new ObjectInputStream(lSocket.getInputStream());
 			nServerSocket = new ServerSocket(nPort);
 			nSocket = nServerSocket.accept();
 			nStream = new ObjectInputStream(nSocket.getInputStream());
+			lServerSocket = new ServerSocket(lPort);
+			lSocket = lServerSocket.accept();
+			lStream = new ObjectInputStream(lSocket.getInputStream());
 			bServerSocket = new ServerSocket(bPort);
 			bSocket = bServerSocket.accept();
 			bStream = new ObjectInputStream(bSocket.getInputStream());
@@ -81,8 +83,14 @@ public class LegoReceiver extends Thread {
 		try { obj = lStream.readObject(); } 
 		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
 		if(obj != null) {
-			if(switcher) { pose2 = (Pose) obj; }
-			else { pose1 = (Pose) obj; }
+			if(switcher) { 
+				PoseSample temp = (PoseSample) obj; 
+				pose2 = new Pose(temp.x,temp.y,temp.heading); 
+			}
+			else { 
+				PoseSample temp = (PoseSample) obj; 
+				pose1 = new Pose(temp.x,temp.y,temp.heading); 
+			}
 		}
 	}
 	

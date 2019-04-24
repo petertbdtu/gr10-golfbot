@@ -23,7 +23,8 @@ public class GyroPoseProvider implements PoseProvider, MoveListener {
 	
 	public GyroPoseProvider(MoveProvider mp, Port port) {
 		mp.addMoveListener(this);
-		gyro  = new EV3GyroSensor(port);
+		this.mp = mp;
+		this.gyro  = new EV3GyroSensor(port);
 	}
 	
 	

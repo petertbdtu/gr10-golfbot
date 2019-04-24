@@ -10,10 +10,12 @@ public class KSNavigation extends KnowledgeSource<Boolean>{
 		this.pilot = pilot;
 	}
 	
-	public void travelTo(double angle, double distance) {
-		pilot.setLinearSpeed(500.00);
-		pilot.rotate(angle, true);
+	public void forward(double distance) {
 		pilot.travel(distance, true);
+	}
+	
+	public void turn(double angle) {
+		pilot.rotate(angle, true);
 	}
 	
 	public void stopMoving() {

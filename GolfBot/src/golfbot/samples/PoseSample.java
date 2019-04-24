@@ -1,20 +1,25 @@
 package golfbot.samples;
 
-import lejos.robotics.navigation.Pose;
+import java.io.Serializable;
 
-public class PoseSample {
+public class PoseSample implements Serializable{
 
-	public Pose position;
+	private static final long serialVersionUID = 1L;
+	public float x;
+	public float y;
+	public float heading;
 	
-	public PoseSample(Pose position) {
-		this.position = position;
+	public PoseSample(float x, float y, float heading) {
+		this.x = x;
+		this.y = y;
+		this.heading = heading;
 	}
 	
 	public boolean equals(PoseSample poseSample) {
-		return (this.position == poseSample.position);
+		return (this.x == poseSample.x && this.y == poseSample.y && this.heading == poseSample.heading);
 	}
 	
 	public String toString() {
-		return "[" + position + "]";
+		return "[" + this.x + "," + this.y + "," + this.heading + "]";
 	}
 }

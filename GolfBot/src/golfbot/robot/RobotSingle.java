@@ -14,7 +14,7 @@ import lejos.robotics.navigation.MovePilot;
 public class RobotSingle {
 	public static void main(String [ ] args) {
 		// Server IP hello
-		String ip = "localhost";
+		String ip = "172.20.10.2";
 		
 		// Really important bool
 		boolean YesRobotRunYesYes = true;
@@ -29,28 +29,24 @@ public class RobotSingle {
 		// Build Navigation
 		MovePilot pilot = new MovePilot(chassis);
 		KSNavigation navigation = new KSNavigation(pilot);
-		if(YesRobotRunYesYes && navigation.connect(ip, 3000))
-			 navigation.run();
+		if(YesRobotRunYesYes)
+			YesRobotRunYesYes = navigation.connect(ip, 3000);
 		
 		// Build Localisation
 		GyroPoseProvider gyroPoseProvider = new GyroPoseProvider(pilot, SensorPort.S2);
 		KSLocation location = new KSLocation(gyroPoseProvider);
-		if(YesRobotRunYesYes && location.connect(ip, 3001))
-			location.run();
-		else
-			YesRobotRunYesYes = false;
+		if(YesRobotRunYesYes)
+			YesRobotRunYesYes = location.connect(ip, 3001);
 	
 		// Build ball management
 		KSBallManagement ballManager = new KSBallManagement();
-		if(YesRobotRunYesYes && ballManager.connect(ip, 3002))
-			ballManager.run();
-		else
-			YesRobotRunYesYes = false;
+		if(YesRobotRunYesYes)
+			YesRobotRunYesYes = ballManager.connect(ip, 3002);
 
 		// Command Receiver
 		CommandReceiver receiver = new CommandReceiver(navigation, ballManager);
 		if(YesRobotRunYesYes && receiver.connect(ip, 3003))
-			receiver.run();
+			receiver.start();
 		else
 			YesRobotRunYesYes = false;
 		

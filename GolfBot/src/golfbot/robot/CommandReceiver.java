@@ -46,7 +46,14 @@ public class CommandReceiver extends Thread {
 				case 'M':
 					String newMsg = msg.substring(2, msg.length());
 					move = newMsg.split(":");
-					navigation.travelTo(Double.parseDouble(move[0]), Double.parseDouble(move[1]));
+					double angle = Double.parseDouble(move[0]);
+					double distance = Double.parseDouble(move[1]);
+					
+					if(angle != 0) {
+						navigation.turn(angle);
+					} else if(distance != 0) {
+						navigation.forward(distance);
+					}
 					break;
 				//For stopping robot send a msg (String) "S"	
 				case 'S':
