@@ -1,12 +1,14 @@
 package golfbot.robot.knowledgesources;
 
-import golfbot.robot.RobotSingle;
-import golfbot.samples.NavigationSample;
 import lejos.robotics.navigation.MovePilot;
 
 public class KSNavigation extends KnowledgeSource<Boolean>{
 
-	MovePilot pilot = RobotSingle.pilot;
+	MovePilot pilot;
+	
+	public KSNavigation(MovePilot pilot) {
+		this.pilot = pilot;
+	}
 	
 	public void travelTo(double angle, double distance) {
 		pilot.setLinearSpeed(500.00);

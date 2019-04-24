@@ -4,26 +4,23 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedList;
 
 public class CommandTransmitter {
 	
 	private ServerSocket serverSocket;
 	private Socket socket;
 	private ObjectOutputStream oos;
-	private final int port = 3000;
 	
-	public boolean connect() {
-		boolean connected = false;
+	public boolean connect(int port) {
 		try {
 			serverSocket = new ServerSocket(port);
 			socket = serverSocket.accept();
 			oos = new ObjectOutputStream(socket.getOutputStream());
-			connected = true;
+			return true;
 		} catch (IOException e) { 
 			e.printStackTrace(); 
+			return false;
 		}
-		return connected;
 	}
 	
 	public void closeConnections() {
@@ -38,31 +35,18 @@ public class CommandTransmitter {
 	}
 	
 	public void robotTravel(double angle, double distance) {
-		
-		try {
-			oos.writeObject("M " + angle + ":" + distance);
-		} catch (IOException e) {
-			e.printStackTrace();
-			closeConnections();
-		}
+		try { oos.writeObject("M " + angle + ":" + distance); } 
+		catch (IOException e) { e.printStackTrace(); }
 	}
 	
 	public void robotStop() {
-		try {
-			oos.writeObject("S");
-		} catch (IOException e) {
-			e.printStackTrace();
-			closeConnections();
-		}
+		try { oos.writeObject("S"); } 
+		catch (IOException e) { e.printStackTrace(); }
 	}
 	
 	public void robotCollectBall() {
-		try {
-			oos.writeObject("B");
-		} catch (IOException e) {
-			e.printStackTrace();
-			closeConnections();
-		}
+		try { oos.writeObject("B"); } 
+		catch (IOException e) { e.printStackTrace(); }
 	}
 	
 }

@@ -7,10 +7,6 @@ import java.net.Socket;
 import lejos.robotics.navigation.Pose;
 
 public class LegoReceiver extends Thread {
-	private final int L_PORT = 3010;
-	private final int N_PORT = 3011;
-	private final int B_PORT = 3012;
-	
 	private ServerSocket lServerSocket;
 	private ServerSocket nServerSocket;
 	private ServerSocket bServerSocket;
@@ -42,15 +38,15 @@ public class LegoReceiver extends Thread {
 		isCollecting2 = false;
 	}
 	
-	public boolean connect() {
+	public boolean connect(int lPort, int nPort, int bPort) {
 		try {
-			lServerSocket = new ServerSocket(L_PORT);
+			lServerSocket = new ServerSocket(lPort);
 			lSocket = lServerSocket.accept();
 			lStream = new ObjectInputStream(lSocket.getInputStream());
-			nServerSocket = new ServerSocket(N_PORT);
+			nServerSocket = new ServerSocket(nPort);
 			nSocket = nServerSocket.accept();
 			nStream = new ObjectInputStream(nSocket.getInputStream());
-			bServerSocket = new ServerSocket(B_PORT);
+			bServerSocket = new ServerSocket(bPort);
 			bSocket = bServerSocket.accept();
 			bStream = new ObjectInputStream(bSocket.getInputStream());
 			return true;
@@ -72,11 +68,11 @@ public class LegoReceiver extends Thread {
 	private boolean socketsWorking() {
 		boolean working = true;
 		if(working)
-			working = (!lSocket.isClosed() && lSocket.isConnected());
+			working = (lSocket != null && lStream != null && !lSocket.isClosed() && lSocket.isConnected());
 		if(working)
-			working = (!nSocket.isClosed() && nSocket.isConnected());
+			working = (nSocket != null && nStream != null && !nSocket.isClosed() && nSocket.isConnected());
 		if(working)
-			working = (!bSocket.isClosed() && bSocket.isConnected());
+			working = (bSocket != null && bStream != null && !bSocket.isClosed() && bSocket.isConnected());
 		return working;
 	}
 	

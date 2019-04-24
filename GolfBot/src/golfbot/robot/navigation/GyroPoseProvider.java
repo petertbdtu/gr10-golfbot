@@ -1,5 +1,6 @@
 package golfbot.robot.navigation;
 
+import lejos.hardware.port.Port;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3GyroSensor;
 import lejos.robotics.SampleProvider;
@@ -18,10 +19,11 @@ public class GyroPoseProvider implements PoseProvider, MoveListener {
 	private float x = 0;
 	private float y = 0;
 	MoveProvider mp;
-	EV3GyroSensor gyro = new EV3GyroSensor(SensorPort.S2);
+	EV3GyroSensor gyro;
 	
-	public GyroPoseProvider(MoveProvider mp) {
+	public GyroPoseProvider(MoveProvider mp, Port port) {
 		mp.addMoveListener(this);
+		gyro  = new EV3GyroSensor(port);
 	}
 	
 	

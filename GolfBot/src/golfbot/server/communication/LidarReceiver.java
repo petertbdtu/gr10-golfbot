@@ -8,33 +8,28 @@ import java.util.HashMap;
 
 public class LidarReceiver extends Thread {
 
-	private DatagramSocket dSocket;
-	private static final int PORT = 5000;
+	private DatagramSocket socket;
 	private double lastAngle = 0;
 	private boolean switcher = false;
 	private HashMap<Double, Double> scan1 = new HashMap<Double, Double>();
 	private HashMap<Double, Double> scan2 = new HashMap<Double, Double>();
 	private HashMap<Double, Double> tempScan = new HashMap<Double, Double>();
 	
-	private boolean bindSocket() {
-		try { dSocket = new DatagramSocket(PORT); } 
+	public boolean bindSocket(int port) {
+		try { socket = new DatagramSocket(port); } 
 		catch (SocketException e) { return false; }
 		return true;
 	}
-
+	
 	@Override
 	public void run() {
-		boolean socketIsWorking = bindSocket();
-		if(socketIsWorking)
-			while(socketIsWorking) {
-				byte[] buffer = new byte[100];
-				DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-				try { dSocket.receive(packet); } 
-				catch (IOException e) { socketIsWorking = false;}
-				decryptPacket(packet.getData());
-			}
-		else
-			System.out.println("LidarReceiver couldn't make socketbind");
+		while(socket != null && socket.isBound()) {
+			byte[] buffer = new byte[100];
+			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+			try { socket.receive(packet); } 
+			catch (IOException e) { break; }
+			decryptPacket(packet.getData());
+		}
 	}
 	
 	// Returns the newest complete scan
@@ -131,6 +126,7 @@ public class LidarReceiver extends Thread {
 		return (Math.abs(dValue + distanceCorrection(distance))) % 360;
 	}
 	
+	//?
 	private double getAngleDifference(double start_angle, double end_angle) {
 		double diff_angle = Math.abs(end_angle - start_angle);
 		if(diff_angle > 180)

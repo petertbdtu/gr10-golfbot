@@ -9,9 +9,6 @@ import golfbot.robot.knowledgesources.KSNavigation;
 
 public class CommandReceiver extends Thread {
 	
-	private String[] move = new String[2];
-	private final String IP = "192.168.0.101";
-	private int port = 3000;
 	private Socket socket = null;
 	private ObjectInputStream ois = null;
 	
@@ -21,21 +18,23 @@ public class CommandReceiver extends Thread {
 	public CommandReceiver(KSNavigation navigation, KSBallManagement manager) {
 		this.navigation = navigation;
 		this.manager = manager;
-		initReceiver();
 	}
 	
-	public void initReceiver() {
+	public boolean connect(String ip, int port) {
 		try {
-			socket = new Socket(IP,port++);
+			socket = new Socket(ip,port++);
 			ois = new ObjectInputStream(socket.getInputStream());
+			return true;
 		} catch (IOException e) {
 			System.out.println("Main Receiver : Couldn't connect");
+			return false;
 		}
 	}
 	
 	@Override
 	public void run() {
-		while(!socket.isClosed() && socket.isConnected()) {
+		String[] move = new String[2];
+		while(socket != null && ois != null && !socket.isClosed() && socket.isConnected()) {
 			String msg = null;
 			try { msg = (String) ois.readObject(); } 
 			catch (ClassNotFoundException | IOException e) { break;	}
@@ -62,7 +61,5 @@ public class CommandReceiver extends Thread {
 					break;
 			}
 		}
-	}
-		
-	
+	}	
 }
