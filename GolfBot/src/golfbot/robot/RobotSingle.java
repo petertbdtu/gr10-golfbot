@@ -31,6 +31,6 @@ public class RobotSingle {
 		location.run();
 		manager.run();
 		receiver = new CommandReceiver(navigation, manager);
-		receiver.runCommand();
+		receiver.run();
 	}
 }

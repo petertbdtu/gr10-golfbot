@@ -4,7 +4,7 @@ import golfbot.robot.RobotSingle;
 import golfbot.samples.NavigationSample;
 import lejos.robotics.navigation.MovePilot;
 
-public class KSNavigation extends KnowledgeSource<NavigationSample>{
+public class KSNavigation extends KnowledgeSource<Boolean>{
 
 	MovePilot pilot = RobotSingle.pilot;
 	
@@ -19,8 +19,8 @@ public class KSNavigation extends KnowledgeSource<NavigationSample>{
 	}
 
 	@Override
-	protected NavigationSample getKnowledge() {
-		return new NavigationSample(pilot.isMoving());
+	protected Boolean getKnowledge() {
+		return new Boolean(pilot.isMoving());
 	}
 	
 }

@@ -8,7 +8,7 @@ import lejos.hardware.sensor.EV3GyroSensor;
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Pose;
 
-public class KSLocation extends KnowledgeSource<PoseSample> {
+public class KSLocation extends KnowledgeSource<Pose> {
 	
 	Pose currentPose;
 	GyroPoseProvider provider = RobotSingle.localization;
@@ -29,7 +29,7 @@ public class KSLocation extends KnowledgeSource<PoseSample> {
 	}
 
 	@Override
-	protected PoseSample getKnowledge() {
-		return new PoseSample(provider.getPose());
+	protected Pose getKnowledge() {
+		return provider.getPose();
 	}
 }

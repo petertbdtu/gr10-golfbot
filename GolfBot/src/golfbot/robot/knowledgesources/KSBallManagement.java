@@ -1,13 +1,11 @@
 package golfbot.robot.knowledgesources;
 
-import golfbot.samples.BallSample;
-
-public class KSBallManagement extends KnowledgeSource<BallSample> {
+public class KSBallManagement extends KnowledgeSource<Boolean> {
 
 	@Override
-	protected BallSample getKnowledge() {
+	protected Boolean getKnowledge() {
 		// TODO Auto-generated method stub
-		return null;
+		return new Boolean(false);
 	}
 	
 }
