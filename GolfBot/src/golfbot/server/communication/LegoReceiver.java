@@ -2,19 +2,8 @@ package golfbot.server.communication;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.lang.ProcessBuilder.Redirect;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import golfbot.samples.DrivingMotorSample;
-import golfbot.samples.GyroSample;
-import golfbot.samples.IRSample;
-import golfbot.samples.SonicSample;
-import golfbot.samples.TouchSample;
-import golfbot.server.blackboard.Blackboard;
-import golfbot.server.blackboard.BlackboardSample;
 import lejos.robotics.navigation.Pose;
 
 public class LegoReceiver extends Thread {
@@ -74,16 +63,9 @@ public class LegoReceiver extends Thread {
 	@Override
 	public void run() {
 		while(socketsWorking()) {
-			boolean gotNewData = false;
-			if(readLocalization() && !gotNewData)
-				gotNewData = true;
-			if(readNavigator() && !gotNewData)
-				gotNewData = true;
-			if(readBallCollector() && !gotNewData)
-				gotNewData = true;
-			if(gotNewData) {
-				newData = true;
-			}
+			readLocalization();
+			readNavigator();
+			readBallCollector();
 		}
 	}
 	
@@ -103,11 +85,8 @@ public class LegoReceiver extends Thread {
 		try { obj = lStream.readObject(); } 
 		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
 		if(obj != null) {
-			Pose newPose = (Pose) obj;
-			if(newPose != pose) {
-				newData = true;
-				pose = newPose;
-			}
+			if(switcher) { pose2 = (Pose) obj; }
+			else { pose1 = (Pose) obj; }
 		}
 	}
 	
@@ -116,19 +95,8 @@ public class LegoReceiver extends Thread {
 		try { obj = nStream.readObject(); } 
 		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
 		if(obj != null) {
-			Boolean newIsMoving = (Boolean) obj;
-			if(switcher) {
-				if(newIsMoving.equals(isMoving2)) {
-					newData = true;
-					isMoving = newIsMoving;
-				}
-			} else {
-				
-			}
-			if(newIsMoving.equals(isMoving)) {
-				newData = true;
-				isMoving = newIsMoving;
-			}
+			if(switcher) { isMoving2 = (Boolean) obj; }
+			else { isMoving1 = (Boolean) obj; }
 		}
 	}
 	
@@ -137,32 +105,27 @@ public class LegoReceiver extends Thread {
 		try { obj = bStream.readObject(); } 
 		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
 		if(obj != null) {
-			Boolean newIsCollecting = (Boolean) obj;
-			if(newIsCollecting.equals(isCollecting)) {
-				newData = true;
-				isMoving = newIsCollecting;
-			}
+			if(switcher) { isCollecting2 = (Boolean) obj; }
+			else { isCollecting1 = (Boolean) obj; }
 		}
 	}
 	
+	public void switchGetter() {
+		switcher = !switcher;
+	}
+	
 	public Pose getPose() {
-		if(switcher)
-			return pose1;
-		else
-			return pose2;
+		if(switcher) { return pose1; }
+		else { return pose2; }
 	}
 
 	public Boolean getIsMoving() {
-		if(switcher)
-			return isMoving1;
-		else
-			return isMoving2;
+		if(switcher) { return isMoving1; }
+		else { return isMoving2; }
 	}
 
 	public Boolean getIsCollecting() {
-		if(switcher)
-			return isCollecting1;
-		else
-			return isCollecting2;
+		if(switcher) { return isCollecting1; }
+		else { return isCollecting2; }
 	}
 }
