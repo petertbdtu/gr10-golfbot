@@ -5,11 +5,15 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class CommandTransmitter {
+import golfbot.server.blackboard.BlackboardListener;
+import golfbot.server.blackboard.BlackboardSample;
+
+public class CommandTransmitter implements BlackboardListener {
 	
 	private ServerSocket serverSocket;
 	private Socket socket;
 	private ObjectOutputStream oos;
+	private BlackboardSample bbSample = null;
 	
 	public boolean connect(int port) {
 		try {
@@ -47,6 +51,15 @@ public class CommandTransmitter {
 	public void robotCollectBall() {
 		try { oos.writeObject("B"); } 
 		catch (IOException e) { e.printStackTrace(); }
+	}
+	
+	public BlackboardSample getSample() {
+		return bbSample;
+	}
+
+	@Override
+	public void blackboardUpdated(BlackboardSample bbSample) {
+		this.bbSample = bbSample;
 	}
 	
 }

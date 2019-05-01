@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import lejos.utility.Delay;
+
 public abstract class KnowledgeSource<E> extends Thread {
 	
 	private Socket socket;
@@ -28,11 +30,13 @@ public abstract class KnowledgeSource<E> extends Thread {
 			if(knowledge != null) {
 				try {
 					oos.writeObject(knowledge);
+					Delay.msDelay(50);
 				} catch (IOException e) {
 					closeConnection();
 					break;
 				}
 			}
+			Delay.msDelay(50);
 		}
 	}
 	

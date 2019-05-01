@@ -25,9 +25,9 @@ public class LegoReceiver extends Thread {
 	private boolean movingSwitcher = false;
 	private boolean collectSwitcher = false;
 
-	public boolean poseNewData = false;
-	public boolean movingNewData = false;
-	public boolean collectNewData = false;
+	private boolean poseNewData = false;
+	private boolean movingNewData = false;
+	private boolean collectNewData = false;
 
 	private Pose pose1;
 	private Pose pose2;
@@ -105,6 +105,7 @@ public class LegoReceiver extends Thread {
 		try { obj = nStream.readObject(); } 
 		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
 		if(obj != null) {
+			System.out.println((Boolean)obj);
 			if(movingSwitcher) { 
 				isMoving2 = (Boolean) obj; 
 				movingNewData = true;
