@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.control.*?>
 <?import java.lang.*?>
@@ -12,7 +13,15 @@
       <Slider fx:id="slider_test" layoutX="14.0" layoutY="509.0" prefHeight="16.0" prefWidth="560.0" />
       <Label fx:id="slider_label_test" layoutX="276.0" layoutY="494.0" text="0" />
       <Button fx:id="btn_test" layoutX="274.0" layoutY="565.0" mnemonicParsing="false" onAction="#OnClickBtnTest" text="test" />
-      <Button fx:id="start_btn" layoutX="337.0" layoutY="565.0" mnemonicParsing="false" onAction="#startCamera" text="Start Cam" />
+      <Button fx:id="start_btn" layoutX="337.0" layoutY="565.0" mnemonicParsing="false" text="Start Cam" />
       <ImageView fx:id="currentFrame" fitHeight="395.0" fitWidth="965.0" layoutX="118.0" layoutY="71.0" pickOnBounds="true" preserveRatio="true" />
+      <ScatterChart fx:id="scanMap" horizontalGridLinesVisible="false" layoutX="686.0" layoutY="27.0" verticalGridLinesVisible="false">
+        <xAxis>
+          <CategoryAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis side="LEFT" />
+        </yAxis>
+      </ScatterChart>
    </children>
 </AnchorPane>
