@@ -22,7 +22,8 @@ public class StateMachine extends Thread {
 		ballsDelivered = 0;
 	}
 	
-	public void FSM() {
+	@Override
+	public void run() {
 		while(!trigger) {
 			switch(state) {
 				case EXPLORE:
