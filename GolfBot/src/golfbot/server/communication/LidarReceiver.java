@@ -11,6 +11,7 @@ public class LidarReceiver extends Thread {
 	private DatagramSocket socket;
 	private double lastAngle = 0;
 	private boolean switcher = false;
+	private boolean newData = false;
 	private HashMap<Double, Double> scan1 = new HashMap<Double, Double>();
 	private HashMap<Double, Double> scan2 = new HashMap<Double, Double>();
 	private HashMap<Double, Double> tempScan = new HashMap<Double, Double>();
@@ -34,7 +35,10 @@ public class LidarReceiver extends Thread {
 	
 	// Returns the newest complete scan
 	public HashMap<Double, Double> getScan() {
-		switcher = !switcher;
+		if(newData) {
+			switcher = !switcher;
+			newData = false;
+		}
 		if (switcher) {	return scan1; }
 		else { return scan2; }
 	}
@@ -96,10 +100,13 @@ public class LidarReceiver extends Thread {
 			// Collects 0-360 degree scan's
 			if(lastAngle > angle) {
 				System.out.println("SCAN ENDED \n");
-				if(switcher) 
+				if(switcher) {
 					scan2 = tempScan;
-				else
+					newData = true;
+				} else {
 					scan1 = tempScan;
+					newData = true;
+				}
 				tempScan.clear();
 			}
 			lastAngle = angle;

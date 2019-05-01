@@ -8,7 +8,6 @@ public abstract class KnowledgeSource<E> extends Thread {
 	
 	private Socket socket;
 	private ObjectOutputStream oos;
-	private E lastKnowledge;
 	
 	public boolean connect(String ip, int port) {
 		try {
@@ -26,10 +25,9 @@ public abstract class KnowledgeSource<E> extends Thread {
 	public void run() {
 		while(!socket.isClosed() && socket.isConnected()) {
 			E knowledge = getKnowledge();
-			if(knowledge != null && (lastKnowledge == null || !knowledge.equals(lastKnowledge))) {
+			if(knowledge != null) {
 				try {
 					oos.writeObject(knowledge);
-					lastKnowledge = knowledge;
 				} catch (IOException e) {
 					closeConnection();
 					break;
