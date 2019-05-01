@@ -15,35 +15,47 @@ public class RemoteMain {
 		boolean YesRobotRunYesYes = true;
 		
 		// Build Lidar receiver
-		System.out.println("Build Lidar Receiver - robot running? " + YesRobotRunYesYes);
+		System.out.println("Building Lidar Receiver...");
 		LidarReceiver lidarReceiver = new LidarReceiver();
-		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000))
+		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
 			lidarReceiver.start();
-		else
+			System.out.println("Lidar Receiver succes");
+		} else {
 			YesRobotRunYesYes = false;
-		
+			System.out.println("Lidar Receiver failed");
+		}
+			
 		// Build Lego Receiver
-		System.out.println("Build Lego Receiver - robot running? " + YesRobotRunYesYes);
+		System.out.println("Building Lego Receiver...");
 		LegoReceiver legoReceiver = new LegoReceiver();
-		if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002))
+		if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002)) {
 			legoReceiver.start();
-		else
+			System.out.println("Lego Receiver succes");
+		} else {
 			YesRobotRunYesYes = false;
+			System.out.println("Lego Receiver failed");
+		}
 		
 		// Command Transmitter
-		System.out.println("Build Command Transmitter - robot running? " + YesRobotRunYesYes);
+		System.out.println("Building Command Transmitter...");
 		CommandTransmitter commandTransmitter = new CommandTransmitter();
-		if(YesRobotRunYesYes)
+		if(YesRobotRunYesYes) {
 			YesRobotRunYesYes = commandTransmitter.connect(3003);
-
+			System.out.println("Command Transmitter succes");
+		} else {
+			YesRobotRunYesYes = false;
+			System.out.println("Command Transmitter failed");
+		}
+			
+		//Main Loop
 		while(YesRobotRunYesYes) {
 			Scanner scan = new Scanner(System.in);
 			String hej = scan.next();
-			if(hej.equals("f")) { commandTransmitter.robotTravel(0, 1000); }
+			if(hej.equals("f+")) { commandTransmitter.robotTravel(0, 1000); }
+			if(hej.equals("f-")) { commandTransmitter.robotTravel(0, -1000); }
 			if(hej.equals("t+")) { commandTransmitter.robotTravel(90, 0); }
 			if(hej.equals("t-")) { commandTransmitter.robotTravel(-90, 0); }
 			if(hej.equals("values")) { 
-				legoReceiver.switchGetter();
 				System.out.println("IsMoving: " + legoReceiver.getIsMoving().toString());
 				System.out.println("IsCollecting: " + legoReceiver.getIsCollecting().toString());
 				System.out.println("Pose: " + legoReceiver.getPose().toString());
@@ -55,6 +67,10 @@ public class RemoteMain {
 				System.out.println("");
 			}
 		}
+		
+		//Finish
+		System.out.println("Shutting down...");
+
 			
 	}
 }

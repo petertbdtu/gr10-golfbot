@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 public class BlackboardController extends Thread {
 	private ArrayList<BlackboardListener> bbListeners;
+	private BlackboardSample bSample;
+	private long cycle = 0;
 	
 	public void registerListener(BlackboardListener bbListener) {
 		bbListeners.add(bbListener);
@@ -11,12 +13,9 @@ public class BlackboardController extends Thread {
 	
 	@Override
 	public void run() {
-		Blackboard bb = Blackboard.getInstance();
 		while(!bbListeners.isEmpty()) {
-			if(bb.isUpdated()) {
-				BlackboardSample bbSample = bb.getBlackboardSample();
-				notifyListeners(bbSample);
-				bb.incrementCycle();
+			if(newBlackboardValues()) {
+				notifyListeners(bSample);
 			}
 		}
 	}
@@ -25,5 +24,9 @@ public class BlackboardController extends Thread {
 		for (BlackboardListener bl : bbListeners) {
 			bl.blackboardUpdated(bs);
 		}
+	}
+	
+	private boolean newBlackboardValues() {
+		return false;
 	}
 }

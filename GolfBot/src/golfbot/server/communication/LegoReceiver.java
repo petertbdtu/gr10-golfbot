@@ -21,8 +21,13 @@ public class LegoReceiver extends Thread {
 	private ObjectInputStream nStream;
 	private ObjectInputStream bStream;
 	
-	private boolean switcher = false;
-	public boolean newData = false;
+	private boolean poseSwitcher = false;
+	private boolean movingSwitcher = false;
+	private boolean collectSwitcher = false;
+
+	public boolean poseNewData = false;
+	public boolean movingNewData = false;
+	public boolean collectNewData = false;
 
 	private Pose pose1;
 	private Pose pose2;
@@ -83,13 +88,14 @@ public class LegoReceiver extends Thread {
 		try { obj = lStream.readObject(); } 
 		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
 		if(obj != null) {
-			if(switcher) { 
+			if(poseSwitcher) { 
 				PoseSample temp = (PoseSample) obj; 
 				pose2 = new Pose(temp.x,temp.y,temp.heading); 
-			}
-			else { 
+				poseNewData = true;
+			} else { 
 				PoseSample temp = (PoseSample) obj; 
 				pose1 = new Pose(temp.x,temp.y,temp.heading); 
+				poseNewData = true;
 			}
 		}
 	}
@@ -99,8 +105,13 @@ public class LegoReceiver extends Thread {
 		try { obj = nStream.readObject(); } 
 		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
 		if(obj != null) {
-			if(switcher) { isMoving2 = (Boolean) obj; }
-			else { isMoving1 = (Boolean) obj; }
+			if(movingSwitcher) { 
+				isMoving2 = (Boolean) obj; 
+				movingNewData = true;
+			} else { 
+				isMoving1 = (Boolean) obj; 
+				movingNewData = true;
+			}
 		}
 	}
 	
@@ -109,27 +120,40 @@ public class LegoReceiver extends Thread {
 		try { obj = bStream.readObject(); } 
 		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
 		if(obj != null) {
-			if(switcher) { isCollecting2 = (Boolean) obj; }
-			else { isCollecting1 = (Boolean) obj; }
+			if(collectSwitcher) { 
+				isCollecting2 = (Boolean) obj; 
+				collectNewData = true;
+			} else { 
+				isCollecting1 = (Boolean) obj; 
+				collectNewData = true;
+			}
 		}
 	}
-	
-	public void switchGetter() {
-		switcher = !switcher;
-	}
-	
+		
 	public Pose getPose() {
-		if(switcher) { return pose1; }
+		if(poseNewData) { 
+			poseSwitcher = !poseSwitcher; 
+			poseNewData = false;
+		}
+		if(poseSwitcher) { return pose1; }
 		else { return pose2; }
 	}
 
 	public Boolean getIsMoving() {
-		if(switcher) { return isMoving1; }
+		if(movingNewData) { 
+			movingSwitcher = !movingSwitcher; 
+			movingNewData = false;
+		}
+		if(movingSwitcher) { return isMoving1; }
 		else { return isMoving2; }
 	}
 
 	public Boolean getIsCollecting() {
-		if(switcher) { return isCollecting1; }
+		if(collectNewData) { 
+			collectSwitcher = !collectSwitcher;
+			collectNewData = false;
+		}
+		if(collectSwitcher) { return isCollecting1; }
 		else { return isCollecting2; }
 	}
 }
