@@ -61,9 +61,7 @@ public class CommandReceiver extends Thread {
 					break;
 				//So far for collection ball send msg (String) "B"
 				case 'B':
-					//collect ball logic here
-					
-					//Test
+					manager.pickup();
 					System.out.println("Collecting ball ....");
 					break;
 			}
