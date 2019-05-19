@@ -4,17 +4,26 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.HashMap;
+import golfbot.server.utilities.LidarScan;
 
 public class LidarReceiver extends Thread {
 
 	private DatagramSocket socket;
+	private boolean debug;
 	private double lastAngle = 0;
 	private boolean switcher = false;
 	private boolean newData = false;
-	private HashMap<Double, Double> scan1 = new HashMap<Double, Double>();
-	private HashMap<Double, Double> scan2 = new HashMap<Double, Double>();
-	private HashMap<Double, Double> tempScan = new HashMap<Double, Double>();
+	private LidarScan scan1 = new LidarScan();
+	private LidarScan scan2 = new LidarScan();
+	private LidarScan tempScan = new LidarScan();
+	
+	public LidarReceiver() {
+		this.debug = false;
+	}
+	
+	public LidarReceiver(boolean debug) {
+		this.debug = debug;
+	}
 	
 	public boolean bindSocket(int port) {
 		try { socket = new DatagramSocket(port); } 
@@ -34,7 +43,7 @@ public class LidarReceiver extends Thread {
 	}
 	
 	// Returns the newest complete scan
-	public HashMap<Double, Double> getScan() {
+	public LidarScan getScan() {
 		if(newData) {
 			switcher = !switcher;
 			newData = false;
@@ -44,17 +53,10 @@ public class LidarReceiver extends Thread {
 	}
 	
 	public void decryptPacket(byte[] buffer) {
-		StringBuilder sb = new StringBuilder(buffer.length * 2);
-		for(byte b : buffer) {
-			sb.append(String.format("%02x", b));
-		}
-		
-		System.out.println(sb);
-		
 		// Check for Zero Packet - Skip if true
 		int ct = (buffer[0] & 0xFF);
 		if(ct == 1) {
-			System.out.println("Skipping --> ZeroPacket");
+			if(debug) { System.out.println("Skipping packet... (ZeroPacket)"); }
 			return;
 		}
 		
@@ -63,21 +65,19 @@ public class LidarReceiver extends Thread {
 		
 		// Amount of samples
 		int samples = (buffer[1] & 0xFF);
-		System.out.println("Samples: " + samples);
+		if(debug) { System.out.println("Samples in packet: " + samples); }
 		
-		// Calculate start values
+		// Calculate start/end values
 		double start_distance = binaryToDistance(buffer[sampleStartIndex], buffer[sampleStartIndex+1]);
 		double start_angle = binaryToAngle(buffer[2], buffer[3], start_distance);
-		System.out.println("Start: [" + start_angle + ":" + start_distance + "] --> [" + String.format("%02x", buffer[2])+ String.format("%02x", buffer[3]) + "]");
-		
-		// Calculate end values
 		double end_distance = binaryToDistance(buffer[sampleStartIndex + (samples-1)*2], buffer[sampleStartIndex + (samples-1)*2+1]);
 		double end_angle = binaryToAngle(buffer[4], buffer[5], end_distance);
-		System.out.println("End: [" + end_angle + ":" + end_distance + "] --> [" + String.format("%02x", buffer[4])+ String.format("%02x", buffer[5]) + "]");
+		if(debug) { System.out.println("Angle interval: [" + start_angle + ":" + end_angle + "]"); }
+		if(debug) { System.out.println("Distance interval: [" + start_distance + ":" + end_distance + "]"); }
 		
 		// Angle difference between start and end
 		double diff_angle = getAngleDifference(start_angle, end_angle);
-		System.out.println("Diff: [" + diff_angle + "]");
+		if(debug) { System.out.println("Angle difference: " + diff_angle); }
 		
 		// Calculate distance and angle for each sample
 		for (int i = 0 ; i < samples ; i++) {
@@ -85,32 +85,32 @@ public class LidarReceiver extends Thread {
 			
 			// Calculate distance
 			double distance = binaryToDistance(buffer[index],buffer[index+1]);
-			System.out.println("Distance: [" + distance + "] --> " + String.format("%02x", buffer[index])+ String.format("%02x", buffer[index+1]));
+			if(debug) { System.out.println("Calculated distance: " + distance); }
 
 			
 			// Skip if zero-distance
 			if(distance >= 0 && distance < 0.01) {
-				System.out.println("Skipping --> ZeroSample --> " + String.format("%02x", buffer[index])+ String.format("%02x", buffer[index+1]));
+				if(debug) { System.out.println("Skipping sample... (ZeroSample)"); }
 				continue;
 			}
 			
 			// Calculate angle
 			double angle = (diff_angle / samples * i + start_angle + distanceCorrection(distance)) % 360;
-			System.out.println("Angle: [" + angle + "]");
+			if(debug) { System.out.println("Calculated angle: " + angle); }
 			// Collects 0-360 degree scan's
 			if(lastAngle > angle) {
-				System.out.println("SCAN ENDED \n");
+				if(debug) { System.out.println("Scan finished... Found " + tempScan.scanSize() + " samples..."); }
 				if(switcher) {
 					scan2 = tempScan;
-					newData = true;
+					if(!newData) { newData = true; }
 				} else {
 					scan1 = tempScan;
-					newData = true;
+					if(!newData) { newData = true; }
 				}
 				tempScan.clear();
 			}
 			lastAngle = angle;
-			tempScan.put(angle, distance);
+			tempScan.addSample(angle, distance);
 		}
 	}
 	

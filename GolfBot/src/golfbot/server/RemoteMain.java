@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 import golfbot.server.communication.LidarReceiver;
+import golfbot.server.utilities.LidarSample;
+import golfbot.server.utilities.LidarScan;
 import golfbot.server.blackboard.BlackboardController;
 import golfbot.server.blackboard.BlackboardSample;
 import golfbot.server.communication.CommandTransmitter;
@@ -61,9 +63,10 @@ public class RemoteMain {
 		}
 			
 		//Main Loop
+		System.out.println("Start Manual Remote-Control...");
+		Scanner scanner = new Scanner(System.in);
 		while(YesRobotRunYesYes) {
-			Scanner scan = new Scanner(System.in);
-			String hej = scan.next();
+			String hej = scanner.next();
 			if(hej.equals("f+")) { commandTransmitter.robotTravel(0, 1000); }
 			if(hej.equals("f-")) { commandTransmitter.robotTravel(0, -1000); }
 			if(hej.equals("t+")) { commandTransmitter.robotTravel(90, 0); }
@@ -74,13 +77,14 @@ public class RemoteMain {
 				System.out.println("IsCollecting: " + bSample.isCollecting);
 				System.out.println("Pose: " + bSample.robotPose.toString());
 				System.out.print("Årets Scan: ");
-				HashMap<Double,Double> scanning = bSample.scan;
-				for(Double angle : scanning.keySet()) {
-					System.out.print("[" + angle + "," + scanning.get(angle) + "] ");	
+				LidarScan scan = bSample.scan;
+				for(LidarSample sample : scan.getSamples()) {
+					System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
 				}
 				System.out.println("");
 			}
 		}
+		scanner.close();
 		
 		//Finish
 		System.out.println("Shutting down...");
