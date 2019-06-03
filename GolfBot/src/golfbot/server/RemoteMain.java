@@ -80,6 +80,9 @@ public class RemoteMain {
 				}
 				System.out.println("");
 			}
+			if(hej.equals("b")) {
+				commandTransmitter.robotCollectBall();
+			}
 		}
 		
 		//Finish

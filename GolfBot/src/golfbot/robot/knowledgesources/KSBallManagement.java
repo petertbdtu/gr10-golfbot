@@ -1,14 +1,15 @@
 package golfbot.robot.knowledgesources;
 
 import lejos.hardware.motor.EV3MediumRegulatedMotor;
-import lejos.hardware.port.MotorPort;
+import lejos.hardware.port.*;
+
 
 public class KSBallManagement extends KnowledgeSource<Boolean> {
 
 	EV3MediumRegulatedMotor motor;
 	
 	public KSBallManagement() {
-		motor = new EV3MediumRegulatedMotor(MotorPort.C);
+		motor = new EV3MediumRegulatedMotor(MotorPort.D);
 	}
 	
 	public void pickup() {
