@@ -1,9 +1,9 @@
 package Knowledgesource;
 
-import GyroPoseProvider;
-import PoseSample;
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Pose;
+import robot.GyroPoseProvider;
+import robot.PoseSample;
 
 public class KSLocation extends KnowledgeSource<PoseSample> {
 	
