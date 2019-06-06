@@ -1,8 +1,11 @@
-package Navigation;
+
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+
+import Knowledgesource.KSBallManagement;
+import Knowledgesource.KSNavigation;
 
 public class CommandReceiver extends Thread {
 	

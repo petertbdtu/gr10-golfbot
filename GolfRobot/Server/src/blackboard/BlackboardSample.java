@@ -1,5 +1,7 @@
-package communication;
+package blackboard;
 
+import mapping.LidarScan;
+import objects.Pose;
 
 public class BlackboardSample {
 	public Long cycle;

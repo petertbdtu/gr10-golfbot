@@ -1,4 +1,4 @@
-package Navigation;
+package Knowledgesource;
 
 import lejos.robotics.navigation.MovePilot;
 

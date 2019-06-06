@@ -1,4 +1,4 @@
-package communication;
+package blackboard;
 
 public class Blackboard {	
 	

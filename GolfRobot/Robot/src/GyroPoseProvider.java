@@ -1,4 +1,4 @@
-package Navigation;
+
 
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3GyroSensor;

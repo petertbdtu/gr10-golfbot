@@ -1,4 +1,4 @@
-package communication;
+package blackboard;
 
 //import java.io.FileInputStream;
 //import java.io.FileOutputStream;

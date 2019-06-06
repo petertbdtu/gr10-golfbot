@@ -1,4 +1,4 @@
-package Navigation;
+package objects;
 
 public class FrameSample {
 

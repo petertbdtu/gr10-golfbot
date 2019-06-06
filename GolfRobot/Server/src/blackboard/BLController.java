@@ -1,5 +1,4 @@
-package communication;
-
+package blackboard;
 
 public class BLController implements BlackboardListener {
 	private enum State {
