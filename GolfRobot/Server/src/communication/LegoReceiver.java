@@ -87,11 +87,11 @@ public class LegoReceiver extends Thread {
 		if(obj != null) {
 			if(poseSwitcher) { 
 				Pose temp = (Pose) obj; 
-				pose2 = new Pose(temp.x,temp.y,temp.heading); 
+				pose2 = new Pose(temp.point.x,temp.point.y,temp.heading); 
 				poseNewData = true;
 			} else { 
 				Pose temp = (Pose) obj; 
-				pose1 = new Pose(temp.x,temp.y,temp.heading); 
+				pose1 = new Pose(temp.point.x,temp.point.y,temp.heading); 
 				poseNewData = true;
 			}
 		}
