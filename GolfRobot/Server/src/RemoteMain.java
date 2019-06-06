@@ -62,36 +62,74 @@ public class RemoteMain {
 			System.out.println("Blackboard not started");
 		}
 			
-		//Main Loop
+		//Remove main
 		System.out.println("Start Manual Remote-Control...");
-		Scanner scanner = new Scanner(System.in);
+		Scanner scan = new Scanner(System.in);
+		
+		
 		while(YesRobotRunYesYes) {
-			String hej = scanner.next();
-			if(hej.equals("f+")) { commandTransmitter.robotTravel(0, 1000); }
-			if(hej.equals("f-")) { commandTransmitter.robotTravel(0, -1000); }
-			if(hej.equals("t+")) { commandTransmitter.robotTravel(90, 0); }
-			if(hej.equals("t-")) { commandTransmitter.robotTravel(-90, 0); }
-			if(hej.equals("values")) {
-				BlackboardSample bSample = commandTransmitter.getSample();
-				System.out.println("IsMoving: " + bSample.isMoving);
-				System.out.println("IsCollecting: " + bSample.isCollecting);
-				//System.out.println("Pose: " + bSample.robotPose.toString());
-				System.out.print("�rets Scan: ");
-				LidarScan scan = bSample.scan;
-				for(LidarSample sample : scan.getSamples()) {
-					System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
+			printMenu();
+			System.out.println();
+			System.out.println();
+			switch (scan.next()) {
+				case "1" : {
+					System.out.println("How much?");
+					while(!scan.hasNextInt()) { commandTransmitter.robotTravel(0, scan.nextInt()); }
+					break;
 				}
-				System.out.println("");
-			}
-			if(hej.equals("b")) {
-				commandTransmitter.robotCollectBall();
+				case "2" : {
+					System.out.println("How much?");
+					while(!scan.hasNextInt()) { commandTransmitter.robotTravel(0, -scan.nextInt()); }
+					break;
+				}
+				case "3" : {
+					System.out.println("How much?");
+					while(!scan.hasNextInt()) { commandTransmitter.robotTravel(scan.nextInt(), 0); }
+					break;
+				}
+				case "4" : {
+					System.out.println("How much?");
+					while(!scan.hasNextInt()) { commandTransmitter.robotTravel(-scan.nextInt(), 0); }
+					break;
+				}
+				case "5" : {
+					// not implemented
+					break;
+				}
+				case "6" : {
+					BlackboardSample bSample = commandTransmitter.getSample();
+					System.out.println(">>> DATA <<<");
+					System.out.println("IsMoving: " + bSample.isMoving);
+					System.out.println("IsCollecting: " + bSample.isCollecting);
+					System.out.println("Pose: " + bSample.robotPose.toString());
+					//System.out.print("TheScan: ");
+					//LidarScan scan = bSample.scan;
+					//for(LidarSample sample : scan.getSamples()) {
+					//	System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
+					//}
+					break;
+				}
+				default : {
+					System.out.println("not valid");
+					break;
+				}
 			}
 		}
-		scanner.close();
-		
+				
 		//Finish
 		System.out.println("Shutting down...");
-
-			
+		scan.close();
+	}
+	
+	private static void printMenu() {
+		System.out.println();
+		System.out.println(">>> MENU <<<");
+		System.out.println("  1: drive forward");
+		System.out.println("  2: drive backwards");
+		System.out.println("  3: turn right");
+		System.out.println("  4: turn left");
+		System.out.println("  5: pickup ball");
+		System.out.println("  6: print values");
+		System.out.println();
 	}
 }
