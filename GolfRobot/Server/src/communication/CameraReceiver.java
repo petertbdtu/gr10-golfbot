@@ -14,6 +14,8 @@ import javax.imageio.ImageIO;
 
 import mapping.LidarScan;
 
+import mapping.LidarScan;
+
 public class CameraReceiver extends Thread {
 
 	private DatagramSocket socket;

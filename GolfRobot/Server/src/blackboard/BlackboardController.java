@@ -46,7 +46,7 @@ public class BlackboardController extends Thread {
 		bSample.isMoving = lego.getIsMoving();
 		bSample.isCollecting = lego.getIsCollecting();
 		bSample.robotPose = lego.getPose();
-		bSample.scan = lidar.getScan();
+		//bSample.scan = lidar.getScan();
 		
 		cycle += 1;
 	}

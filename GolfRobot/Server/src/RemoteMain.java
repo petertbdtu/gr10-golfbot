@@ -6,6 +6,9 @@ import java.util.Scanner;
 
 import blackboard.BlackboardController;
 import blackboard.BlackboardSample;
+import communication.CommandTransmitter;
+import communication.LegoReceiver;
+import communication.LidarReceiver;
 import mapping.LidarScan;
 import objects.LidarSample;
 
@@ -16,20 +19,20 @@ public class RemoteMain {
 		boolean YesRobotRunYesYes = true;
 		
 		// Build Lidar receiver
-		System.out.println("Building Lidar Receiver...");
-		LidarReceiver lidarReceiver = new LidarReceiver();
-		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
-			lidarReceiver.start();
-			System.out.println("Lidar Receiver succes");
-		} else {
-			YesRobotRunYesYes = false;
-			System.out.println("Lidar Receiver failed");
-		}
+//		System.out.println("Building Lidar Receiver...");
+//		LidarReceiver lidarReceiver = new LidarReceiver();
+//		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
+//			lidarReceiver.start();
+//			System.out.println("Lidar Receiver succes");
+//		} else {
+//			YesRobotRunYesYes = false;
+//			System.out.println("Lidar Receiver failed");
+//		}
 			
 		// Build Lego Receiver
 		System.out.println("Building Lego Receiver...");
 		LegoReceiver legoReceiver = new LegoReceiver();
-		if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002)) {
+		if(YesRobotRunYesYes && legoReceiver.connect(3000)) {
 			legoReceiver.start();
 			System.out.println("Lego Receiver succes");
 		} else {
@@ -41,7 +44,7 @@ public class RemoteMain {
 		System.out.println("Building Command Transmitter...");
 		CommandTransmitter commandTransmitter = new CommandTransmitter();
 		if(YesRobotRunYesYes) {
-			YesRobotRunYesYes = commandTransmitter.connect(3003);
+			YesRobotRunYesYes = commandTransmitter.connect(3000);
 			System.out.println("Command Transmitter succes");
 		} else {
 			YesRobotRunYesYes = false;
@@ -50,7 +53,7 @@ public class RemoteMain {
 		
 		// Blackboard Controller
 		System.out.println("Building blackboard...");
-		BlackboardController bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+		BlackboardController bController = new BlackboardController(null, legoReceiver, null);
 		bController.registerListener(commandTransmitter);
 		if(YesRobotRunYesYes) {
 			bController.start();

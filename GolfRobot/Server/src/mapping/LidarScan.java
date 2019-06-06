@@ -18,6 +18,10 @@ public class LidarScan {
 		this.samples = scan;
 	}
 	
+	public LidarScan(LidarScan scan) {
+		this.samples = scan.samples;
+	}
+	
 	public void addSample(LidarSample sample) {
 		samples.add(sample);
 	}

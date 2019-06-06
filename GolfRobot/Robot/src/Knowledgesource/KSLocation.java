@@ -1,11 +1,13 @@
 package Knowledgesource;
 
-import GyroPoseProvider;
-import PoseSample;
+import java.nio.ByteBuffer;
+
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Pose;
+import robot.GyroPoseProvider;
+import robot.PoseSample;
 
-public class KSLocation extends KnowledgeSource<PoseSample> {
+public class KSLocation extends KnowledgeSource {
 	
 	Pose currentPose;
 	GyroPoseProvider provider;
@@ -23,8 +25,12 @@ public class KSLocation extends KnowledgeSource<PoseSample> {
 	}
 
 	@Override
-	protected PoseSample getKnowledge() {
+	protected byte[] getKnowledgeAsBytes() {
 		Pose curPose = provider.getPose();
-		return new PoseSample(curPose.getX(), curPose.getY(), curPose.getHeading());
+		ByteBuffer bf = ByteBuffer.allocate(12);
+		bf.putInt((int) curPose.getX());
+		bf.putInt((int) curPose.getY());
+		bf.putFloat(curPose.getHeading());
+		return bf.array();
 	}
 }

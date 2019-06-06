@@ -1,9 +1,10 @@
 package communication;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 import objects.Pose;
 
@@ -16,9 +17,9 @@ public class LegoReceiver extends Thread {
 	private Socket nSocket;
 	private Socket bSocket;
 	
-	private ObjectInputStream lStream;
-	private ObjectInputStream nStream;
-	private ObjectInputStream bStream;
+	private InputStream lStream;
+	private InputStream nStream;
+	private InputStream bStream;
 	
 	private boolean poseSwitcher = false;
 	private boolean movingSwitcher = false;
@@ -44,17 +45,17 @@ public class LegoReceiver extends Thread {
 		isCollecting2 = false;
 	}
 	
-	public boolean connect(int nPort, int lPort, int bPort) {
+	public boolean connect(int port) {
 		try {
-			nServerSocket = new ServerSocket(nPort);
+			nServerSocket = new ServerSocket(port);
 			nSocket = nServerSocket.accept();
-			nStream = new ObjectInputStream(nSocket.getInputStream());
-			lServerSocket = new ServerSocket(lPort);
+			nStream = nSocket.getInputStream();
+			lServerSocket = new ServerSocket(port);
 			lSocket = lServerSocket.accept();
-			lStream = new ObjectInputStream(lSocket.getInputStream());
-			bServerSocket = new ServerSocket(bPort);
+			lStream = lSocket.getInputStream();
+			bServerSocket = new ServerSocket(port);
 			bSocket = bServerSocket.accept();
-			bStream = new ObjectInputStream(bSocket.getInputStream());
+			bStream = bSocket.getInputStream();
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -83,50 +84,62 @@ public class LegoReceiver extends Thread {
 	}
 	
 	private void readLocalization() {
-		Object obj = null;
-		try { obj = lStream.readObject(); } 
-		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
-		if(obj != null) {
-			if(poseSwitcher) { 
-				Pose temp = (Pose) obj; 
-				pose2 = new Pose(temp.point.x,temp.point.y,temp.heading); 
-				poseNewData = true;
-			} else { 
-				Pose temp = (Pose) obj; 
-				pose1 = new Pose(temp.point.x,temp.point.y,temp.heading); 
+		try {
+			int rec = lStream.read();
+			if (rec != -1) {
+				
+				//int x, y; float heading.
+				ByteBuffer inbytes = ByteBuffer.allocate(12);
+				lStream.read(inbytes.array());
+				Pose pose = new Pose(inbytes.getInt(), inbytes.getInt(), inbytes.getFloat());
+				
+				if (poseSwitcher) {
+					pose2 = pose;
+				}
+				else {
+					pose1 = pose;
+				}
 				poseNewData = true;
 			}
+		}
+		catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
 	private void readNavigator() {
-		Object obj = null;
-		try { obj = nStream.readObject(); } 
-		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
-		if(obj != null) {
-			System.out.println((Boolean)obj);
-			if(movingSwitcher) { 
-				isMoving2 = (Boolean) obj; 
-				movingNewData = true;
-			} else { 
-				isMoving1 = (Boolean) obj; 
+		try {
+			int rec = nStream.read();
+			if (rec != -1) {
+				if (movingSwitcher) {
+					isMoving2 = rec == 1;
+				}
+				else {
+					isMoving1 = rec == 1;
+				}
 				movingNewData = true;
 			}
+		}
+		catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
 	private void readBallCollector() {
-		Object obj = null;
-		try { obj = bStream.readObject(); } 
-		catch (ClassNotFoundException | IOException e) { e.printStackTrace(); }
-		if(obj != null) {
-			if(collectSwitcher) { 
-				isCollecting2 = (Boolean) obj; 
-				collectNewData = true;
-			} else { 
-				isCollecting1 = (Boolean) obj; 
+		try {
+			int rec = bStream.read();
+			if (rec != -1) {
+				if (collectSwitcher) {
+					isCollecting2 = rec == 1;
+				}
+				else {
+					isCollecting1 = rec == 1;
+				}
 				collectNewData = true;
 			}
+		}
+		catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 		

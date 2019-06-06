@@ -2,7 +2,7 @@ package Knowledgesource;
 
 import lejos.robotics.navigation.MovePilot;
 
-public class KSNavigation extends KnowledgeSource<Boolean>{
+public class KSNavigation extends KnowledgeSource {
 
 	MovePilot pilot;
 	
@@ -23,8 +23,9 @@ public class KSNavigation extends KnowledgeSource<Boolean>{
 	}
 
 	@Override
-	protected Boolean getKnowledge() {
-		return new Boolean(pilot.isMoving());
+	protected byte[] getKnowledgeAsBytes() {
+		byte val = pilot.isMoving() ? (byte) 1 : (byte) 0;
+		return new byte[] { val };
 	}
 	
 }
