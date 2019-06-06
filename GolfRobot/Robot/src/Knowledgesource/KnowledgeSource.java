@@ -1,7 +1,7 @@
 package Knowledgesource;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 import lejos.utility.Delay;
@@ -9,12 +9,12 @@ import lejos.utility.Delay;
 public abstract class KnowledgeSource<E> extends Thread {
 	
 	private Socket socket;
-	private ObjectOutputStream oos;
+	private OutputStream os;
 	
 	public boolean connect(String ip, int port) {
 		try {
 			socket = new Socket(ip,port);
-			oos = new ObjectOutputStream(socket.getOutputStream());
+			os = socket.getOutputStream();
 			this.start();
 			return true;
 		} catch (IOException e) {
@@ -26,10 +26,10 @@ public abstract class KnowledgeSource<E> extends Thread {
 	@Override
 	public void run() {
 		while(!socket.isClosed() && socket.isConnected()) {
-			E knowledge = getKnowledge();
-			if(knowledge != null) {
+			byte[] data = getKnowledgeAsBytes();
+			if(data.length > 0) {
 				try {
-					oos.writeObject(knowledge);
+					os.write(data);
 					Delay.msDelay(50);
 				} catch (IOException e) {
 					closeConnection();
@@ -39,11 +39,12 @@ public abstract class KnowledgeSource<E> extends Thread {
 			Delay.msDelay(50);
 		}
 	}
-	
+
 	protected abstract E getKnowledge();
+	protected abstract byte[] getKnowledgeAsBytes();
 	
 	public void closeConnection() {
-		try { oos.close(); } 
+		try { os.close(); } 
 		catch (IOException e) {}
 		
 		try { socket.close(); } 

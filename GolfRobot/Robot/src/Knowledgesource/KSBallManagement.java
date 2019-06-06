@@ -26,5 +26,10 @@ public class KSBallManagement extends KnowledgeSource<Boolean> {
 	protected Boolean getKnowledge() {
 		return new Boolean(false);
 	}
+
+	@Override
+	protected byte[] getKnowledgeAsBytes() {
+		return new byte[] {0};
+	}
 	
 }

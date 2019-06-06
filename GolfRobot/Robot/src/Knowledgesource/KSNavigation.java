@@ -21,10 +21,16 @@ public class KSNavigation extends KnowledgeSource<Boolean>{
 	public void stopMoving() {
 		pilot.stop();
 	}
-
+	
 	@Override
 	protected Boolean getKnowledge() {
 		return new Boolean(pilot.isMoving());
+	}
+
+	@Override
+	protected byte[] getKnowledgeAsBytes() {
+		byte val = pilot.isMoving() ? (byte) 1 : (byte) 0;
+		return new byte[] { val };
 	}
 	
 }
