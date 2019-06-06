@@ -16,31 +16,33 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	List<objects.Point> list;
 	private BlackboardSample bbSample;
 	
-	public String StartAvoidance() {
-		while(isMoving) {
-			isMoving = bbSample.isMoving;
-			list = bbSample.scan.getPoints();
+	public void StartAvoidance() {
+		   list = bbSample.scan.getPoints();
 		   for(int i = 0; i < list.size(); i++) {
 			   Point point = list.get(i);
 			   if(avoidanceArea.contains(point)) {
 				   //TODO make the robot stop
-				   return "stop";
+				   //Method call
 			   } else if(warningArea.contains(point)) {
 				   //TODO slow down the robot
-				   return "slow";
+				   //Method call
 			   }
 		   }
-		}
-		return "stopped";
 	}
 
 	@Override
 	public void blackboardUpdated(BlackboardSample bbSample) {
-		this.bbSample = bbSample;
+		this.bbSample = new BlackboardSample(bbSample);
 	}
 	
 	@Override
 	public void run() {
-		StartAvoidance();
+		int cycle = -1;
+		while(true) {
+			if(bbSample.cycle == cycle + 1) {
+				StartAvoidance();
+				cycle++;
+			}
+		}
 	}
 }

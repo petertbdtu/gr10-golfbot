@@ -15,6 +15,11 @@ public class Pose {
 		this.point.y = 0;
 		this.heading = 0;
 	}
+	public Pose(Pose pose) {
+		this.point.x = pose.point.x;
+		this.point.y = pose.point.y;
+		this.heading = pose.heading;
+	}
 	
 	public boolean equals(Pose pose) {
 		return (this.point.x == pose.point.x && this.point.y == pose.point.y && this.heading == pose.heading);
