@@ -19,15 +19,15 @@ public class RemoteMain {
 		boolean YesRobotRunYesYes = true;
 		
 		// Build Lidar receiver
-		System.out.println("Building Lidar Receiver...");
-		LidarReceiver lidarReceiver = new LidarReceiver();
-		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
-			lidarReceiver.start();
-			System.out.println("Lidar Receiver succes");
-		} else {
-			YesRobotRunYesYes = false;
-			System.out.println("Lidar Receiver failed");
-		}
+//		System.out.println("Building Lidar Receiver...");
+//		LidarReceiver lidarReceiver = new LidarReceiver();
+//		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
+//			lidarReceiver.start();
+//			System.out.println("Lidar Receiver succes");
+//		} else {
+//			YesRobotRunYesYes = false;
+//			System.out.println("Lidar Receiver failed");
+//		}
 			
 		// Build Lego Receiver
 		System.out.println("Building Lego Receiver...");
@@ -53,7 +53,7 @@ public class RemoteMain {
 		
 		// Blackboard Controller
 		System.out.println("Building blackboard...");
-		BlackboardController bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+		BlackboardController bController = new BlackboardController(null, legoReceiver, null);
 		bController.registerListener(commandTransmitter);
 		if(YesRobotRunYesYes) {
 			bController.start();

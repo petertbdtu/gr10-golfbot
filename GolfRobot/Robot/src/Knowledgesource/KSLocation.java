@@ -7,7 +7,7 @@ import lejos.robotics.navigation.Pose;
 import robot.GyroPoseProvider;
 import robot.PoseSample;
 
-public class KSLocation extends KnowledgeSource<PoseSample> {
+public class KSLocation extends KnowledgeSource {
 	
 	Pose currentPose;
 	GyroPoseProvider provider;
@@ -22,12 +22,6 @@ public class KSLocation extends KnowledgeSource<PoseSample> {
 			currentPose = provider.getPose();
 		}
 		return currentPose;
-	}
-
-	@Override
-	protected PoseSample getKnowledge() {
-		Pose curPose = provider.getPose();
-		return new PoseSample(curPose.getX(), curPose.getY(), curPose.getHeading());
 	}
 
 	@Override

@@ -40,9 +40,9 @@ public class RobotMain {
 			YesRobotRunYesYes = location.connect(ip, port);
 	
 		// Build ball management
-		//KSBallManagement ballManager = new KSBallManagement();
-		//if(YesRobotRunYesYes)
-		//	YesRobotRunYesYes = ballManager.connect(ip, port);
+		KSBallManagement ballManager = new KSBallManagement();
+		if(YesRobotRunYesYes)
+			YesRobotRunYesYes = ballManager.connect(ip, port);
 
 		// Command Receiver
 		CommandReceiver receiver = new CommandReceiver(navigation, null);

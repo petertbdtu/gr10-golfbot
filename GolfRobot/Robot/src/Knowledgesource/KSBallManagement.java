@@ -4,7 +4,7 @@ import lejos.hardware.motor.EV3MediumRegulatedMotor;
 import lejos.hardware.port.*;
 
 
-public class KSBallManagement extends KnowledgeSource<Boolean> {
+public class KSBallManagement extends KnowledgeSource {
 
 	EV3MediumRegulatedMotor motor;
 	
@@ -20,11 +20,6 @@ public class KSBallManagement extends KnowledgeSource<Boolean> {
 		while(!motor.isStalled()) {
 			motor.backward();
 		}
-	}
-	
-	@Override
-	protected Boolean getKnowledge() {
-		return new Boolean(false);
 	}
 
 	@Override

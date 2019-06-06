@@ -6,7 +6,7 @@ import java.net.Socket;
 
 import lejos.utility.Delay;
 
-public abstract class KnowledgeSource<E> extends Thread {
+public abstract class KnowledgeSource extends Thread {
 	
 	private Socket socket;
 	private OutputStream os;
@@ -30,7 +30,7 @@ public abstract class KnowledgeSource<E> extends Thread {
 			if(data.length > 0) {
 				try {
 					os.write(data);
-					Delay.msDelay(50);
+					Delay.msDelay(100);
 				} catch (IOException e) {
 					closeConnection();
 					break;
@@ -40,7 +40,6 @@ public abstract class KnowledgeSource<E> extends Thread {
 		}
 	}
 
-	protected abstract E getKnowledge();
 	protected abstract byte[] getKnowledgeAsBytes();
 	
 	public void closeConnection() {
