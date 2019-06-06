@@ -23,9 +23,9 @@ public class CameraReceiver extends Thread {
 	private double lastAngle = 0;
 	private boolean switcher = false;
 	private boolean newData = false;
-	//private BufferedImage img1 = new BufferedImage(0,0,0);
-	//private BufferedImage img2 = new BufferedImage(0,0,0);
-	//private BufferedImage tempImg = new BufferedImage(0,0,0);
+	private BufferedImage img1;
+	private BufferedImage img2;
+	private BufferedImage tempImg;
 	
 	public CameraReceiver() {
 		this.debug = false;
@@ -107,8 +107,15 @@ public class CameraReceiver extends Thread {
 		InputStream bis = new ByteArrayInputStream(imgBuffer);
 		
 	    try {
-			BufferedImage bImage2 = ImageIO.read(bis); // read to image
-		    ImageIO.write(bImage2, "jpg", new File("output.jpg") );
+	    	
+			if(switcher) {
+				img1 = ImageIO.read(bis);
+				if(!newData) { newData = true; }
+			} else {
+				img2 = ImageIO.read(bis);
+				if(!newData) { newData = true; }
+			}
+//		    ImageIO.write(bImage2, "jpg", new File("output.jpg") );
 		    System.out.println("Wrote Image");
 		} catch (Exception e) {
 			retval = -1;
@@ -116,5 +123,14 @@ public class CameraReceiver extends Thread {
 		}
 	    
 	    return retval;
+	}
+	
+	public BufferedImage getImage() {
+		if(newData) {
+			switcher = !switcher;
+			newData = false;
+		}
+		if (switcher) {	return img1; }
+		else { return img2; }
 	}
 }
