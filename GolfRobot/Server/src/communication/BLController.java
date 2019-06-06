@@ -1,10 +1,13 @@
-package communication;
+package src.communication;
 
+import golfbot.server.blackboard.BlackboardListener;
+import golfbot.server.blackboard.BlackboardSample;
 
 public class BLController implements BlackboardListener {
 	private enum State {
 		GET_SAMPLES,
 		EXPLORE,
+		VALIDATE_BALL,
 		PLAN_ROUTE,
 		RUN_ROUTE,
 		FETCH_BALL,
@@ -18,17 +21,17 @@ public class BLController implements BlackboardListener {
 	private int ballcounter;
 	private int ballsDelivered;
 	private BlackboardSample bbSample;
-	
-	
-	
-	
+
+
+
+
 	public BLController() {
 		state = State.EXPLORE;
 		trigger = false;
 		ballcounter = 0;
 		ballsDelivered = 0;
 	}
-	
+
 	public void FSM() {
 		while(!trigger) {
 			switch(state) {
@@ -37,25 +40,34 @@ public class BLController implements BlackboardListener {
 					 * state = State.PLAN_ROUTE;
 					 */
 					break;
-			
+
 				case EXPLORE:
-					/* while (ballNotFound) driveAround();
-					 * state = State.PLAN_ROUTE;
+					/* while (locateBall() == false) travelAlongWall();
+					 * state = State.VALIDATE_BALL;
 					 * */
 					break;
-					
+
+				case VALIDATE_BALL:
+					/* turnToBall();
+					 * if( stillABall() ){
+					 * 	state = state.PLAN_ROUTE;
+				 	 * } else state = state.EXPLORE;
+					 * */
+					break;
+
 				case PLAN_ROUTE:
 					/* planRoute();
 					 * state = State.RUN_ROUTE;
+					 *
 					 */
 					break;
-				
+
 				case RUN_ROUTE:
 					/* driveToNearestPoint();
 					 * state = State.FETCH_BALL;
 					 */
 					break;
-					
+
 				case FETCH_BALL:
 					/* pickUpBall();
 					 * ballcounter++;
@@ -68,24 +80,24 @@ public class BLController implements BlackboardListener {
 					 * 			state = State.RUN_ROUTE;
 					 */
 					break;
-				
+
 				case COLLISION_AVOIDANCE:
 					/* robotEmergencyBrake();
 					 * ?moveAwayFromWall();
 					 * state = State.GET_SAMPLES;
 					 */
 					break;
-					
+
 				case FIND_GOAL:
 					/* if (locateNearestGoal())
 					 * 		state = State.GO_TO_GOAL;
 					 * else
 					 * 		travelAlongWall();
-					 * 
+					 *
 					 */
-					
+
 					break;
-					
+
 				case GO_TO_GOAL:
 					/* deliverBalls();
 					 * ballsDelivered += ballcounter;
@@ -95,21 +107,22 @@ public class BLController implements BlackboardListener {
 					 * else
 					 * 		state = State.EXPLORE;
 					 */
-					
+
 					break;
-					
+
 				case COMPLETED:
-					/* celebrate();
+					/* finished();
 					 * trigger = TRUE;
 					 */
 					break;
+
 				default:
 					state = State.EXPLORE;
 					break;
 			}
 		}
 	}
-	
+
 	public void wallCollisionISR() {
 		state = State.COLLISION_AVOIDANCE;
 	}
@@ -117,4 +130,54 @@ public class BLController implements BlackboardListener {
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = bbSample;
 	}
+
+	public void getLidarSamples() {
+
+	}
+
+	public void locateBall() {
+
+	}
+
+	public void travelAlongWall() {
+
+	}
+
+	public void turnToBall() {
+
+	}
+
+	public void planRoute() {
+
+	}
+
+	public void driveToNearestPoint() {
+
+	}
+
+	public void pickUpBall() {
+
+	}
+
+	public void routeUpdated() {
+
+	}
+
+	public void robotEmergencyBrake() {
+
+	}
+
+	public void locateNearestGoal() {
+
+	}
+
+	public void deliverBalls() {
+
+	}
+
+	public void finished() {
+
+	}
+
+
 }
