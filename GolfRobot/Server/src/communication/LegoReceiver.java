@@ -9,10 +9,7 @@ import java.nio.ByteBuffer;
 import objects.Pose;
 
 public class LegoReceiver extends Thread {
-	private ServerSocket lServerSocket;
-	private ServerSocket nServerSocket;
-	private ServerSocket bServerSocket;
-	
+	private ServerSocket serverSocket;
 	private Socket lSocket;
 	private Socket nSocket;
 	private Socket bSocket;
@@ -47,14 +44,12 @@ public class LegoReceiver extends Thread {
 	
 	public boolean connect(int port) {
 		try {
-			nServerSocket = new ServerSocket(port);
-			nSocket = nServerSocket.accept();
+			serverSocket = new ServerSocket(port);
+			nSocket = serverSocket.accept();
 			nStream = nSocket.getInputStream();
-			lServerSocket = new ServerSocket(port);
-			lSocket = lServerSocket.accept();
+			lSocket = serverSocket.accept();
 			lStream = lSocket.getInputStream();
-			bServerSocket = new ServerSocket(port);
-			bSocket = bServerSocket.accept();
+			bSocket = serverSocket.accept();
 			bStream = bSocket.getInputStream();
 			return true;
 		} catch (IOException e) {

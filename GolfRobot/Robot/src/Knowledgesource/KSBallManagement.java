@@ -9,7 +9,7 @@ public class KSBallManagement extends KnowledgeSource {
 	EV3MediumRegulatedMotor motor;
 	
 	public KSBallManagement() {
-		motor = new EV3MediumRegulatedMotor(MotorPort.D);
+		motor = new EV3MediumRegulatedMotor(MotorPort.C);
 	}
 	
 	public void pickup() {

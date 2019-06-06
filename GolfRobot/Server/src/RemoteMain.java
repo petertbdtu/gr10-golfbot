@@ -44,7 +44,7 @@ public class RemoteMain {
 		System.out.println("Building Command Transmitter...");
 		CommandTransmitter commandTransmitter = new CommandTransmitter();
 		if(YesRobotRunYesYes) {
-			YesRobotRunYesYes = commandTransmitter.connect(3000);
+			YesRobotRunYesYes = commandTransmitter.connect(3001);
 			System.out.println("Command Transmitter succes");
 		} else {
 			YesRobotRunYesYes = false;
@@ -73,23 +73,23 @@ public class RemoteMain {
 			System.out.println();
 			switch (scan.next()) {
 				case "1" : {
-					System.out.println("How much?");
-					while(!scan.hasNextInt()) { commandTransmitter.robotTravel(0, scan.nextInt()); }
+					System.out.println("How far?");
+					commandTransmitter.robotTravel(0, scan.nextInt()); 
 					break;
 				}
 				case "2" : {
-					System.out.println("How much?");
-					while(!scan.hasNextInt()) { commandTransmitter.robotTravel(0, -scan.nextInt()); }
+					System.out.println("How far?");
+					commandTransmitter.robotTravel(0, -scan.nextInt());
 					break;
 				}
 				case "3" : {
 					System.out.println("How much?");
-					while(!scan.hasNextInt()) { commandTransmitter.robotTravel(scan.nextInt(), 0); }
+					commandTransmitter.robotTravel(scan.nextInt(), 0);
 					break;
 				}
 				case "4" : {
 					System.out.println("How much?");
-					while(!scan.hasNextInt()) { commandTransmitter.robotTravel(-scan.nextInt(), 0); }
+					commandTransmitter.robotTravel(-scan.nextInt(), 0);
 					break;
 				}
 				case "5" : {

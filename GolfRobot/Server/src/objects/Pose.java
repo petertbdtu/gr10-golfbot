@@ -11,8 +11,7 @@ public class Pose {
 	}
 	
 	public Pose() {
-		this.point.x = 0;
-		this.point.y = 0;
+		this.point = new Point(0, 0);	
 		this.heading = 0;
 	}
 	public Pose(Pose pose) {
