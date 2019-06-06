@@ -5,6 +5,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
+import mapping.LidarScan;
+
 public class CameraReceiver extends Thread {
 
 	private DatagramSocket socket;
