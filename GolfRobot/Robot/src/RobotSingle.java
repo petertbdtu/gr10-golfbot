@@ -1,5 +1,8 @@
-package Navigation;
 
+
+import Knowledgesource.KSBallManagement;
+import Knowledgesource.KSLocation;
+import Knowledgesource.KSNavigation;
 import lejos.hardware.motor.Motor;
 import lejos.hardware.port.SensorPort;
 import lejos.robotics.chassis.Chassis;

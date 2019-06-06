@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import objects.Pose;
+
 public class LegoReceiver extends Thread {
 	private ServerSocket lServerSocket;
 	private ServerSocket nServerSocket;

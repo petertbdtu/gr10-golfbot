@@ -1,4 +1,4 @@
-package communication;
+package mapping;
 //import java.util.ArrayList;
 //import java.util.Collections;
 //import java.util.List;

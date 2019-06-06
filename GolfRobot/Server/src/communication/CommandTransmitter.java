@@ -5,6 +5,9 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import blackboard.BlackboardListener;
+import blackboard.BlackboardSample;
+
 public class CommandTransmitter implements BlackboardListener {
 	
 	private ServerSocket serverSocket;

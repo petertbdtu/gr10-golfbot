@@ -8,6 +8,8 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import objects.FrameSample;
+
 
 public class TestKameraRemote {
 

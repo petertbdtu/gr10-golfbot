@@ -1,6 +1,10 @@
-package communication;
+package blackboard;
 
 import java.util.ArrayList;
+
+import communication.CameraReceiver;
+import communication.LegoReceiver;
+import communication.LidarReceiver;
 
 public class BlackboardController extends Thread {
 	private ArrayList<BlackboardListener> bbListeners;

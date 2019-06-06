@@ -1,4 +1,4 @@
-package communication;
+package objects;
 
 public class LidarSample {
 	public double angle;

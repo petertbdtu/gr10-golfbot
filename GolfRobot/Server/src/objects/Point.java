@@ -1,4 +1,4 @@
-package communication;
+package objects;
 
 public class Point extends java.awt.Point {
 

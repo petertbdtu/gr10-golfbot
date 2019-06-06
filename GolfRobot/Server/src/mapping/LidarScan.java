@@ -1,7 +1,10 @@
-package communication;
+package mapping;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import objects.LidarSample;
+import objects.Point;
 
 public class LidarScan {
 	

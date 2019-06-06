@@ -1,4 +1,8 @@
-package communication;
+package blackboard;
+
+import mapping.LidarScan;
+import objects.Point;
+import objects.Pose;
 
 public class BLBallDetector {
 	
