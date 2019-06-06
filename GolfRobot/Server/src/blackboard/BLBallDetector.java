@@ -1,6 +1,11 @@
 package blackboard;
 
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+
 import mapping.LidarScan;
+import objects.LidarSample;
 import objects.Point;
 import objects.Pose;
 
@@ -9,11 +14,34 @@ public class BLBallDetector {
     public static void main(String args[])
     {
     	//Point a = new Point(1.5f,1.75f);
-    	Point b = new Point(2,2);
+    	//Point b = new Point(2,2);
     	//Point c = new Point(2.5f,1.75f);
     	//Point center = findCenter(a,b,c);
     	
     	//System.out.println(String.format("Center: x='%f' y='%f'", center.x, center.y));
+    	
+    	System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+
+    	LidarSample lsa = new LidarSample(0, 10);
+    	LidarSample lsb = new LidarSample(90, 10);
+    	LidarSample lsc = new LidarSample(180, 10);
+    	LidarSample lsd = new LidarSample(270, 10);
+    	LidarSample lse = new LidarSample(10, 3);
+    	LidarSample lsf = new LidarSample(20, 4);
+    	LidarSample lsg = new LidarSample(30, 5);
+    	
+    	LidarScan scan = new LidarScan();
+    	scan.addSample(lsa);
+    	scan.addSample(lsb);
+    	scan.addSample(lsc);
+    	scan.addSample(lsd);
+    	scan.addSample(lse);
+    	scan.addSample(lsf);
+    	scan.addSample(lsg);
+    	
+    	Mat map = scan.getMat();
+    	Imgcodecs.imwrite("C:\\Users\\PeterTB\\Desktop\\map.png", map);
+    	System.out.println("Wrote image to PeterTB's desktop.");
     }
     
     public static Point findCenter(Point a, Point b, Point c)

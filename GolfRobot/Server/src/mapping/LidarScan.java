@@ -6,6 +6,9 @@ import java.util.List;
 import objects.LidarSample;
 import objects.Point;
 
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+
 public class LidarScan {
 	
 	private List<LidarSample> samples;
@@ -39,11 +42,12 @@ public class LidarScan {
 	}
 	
 	public List<Point> getPoints() {
-		Point pos = new Point(0,0);
 		List<Point> mapping = new ArrayList<Point>();
-		for(LidarSample sample : samples) {
-			mapping.add(pos.pointAt(sample.distance, sample.angle));
+		
+		for (LidarSample sample : samples) {
+			mapping.add(sample.getRectangularCoordinates());
 		}
+		
 		return mapping;
 	}
 
@@ -51,4 +55,37 @@ public class LidarScan {
 		return this.samples.size();
 	}
 	
+	public Mat getMat() {
+		int lx = 0;
+		int hx = 0;
+		int ly = 0;
+		int hy = 0;
+		
+		List<Point> pts = getPoints();
+		
+		for (Point p : pts) {
+			if (p.x < lx)
+				lx = p.x;
+			
+			if (p.x > hx)
+				hx = p.x;
+			
+			if (p.y < ly)
+				ly = p.y;
+			
+			if (p.y > hy)
+				hy = p.y;
+		}
+		
+		Mat mat = Mat.zeros(hy-ly+1, hx-lx+1, CvType.CV_8U);
+		
+		for (Point p : pts) {
+			mat.put(p.y-ly, p.x-lx, new byte[] {(byte)255});
+		}
+		
+		// (0, 0) location in grey
+		mat.put(0-ly, 0-lx, new byte[] {(byte)127});
+		
+		return mat;
+	}
 }
