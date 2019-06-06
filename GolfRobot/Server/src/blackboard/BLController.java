@@ -1,5 +1,17 @@
 package blackboard;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Scanner;
+
+import blackboard.BlackboardController;
+import blackboard.BlackboardSample;
+import communication.CommandTransmitter;
+import communication.LegoReceiver;
+import communication.LidarReceiver;
+import mapping.LidarScan;
+import objects.LidarSample;
+
 public class BLController implements BlackboardListener {
 	private enum State {
 		GET_SAMPLES,
@@ -19,6 +31,52 @@ public class BLController implements BlackboardListener {
 	private int ballsDelivered;
 	private BlackboardSample bbSample;
 
+	// Very important boolean
+	boolean YesRobotRunYesYes = true;
+
+	// Build Lidar receiver
+	System.out.println("Building Lidar Receiver...");
+	LidarReceiver lidarReceiver = new LidarReceiver();
+	if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
+		lidarReceiver.start();
+		System.out.println("Lidar Receiver succes");
+	} else {
+		YesRobotRunYesYes = false;
+		System.out.println("Lidar Receiver failed");
+	}
+
+	// Build Lego Receiver
+	System.out.println("Building Lego Receiver...");
+	LegoReceiver legoReceiver = new LegoReceiver();
+	if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002)) {
+		legoReceiver.start();
+		System.out.println("Lego Receiver succes");
+	} else {
+		YesRobotRunYesYes = false;
+		System.out.println("Lego Receiver failed");
+	}
+
+	// Command Transmitter
+	System.out.println("Building Command Transmitter...");
+	CommandTransmitter commandTransmitter = new CommandTransmitter();
+	if(YesRobotRunYesYes) {
+		YesRobotRunYesYes = commandTransmitter.connect(3003);
+		System.out.println("Command Transmitter succes");
+	} else {
+		YesRobotRunYesYes = false;
+		System.out.println("Command Transmitter failed");
+	}
+
+	// Blackboard Controller
+	System.out.println("Building blackboard...");
+	BlackboardController bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+	bController.registerListener(commandTransmitter);
+	if(YesRobotRunYesYes) {
+		bController.start();
+		System.out.println("Blackboard succes");
+	} else {
+		System.out.println("Blackboard not started");
+	}
 
 
 
@@ -39,9 +97,14 @@ public class BLController implements BlackboardListener {
 					break;
 
 				case EXPLORE:
-					/* while (locateBall() == false) travelAlongWall();
+					/* Drive around until ball located
+					 * while (locateBall() == false) travelAlongWall();
 					 * state = State.VALIDATE_BALL;
 					 * */
+
+
+					commandTransmitter.robotTravel(0, 1000);
+					state = State.VALIDATE_BALL;
 					break;
 
 				case VALIDATE_BALL:
@@ -50,6 +113,7 @@ public class BLController implements BlackboardListener {
 					 * 	state = state.PLAN_ROUTE;
 				 	 * } else state = state.EXPLORE;
 					 * */
+					state = state.PLAN_ROUTE;
 					break;
 
 				case PLAN_ROUTE:
@@ -57,12 +121,19 @@ public class BLController implements BlackboardListener {
 					 * state = State.RUN_ROUTE;
 					 *
 					 */
+				 	state = State.RUN_ROUTE;
 					break;
 
 				case RUN_ROUTE:
 					/* driveToNearestPoint();
 					 * state = State.FETCH_BALL;
 					 */
+
+					// MOVE ACCORDING TO ROUTEPLANNER
+					commandTransmitter.robotTravel(90, 0);
+					commandTransmitter.robotTravel(0, 1000);
+
+					state = State.FETCH_BALL;
 					break;
 
 				case FETCH_BALL:
@@ -76,6 +147,13 @@ public class BLController implements BlackboardListener {
 					 * 		else
 					 * 			state = State.RUN_ROUTE;
 					 */
+
+				 	commandTransmitter.robotCollectBall();
+					ballcounter++;
+					if (ballcounter == 10)
+						state = State.FIND_GOAL;
+					else
+						state = State.RUN_ROUTE;
 					break;
 
 				case COLLISION_AVOIDANCE:
@@ -93,6 +171,7 @@ public class BLController implements BlackboardListener {
 					 *
 					 */
 
+					state = State.GO_TO_GOAL;
 					break;
 
 				case GO_TO_GOAL:
@@ -105,6 +184,10 @@ public class BLController implements BlackboardListener {
 					 * 		state = State.EXPLORE;
 					 */
 
+					 deliverBalls();
+
+ 					 state = State.COMPLETED;
+ 					 
 					break;
 
 				case COMPLETED:
@@ -169,12 +252,11 @@ public class BLController implements BlackboardListener {
 	}
 
 	public void deliverBalls() {
-
+		//commandTransmitter.deliverBalls();
 	}
 
 	public void finished() {
-
+		// MAKE A FINISHING SOUND
 	}
-
 
 }
