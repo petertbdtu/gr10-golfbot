@@ -6,6 +6,9 @@ import java.util.Scanner;
 
 import blackboard.BlackboardController;
 import blackboard.BlackboardSample;
+import communication.CommandTransmitter;
+import communication.LegoReceiver;
+import communication.LidarReceiver;
 import mapping.LidarScan;
 import objects.LidarSample;
 
