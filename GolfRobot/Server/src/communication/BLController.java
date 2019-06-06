@@ -1,7 +1,5 @@
-package src.communication;
+package communication;
 
-import golfbot.server.blackboard.BlackboardListener;
-import golfbot.server.blackboard.BlackboardSample;
 
 public class BLController implements BlackboardListener {
 	private enum State {
