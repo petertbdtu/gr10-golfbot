@@ -11,16 +11,17 @@ import lejos.robotics.chassis.Wheel;
 import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.navigation.MovePilot;
 
-public class RobotSingle {
+public class RobotMain {
 	public static void main(String [ ] args) {
 		// Server IP hello
 		String ip = "172.20.10.2";
+		int port = 3000;
 		
 		// Really important bool
 		boolean YesRobotRunYesYes = true;
 		
 		// Build Chassis
-		double offset = 100; //distance between the two wheels divided by 2 in mm
+		double offset = 78; //distance between the two wheels divided by 2 in mm
 		double wheelDiamater = 30; //Diameter of wheels in mm
 		Wheel leftWheel = WheeledChassis.modelWheel(Motor.A, wheelDiamater).offset(offset);
 		Wheel rightWheel = WheeledChassis.modelWheel(Motor.B, wheelDiamater).offset(-offset);
@@ -30,22 +31,22 @@ public class RobotSingle {
 		MovePilot pilot = new MovePilot(chassis);
 		KSNavigation navigation = new KSNavigation(pilot);
 		if(YesRobotRunYesYes)
-			YesRobotRunYesYes = navigation.connect(ip, 3000);
+			YesRobotRunYesYes = navigation.connect(ip, port);
 		
 		// Build Localisation
 		GyroPoseProvider gyroPoseProvider = new GyroPoseProvider(pilot, SensorPort.S2);
 		KSLocation location = new KSLocation(gyroPoseProvider);
 		if(YesRobotRunYesYes)
-			YesRobotRunYesYes = location.connect(ip, 3001);
+			YesRobotRunYesYes = location.connect(ip, port);
 	
 		// Build ball management
-		KSBallManagement ballManager = new KSBallManagement();
-		if(YesRobotRunYesYes)
-			YesRobotRunYesYes = ballManager.connect(ip, 3002);
+		//KSBallManagement ballManager = new KSBallManagement();
+		//if(YesRobotRunYesYes)
+		//	YesRobotRunYesYes = ballManager.connect(ip, port);
 
 		// Command Receiver
-		CommandReceiver receiver = new CommandReceiver(navigation, ballManager);
-		if(YesRobotRunYesYes && receiver.connect(ip, 3003))
+		CommandReceiver receiver = new CommandReceiver(navigation, null);
+		if(YesRobotRunYesYes && receiver.connect(ip, port))
 			receiver.start();
 		else
 			YesRobotRunYesYes = false;

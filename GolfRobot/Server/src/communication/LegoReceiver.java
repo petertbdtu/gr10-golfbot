@@ -45,15 +45,15 @@ public class LegoReceiver extends Thread {
 		isCollecting2 = false;
 	}
 	
-	public boolean connect(int nPort, int lPort, int bPort) {
+	public boolean connect(int port) {
 		try {
-			nServerSocket = new ServerSocket(nPort);
+			nServerSocket = new ServerSocket(port);
 			nSocket = nServerSocket.accept();
 			nStream = nSocket.getInputStream();
-			lServerSocket = new ServerSocket(lPort);
+			lServerSocket = new ServerSocket(port);
 			lSocket = lServerSocket.accept();
 			lStream = lSocket.getInputStream();
-			bServerSocket = new ServerSocket(bPort);
+			bServerSocket = new ServerSocket(port);
 			bSocket = bServerSocket.accept();
 			bStream = bSocket.getInputStream();
 			return true;

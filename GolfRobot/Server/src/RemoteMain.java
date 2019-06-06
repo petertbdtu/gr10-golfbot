@@ -32,7 +32,7 @@ public class RemoteMain {
 		// Build Lego Receiver
 		System.out.println("Building Lego Receiver...");
 		LegoReceiver legoReceiver = new LegoReceiver();
-		if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002)) {
+		if(YesRobotRunYesYes && legoReceiver.connect(3000)) {
 			legoReceiver.start();
 			System.out.println("Lego Receiver succes");
 		} else {
@@ -44,7 +44,7 @@ public class RemoteMain {
 		System.out.println("Building Command Transmitter...");
 		CommandTransmitter commandTransmitter = new CommandTransmitter();
 		if(YesRobotRunYesYes) {
-			YesRobotRunYesYes = commandTransmitter.connect(3003);
+			YesRobotRunYesYes = commandTransmitter.connect(3000);
 			System.out.println("Command Transmitter succes");
 		} else {
 			YesRobotRunYesYes = false;
