@@ -96,22 +96,31 @@ public class LidarReceiver extends Thread {
 			}
 			
 			// Calculate angle
-			double angle = (diff_angle / samples * i + start_angle + distanceCorrection(distance)) % 360;
-			if(debug) { System.out.println("Calculated angle: " + angle); }
-			// Collects 0-360 degree scan's
-			if(lastAngle > angle) {
-				if(debug) { System.out.println("Scan finished... Found " + tempScan.scanSize() + " samples..."); }
-				if(switcher) {
-					scan2 = tempScan;
-					if(!newData) { newData = true; }
-				} else {
-					scan1 = tempScan;
-					if(!newData) { newData = true; }
-				}
-				tempScan.clear();
+			double calculated_angle = diff_angle / samples * i + start_angle;
+			double distCorrection = distanceCorrection(distance);
+			double angle;
+			if(calculated_angle + distCorrection < 0) {
+				angle = 360 + distCorrection;
+			} else {
+				angle = calculated_angle + distCorrection;
 			}
-			lastAngle = angle;
-			tempScan.addSample(angle, distance);
+			if(debug) { System.out.println("Calculated angle: " + angle); }
+			if(!(angle > 34 && angle < 41) && !(angle > 97 && angle < 111)) {
+				// Collects 0-360 degree scan's
+				if(lastAngle > angle + 10) {
+					if(debug) { System.out.println("Scan finished... Found " + tempScan.scanSize() + " samples..."); }
+					if(switcher) {
+						scan2 = new LidarScan(tempScan);
+						if(!newData) { newData = true; }
+					} else {
+						scan1 = new LidarScan(tempScan);
+						if(!newData) { newData = true; }
+					}
+					tempScan.clear();
+				}
+				lastAngle = angle;
+				tempScan.addSample(angle, distance);
+			}
 		}
 	}
 	
@@ -122,9 +131,12 @@ public class LidarReceiver extends Thread {
 	
 	// Calculates angular correction given a distance
 	private double distanceCorrection(double distance) {
+		double correction = 0;
 		if (distance != 0.0)
-			return Math.toDegrees(Math.atan(21.8 * ((155.3-distance)/(155.3*distance))));
-		return 0;
+			correction = Math.toDegrees(Math.atan(21.8 * ((155.3-distance)/(155.3*distance))));
+		if (correction < 0)
+			return 0;
+		return correction;
 	}
 	
 	// Transforms angle bytes to double (degrees)

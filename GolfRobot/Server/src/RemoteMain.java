@@ -6,7 +6,10 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import blackboard.BLCollisionDetector;
+import org.opencv.core.Core;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+
 import blackboard.BlackboardController;
 import blackboard.BlackboardSample;
 import communication.CommandTransmitter;
@@ -20,6 +23,7 @@ public class RemoteMain {
 	public static void main(String[] args) throws IOException {
 		// Very important boolean
 		boolean YesRobotRunYesYes = true;
+		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		
 		// Build Lidar receiver
 		System.out.println("Building Lidar Receiver...");
@@ -64,17 +68,6 @@ public class RemoteMain {
 		} else {
 			System.out.println("Blackboard not started");
 		}
-		
-		//Collision Detection
-		System.out.println("Building Collision Detector...");
-		BLCollisionDetector cd = new BLCollisionDetector(commandTransmitter);
-		if(YesRobotRunYesYes) {
-			cd.start();
-			System.out.println("Collision detection activated");
-		} else {
-			System.out.println("Collision detection aprehended");
-		}
-				
 			
 		//Remove main
 		System.out.println("Start Manual Remote-Control...");
@@ -127,11 +120,11 @@ public class RemoteMain {
 					break;
 				}
 				case "7" : {
-					BlackboardSample bSample = commandTransmitter.getSample();
-					if(bSample != null) {
-						LidarScan lScan = bSample.scan;
+					LidarScan lScan = lidarReceiver.getScan();
+					if(lScan != null) {
 						try {
-				            FileOutputStream fileOut = new FileOutputStream("testScan.data");
+							Imgcodecs.imwrite("testScan2.jpg", lScan.getMat());
+				            FileOutputStream fileOut = new FileOutputStream("testScan2.data");
 				            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
 				            objectOut.writeObject(lScan);
 				            objectOut.close();
@@ -140,6 +133,16 @@ public class RemoteMain {
 				        } catch (Exception ex) {
 				            System.out.println("The Object could not be written to a file");
 				        }
+					}
+					break;
+				}
+				case "8" : {
+					LidarScan lScan = lidarReceiver.getScan();
+					for(LidarSample sample : lScan.getSamples()) {
+						System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
+					}
+					if(lScan != null) {
+						Imgcodecs.imwrite("testScan.jpg", lScan.getMat());
 					}
 					break;
 				}
@@ -165,6 +168,7 @@ public class RemoteMain {
 		System.out.println("  5: pickup ball");
 		System.out.println("  6: print values");
 		System.out.println("  7: save scan");
+		System.out.println("  8: save scan as image");
 		System.out.println();
 	}
 }
