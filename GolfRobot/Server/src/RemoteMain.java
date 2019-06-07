@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import blackboard.BLCollisionDetector;
 import blackboard.BlackboardController;
 import blackboard.BlackboardSample;
 import communication.CommandTransmitter;
@@ -63,6 +64,17 @@ public class RemoteMain {
 		} else {
 			System.out.println("Blackboard not started");
 		}
+		
+		//Collision Detection
+		System.out.println("Building Collision Detector...");
+		BLCollisionDetector cd = new BLCollisionDetector(commandTransmitter);
+		if(YesRobotRunYesYes) {
+			cd.start();
+			System.out.println("Collision detection activated");
+		} else {
+			System.out.println("Collision detection aprehended");
+		}
+				
 			
 		//Remove main
 		System.out.println("Start Manual Remote-Control...");

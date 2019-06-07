@@ -53,6 +53,11 @@ public class CommandTransmitter implements BlackboardListener {
 		catch (IOException e) { e.printStackTrace(); }
 	}
 	
+	public void robotSlowDown() {
+		try { oos.writeObject("J"); }
+		catch (IOException e) { e.printStackTrace(); }
+	}
+	
 	public BlackboardSample getSample() {
 		return bbSample;
 	}
