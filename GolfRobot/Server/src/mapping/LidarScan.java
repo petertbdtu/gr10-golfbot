@@ -20,11 +20,11 @@ public class LidarScan implements Serializable {
 	}
 	
 	public LidarScan(List<LidarSample> scan) {
-		this.samples = scan;
+		this.samples = new ArrayList<LidarSample>(scan);
 	}
 	
 	public LidarScan(LidarScan scan) {
-		this.samples = scan.samples;
+		this.samples = new ArrayList<LidarSample>(scan.samples);
 	}
 	
 	public void addSample(LidarSample sample) {
