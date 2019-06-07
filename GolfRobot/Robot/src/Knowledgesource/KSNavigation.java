@@ -21,6 +21,10 @@ public class KSNavigation extends KnowledgeSource {
 	public void stopMoving() {
 		pilot.stop();
 	}
+	
+	public void slowDown() {
+		pilot.setLinearSpeed(pilot.getLinearSpeed()/4);
+	}
 
 	@Override
 	protected byte[] getKnowledgeAsBytes() {
