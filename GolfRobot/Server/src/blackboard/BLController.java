@@ -15,6 +15,7 @@ import objects.LidarSample;
 public class BLController implements BlackboardListener {
 	private enum State {
 		GET_SAMPLES,
+		COLLISION_AVOIDANCE,
 		EXPLORE,
 		VALIDATE_BALL,
 		PLAN_ROUTE,
@@ -22,23 +23,26 @@ public class BLController implements BlackboardListener {
 		FETCH_BALL,
 		FIND_GOAL,
 		GO_TO_GOAL,
-		COLLISION_AVOIDANCE,
+		
 		COMPLETED
 	}
 	private State state;
+	private State lastState;
 	private boolean trigger;
+	private boolean ballFound;
 	private int ballcounter;
 	private int ballsDelivered;
 	private BlackboardSample bbSample;
 	private CommandTransmitter commandTransmitter;
-	//private LidarReceiver lidarReceiver;
-	//private LegoReceiver legoReceiver;
-	//private BlackboardController bController;
+	private LidarReceiver lidarReceiver;
+	private LegoReceiver legoReceiver;
+	private BlackboardController bController;
 
 
 	public BLController() {
 		state = State.EXPLORE;
 		trigger = false;
+		ballFound = false;
 		ballcounter = 0;
 		ballsDelivered = 0;
 	}
@@ -50,22 +54,38 @@ public class BLController implements BlackboardListener {
 
 	public void FSM() {
 		while(!trigger) {
+			if (collisionDetected == true) { // collisionDetected skal sættes af en anden classe
+				lastState = state;
+				state = State.COLLISION_AVOIDANCE;
+			}
+			
 			switch(state) {
 				case GET_SAMPLES:
-					/* getLidarSamples();
-					 * state = State.PLAN_ROUTE;
-					 */
+					
+					commandTransmitter.robotTravel(360, 0);
+					getLidarSamples();
+					state = State.EXPLORE;
+					break;
+				
+				case COLLISION_AVOIDANCE:
+					// Go back, compare right side to left side, turn and go where the distance is largest
+					commandTransmitter.robotTravel(0,500);
+					commandTransmitter.robotTravel(90,0);
+					
+					collisionDetected = false;
+					state = lastState;
 					break;
 
+
 				case EXPLORE:
-					/* Drive around until ball located
-					 * while (locateBall() == false) travelAlongWall();
-					 * state = State.VALIDATE_BALL;
-					 * */
+					
+					// Follow left wall, robot drives clockwise
 
-
-					commandTransmitter.robotTravel(0, 1000);
-					state = State.VALIDATE_BALL;
+					if (locateBall() == false) {
+						state = State.EXPLORE;
+					} else {
+						state = State.VALIDATE_BALL;
+					}
 					break;
 
 				case VALIDATE_BALL:
@@ -74,6 +94,7 @@ public class BLController implements BlackboardListener {
 					 * 	state = state.PLAN_ROUTE;
 				 	 * } else state = state.EXPLORE;
 					 * */
+					
 					state = State.PLAN_ROUTE;
 					break;
 
@@ -117,13 +138,7 @@ public class BLController implements BlackboardListener {
 						state = State.RUN_ROUTE;
 					break;
 
-				case COLLISION_AVOIDANCE:
-					/* robotEmergencyBrake();
-					 * ?moveAwayFromWall();
-					 * state = State.GET_SAMPLES;
-					 */
-					break;
-
+				
 				case FIND_GOAL:
 					/* if (locateNearestGoal())
 					 * 		state = State.GO_TO_GOAL;
@@ -222,15 +237,13 @@ public class BLController implements BlackboardListener {
 	}
 
 	public void getLidarSamples() {
-
+		// read samples
 	}
 
-	public void locateBall() {
-
-	}
-
-	public void travelAlongWall() {
-
+	public boolean locateBall() {
+		// if (Ball located() == true) ballfound = true;
+		
+		return ballFound;
 	}
 
 	public void turnToBall() {
