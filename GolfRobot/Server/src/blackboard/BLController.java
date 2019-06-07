@@ -13,6 +13,11 @@ import mapping.LidarScan;
 import objects.LidarSample;
 
 public class BLController implements BlackboardListener {
+	public void main(){
+		startup();
+		FSM();
+	}
+	
 	private enum State {
 		GET_SAMPLES,
 		COLLISION_AVOIDANCE,
@@ -22,10 +27,10 @@ public class BLController implements BlackboardListener {
 		RUN_ROUTE,
 		FETCH_BALL,
 		FIND_GOAL,
-		GO_TO_GOAL,
-		
+		GO_TO_GOAL,		
 		COMPLETED
 	}
+	
 	private State state;
 	private State lastState;
 	private boolean trigger;
@@ -47,14 +52,9 @@ public class BLController implements BlackboardListener {
 		ballsDelivered = 0;
 	}
 
-	public void main(){
-		startup();
-		FSM();
-	}
-
 	public void FSM() {
 		while(!trigger) {
-			if (collisionDetected == true) { // collisionDetected skal sættes af en anden classe
+			if (cd.isDetected() == true) { 
 				lastState = state;
 				state = State.COLLISION_AVOIDANCE;
 			}
@@ -72,7 +72,7 @@ public class BLController implements BlackboardListener {
 					commandTransmitter.robotTravel(0,500);
 					commandTransmitter.robotTravel(90,0);
 					
-					collisionDetected = false;
+					detected = false;
 					state = lastState;
 					break;
 
@@ -225,6 +225,16 @@ public class BLController implements BlackboardListener {
 			System.out.println("Blackboard succes");
 		} else {
 			System.out.println("Blackboard not started");
+		}
+		
+		//Collision Detection
+		System.out.println("Building Collision Detector...");
+		BLCollisionDetector cd = new BLCollisionDetector(commandTransmitter);
+		if(YesRobotRunYesYes) {
+			cd.start();
+			System.out.println("Collision detection activated");
+		} else {
+			System.out.println("Collision detection aprehended");
 		}
 	}
 
