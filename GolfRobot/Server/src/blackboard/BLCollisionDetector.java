@@ -16,15 +16,26 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	private Rectangle warningArea = new Rectangle(avoidanceArea.x, avoidanceArea.y + avoidanceArea.height, avoidanceArea.width, avoidanceArea.height);
 	List<objects.Point> list;
 	private BlackboardSample bbSample;
-	private CommandTransmitter transmitter;
 	public boolean isDetected = false;
+	public boolean slowDownDetected = false;
 	
-	public BLCollisionDetector(CommandTransmitter transmitter) {
-		this.transmitter = transmitter;
+	public BLCollisionDetector() {
 	}
 	
 	public boolean getIsDetected() {
 		return isDetected;
+	}
+	
+	public boolean getSlowDown() {
+		return slowDownDetected;
+	}
+	
+	public void setSlowDown(boolean bool) {
+		slowDownDetected = bool;
+	}
+	
+	public void setisDetected(boolean bool) {
+		isDetected = bool;
 	}
 	
 	public void StartAvoidance() {
@@ -32,10 +43,9 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 		   for(int i = 0; i < list.size(); i++) {
 			   Point point = list.get(i);
 			   if(avoidanceArea.contains(point)) {
-				   transmitter.robotStop();
 				   isDetected = true;
 			   } else if(warningArea.contains(point)) {
-				   transmitter.robotSlowDown();
+				   slowDownDetected = true;
 			   }
 		   }
 	}
