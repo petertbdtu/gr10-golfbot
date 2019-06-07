@@ -31,60 +31,17 @@ public class BLController implements BlackboardListener {
 	private int ballsDelivered;
 	private BlackboardSample bbSample;
 
-	// Very important boolean
-	boolean YesRobotRunYesYes = true;
-
-	// Build Lidar receiver
-	System.out.println("Building Lidar Receiver...");
-	LidarReceiver lidarReceiver = new LidarReceiver();
-	if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
-		lidarReceiver.start();
-		System.out.println("Lidar Receiver succes");
-	} else {
-		YesRobotRunYesYes = false;
-		System.out.println("Lidar Receiver failed");
-	}
-
-	// Build Lego Receiver
-	System.out.println("Building Lego Receiver...");
-	LegoReceiver legoReceiver = new LegoReceiver();
-	if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002)) {
-		legoReceiver.start();
-		System.out.println("Lego Receiver succes");
-	} else {
-		YesRobotRunYesYes = false;
-		System.out.println("Lego Receiver failed");
-	}
-
-	// Command Transmitter
-	System.out.println("Building Command Transmitter...");
-	CommandTransmitter commandTransmitter = new CommandTransmitter();
-	if(YesRobotRunYesYes) {
-		YesRobotRunYesYes = commandTransmitter.connect(3003);
-		System.out.println("Command Transmitter succes");
-	} else {
-		YesRobotRunYesYes = false;
-		System.out.println("Command Transmitter failed");
-	}
-
-	// Blackboard Controller
-	System.out.println("Building blackboard...");
-	BlackboardController bController = new BlackboardController(null, legoReceiver, lidarReceiver);
-	bController.registerListener(commandTransmitter);
-	if(YesRobotRunYesYes) {
-		bController.start();
-		System.out.println("Blackboard succes");
-	} else {
-		System.out.println("Blackboard not started");
-	}
-
-
 
 	public BLController() {
 		state = State.EXPLORE;
 		trigger = false;
 		ballcounter = 0;
 		ballsDelivered = 0;
+	}
+
+	public void main(){
+		startup();
+		FSM();
 	}
 
 	public void FSM() {
@@ -113,7 +70,7 @@ public class BLController implements BlackboardListener {
 					 * 	state = state.PLAN_ROUTE;
 				 	 * } else state = state.EXPLORE;
 					 * */
-					state = state.PLAN_ROUTE;
+					state = State.PLAN_ROUTE;
 					break;
 
 				case PLAN_ROUTE:
@@ -187,7 +144,7 @@ public class BLController implements BlackboardListener {
 					 deliverBalls();
 
  					 state = State.COMPLETED;
- 					 
+
 					break;
 
 				case COMPLETED:
@@ -211,6 +168,55 @@ public class BLController implements BlackboardListener {
 		this.bbSample = bbSample;
 	}
 
+	public void startup() {
+		// Very important boolean
+		boolean YesRobotRunYesYes = true;
+
+		// Build Lidar receiver
+		System.out.println("Building Lidar Receiver...");
+		LidarReceiver lidarReceiver = new LidarReceiver();
+		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
+			lidarReceiver.start();
+			System.out.println("Lidar Receiver succes");
+		} else {
+			YesRobotRunYesYes = false;
+			System.out.println("Lidar Receiver failed");
+		}
+
+		// Build Lego Receiver
+		System.out.println("Building Lego Receiver...");
+		LegoReceiver legoReceiver = new LegoReceiver();
+		if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002)) {
+			legoReceiver.start();
+			System.out.println("Lego Receiver succes");
+		} else {
+			YesRobotRunYesYes = false;
+			System.out.println("Lego Receiver failed");
+		}
+
+		// Command Transmitter
+		System.out.println("Building Command Transmitter...");
+		CommandTransmitter commandTransmitter = new CommandTransmitter();
+		if(YesRobotRunYesYes) {
+			YesRobotRunYesYes = commandTransmitter.connect(3003);
+			System.out.println("Command Transmitter succes");
+		} else {
+			YesRobotRunYesYes = false;
+			System.out.println("Command Transmitter failed");
+		}
+
+		// Blackboard Controller
+		System.out.println("Building blackboard...");
+		BlackboardController bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+		bController.registerListener(commandTransmitter);
+		if(YesRobotRunYesYes) {
+			bController.start();
+			System.out.println("Blackboard succes");
+		} else {
+			System.out.println("Blackboard not started");
+		}
+	}
+
 	public void getLidarSamples() {
 
 	}
@@ -228,7 +234,7 @@ public class BLController implements BlackboardListener {
 	}
 
 	public void planRoute() {
-
+		// route planner magic
 	}
 
 	public void driveToNearestPoint() {
