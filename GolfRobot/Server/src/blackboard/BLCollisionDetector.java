@@ -17,11 +17,14 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	List<objects.Point> list;
 	private BlackboardSample bbSample;
 	private CommandTransmitter transmitter;
-	private boolean detected = false;
+	public boolean isDetected = false;
 	
-	public BLCollisionDetector(CommandTransmitter transmitter, boolean detected) {
+	public BLCollisionDetector(CommandTransmitter transmitter) {
 		this.transmitter = transmitter;
-		this.detected = detected;
+	}
+	
+	public boolean getIsDetected() {
+		return isDetected;
 	}
 	
 	public void StartAvoidance() {
@@ -30,7 +33,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 			   Point point = list.get(i);
 			   if(avoidanceArea.contains(point)) {
 				   transmitter.robotStop();
-				   detected = true;
+				   isDetected = true;
 			   } else if(warningArea.contains(point)) {
 				   transmitter.robotSlowDown();
 			   }
