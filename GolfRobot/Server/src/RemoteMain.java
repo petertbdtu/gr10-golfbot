@@ -1,6 +1,8 @@
 
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -19,15 +21,15 @@ public class RemoteMain {
 		boolean YesRobotRunYesYes = true;
 		
 		// Build Lidar receiver
-//		System.out.println("Building Lidar Receiver...");
-//		LidarReceiver lidarReceiver = new LidarReceiver();
-//		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
-//			lidarReceiver.start();
-//			System.out.println("Lidar Receiver succes");
-//		} else {
-//			YesRobotRunYesYes = false;
-//			System.out.println("Lidar Receiver failed");
-//		}
+		System.out.println("Building Lidar Receiver...");
+		LidarReceiver lidarReceiver = new LidarReceiver();
+		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
+			lidarReceiver.start();
+			System.out.println("Lidar Receiver succes");
+		} else {
+			YesRobotRunYesYes = false;
+			System.out.println("Lidar Receiver failed");
+		}
 			
 		// Build Lego Receiver
 		System.out.println("Building Lego Receiver...");
@@ -98,15 +100,35 @@ public class RemoteMain {
 				}
 				case "6" : {
 					BlackboardSample bSample = commandTransmitter.getSample();
-					System.out.println(">>> DATA <<<");
-					System.out.println("IsMoving: " + bSample.isMoving);
-					System.out.println("IsCollecting: " + bSample.isCollecting);
-					System.out.println("Pose: " + bSample.robotPose.toString());
-					//System.out.print("TheScan: ");
-					//LidarScan scan = bSample.scan;
-					//for(LidarSample sample : scan.getSamples()) {
-					//	System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
-					//}
+					if(bSample != null) {
+						System.out.println(">>> DATA <<<");
+						System.out.println("IsMoving: " + bSample.isMoving);
+						System.out.println("IsCollecting: " + bSample.isCollecting);
+						System.out.println("Pose: " + bSample.robotPose.toString());
+						System.out.print("TheScan: ");
+						LidarScan lScan = bSample.scan;
+						for(LidarSample sample : lScan.getSamples()) {
+							System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
+						}
+					}
+
+					break;
+				}
+				case "7" : {
+					BlackboardSample bSample = commandTransmitter.getSample();
+					if(bSample != null) {
+						LidarScan lScan = bSample.scan;
+						try {
+				            FileOutputStream fileOut = new FileOutputStream("testScan.data");
+				            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+				            objectOut.writeObject(lScan);
+				            objectOut.close();
+				            System.out.println("The Object was succesfully written to testScan.data");
+				 
+				        } catch (Exception ex) {
+				            System.out.println("The Object could not be written to a file");
+				        }
+					}
 					break;
 				}
 				default : {
@@ -130,6 +152,7 @@ public class RemoteMain {
 		System.out.println("  4: turn left");
 		System.out.println("  5: pickup ball");
 		System.out.println("  6: print values");
+		System.out.println("  7: save scan");
 		System.out.println();
 	}
 }

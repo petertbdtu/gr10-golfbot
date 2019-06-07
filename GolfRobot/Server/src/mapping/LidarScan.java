@@ -1,5 +1,6 @@
 package mapping;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,8 +10,9 @@ import objects.Point;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
-public class LidarScan {
+public class LidarScan implements Serializable {
 	
+	private static final long serialVersionUID = 1L;
 	private List<LidarSample> samples;
 	
 	public LidarScan() {
