@@ -30,6 +30,10 @@ public class BLController implements BlackboardListener {
 	private int ballcounter;
 	private int ballsDelivered;
 	private BlackboardSample bbSample;
+	private CommandTransmitter commandTransmitter;
+	//private LidarReceiver lidarReceiver;
+	//private LegoReceiver legoReceiver;
+	//private BlackboardController bController;
 
 
 	public BLController() {
@@ -160,14 +164,6 @@ public class BLController implements BlackboardListener {
 		}
 	}
 
-	public void wallCollisionISR() {
-		state = State.COLLISION_AVOIDANCE;
-	}
-
-	public void blackboardUpdated(BlackboardSample bbSample) {
-		this.bbSample = bbSample;
-	}
-
 	public void startup() {
 		// Very important boolean
 		boolean YesRobotRunYesYes = true;
@@ -186,7 +182,7 @@ public class BLController implements BlackboardListener {
 		// Build Lego Receiver
 		System.out.println("Building Lego Receiver...");
 		LegoReceiver legoReceiver = new LegoReceiver();
-		if(YesRobotRunYesYes && legoReceiver.connect(3000, 3001, 3002)) {
+		if(YesRobotRunYesYes && legoReceiver.connect(3000)) {  //connect(3000, 3001, 3002)
 			legoReceiver.start();
 			System.out.println("Lego Receiver succes");
 		} else {
@@ -215,6 +211,14 @@ public class BLController implements BlackboardListener {
 		} else {
 			System.out.println("Blackboard not started");
 		}
+	}
+
+	public void wallCollisionISR() {
+		state = State.COLLISION_AVOIDANCE;
+	}
+
+	public void blackboardUpdated(BlackboardSample bbSample) {
+		this.bbSample = bbSample;
 	}
 
 	public void getLidarSamples() {
