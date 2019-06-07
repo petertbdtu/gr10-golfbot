@@ -79,14 +79,25 @@ public class LidarScan implements Serializable {
 				hy = p.y;
 		}
 		
-		Mat mat = Mat.zeros(hy-ly+1, hx-lx+1, CvType.CV_8U);
+		int h, w;
+		if (Math.abs(lx) > Math.abs(hx))
+			w = lx;
+		else
+			w = hx;
+		
+		if (Math.abs(ly) > Math.abs(hy))
+			h = ly;
+		else
+			h = hy;
+		
+		Mat mat = Mat.zeros(h*2+1, w*2+1, CvType.CV_8U);
 		
 		for (Point p : pts) {
-			mat.put(p.y-ly, p.x-lx, new byte[] {(byte)255});
+			mat.put(p.y+h, p.x+w, new byte[] {(byte)255});
 		}
 		
 		// (0, 0) location in grey
-		mat.put(0-ly, 0-lx, new byte[] {(byte)127});
+		mat.put(h, w, new byte[] {(byte)127});
 		
 		return mat;
 	}
