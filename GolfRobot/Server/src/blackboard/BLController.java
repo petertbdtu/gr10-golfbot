@@ -57,6 +57,9 @@ public class BLController implements BlackboardListener {
 			if (cd.isDetected() == true) { 
 				lastState = state;
 				state = State.COLLISION_AVOIDANCE;
+			} else if (cd.getSlowDown() == true) {
+				commandTransmitter.robotSlowDown();
+				cd.setSlowDown(false);
 			}
 			
 			switch(state) {
@@ -69,10 +72,11 @@ public class BLController implements BlackboardListener {
 				
 				case COLLISION_AVOIDANCE:
 					// Go back, compare right side to left side, turn and go where the distance is largest
-					commandTransmitter.robotTravel(0,500);
+					commandTransmitter.robotStop();
+					commandTransmitter.robotTravel(0,-500);
 					commandTransmitter.robotTravel(90,0);
 					
-					detected = false;
+					cd.setIsDetected(false);
 					state = lastState;
 					break;
 
@@ -229,7 +233,7 @@ public class BLController implements BlackboardListener {
 		
 		//Collision Detection
 		System.out.println("Building Collision Detector...");
-		BLCollisionDetector cd = new BLCollisionDetector(commandTransmitter);
+		BLCollisionDetector cd = new BLCollisionDetector();
 		if(YesRobotRunYesYes) {
 			cd.start();
 			System.out.println("Collision detection activated");
