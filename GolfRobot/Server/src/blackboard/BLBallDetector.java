@@ -1,8 +1,19 @@
 package blackboard;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import mapping.LidarScan;
 import objects.LidarSample;
@@ -13,35 +24,31 @@ public class BLBallDetector {
 	
     public static void main(String args[])
     {
-    	//Point a = new Point(1.5f,1.75f);
-    	//Point b = new Point(2,2);
-    	//Point c = new Point(2.5f,1.75f);
-    	//Point center = findCenter(a,b,c);
-    	
-    	//System.out.println(String.format("Center: x='%f' y='%f'", center.x, center.y));
-    	
-    	System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-
-    	LidarSample lsa = new LidarSample(0, 10);
-    	LidarSample lsb = new LidarSample(90, 10);
-    	LidarSample lsc = new LidarSample(180, 10);
-    	LidarSample lsd = new LidarSample(270, 10);
-    	LidarSample lse = new LidarSample(10, 3);
-    	LidarSample lsf = new LidarSample(20, 4);
-    	LidarSample lsg = new LidarSample(30, 5);
-    	
-    	LidarScan scan = new LidarScan();
-    	scan.addSample(lsa);
-    	scan.addSample(lsb);
-    	scan.addSample(lsc);
-    	scan.addSample(lsd);
-    	scan.addSample(lse);
-    	scan.addSample(lsf);
-    	scan.addSample(lsg);
-    	
-    	Mat map = scan.getMat();
-    	Imgcodecs.imwrite("C:\\Users\\PeterTB\\Desktop\\map.png", map);
-    	System.out.println("Wrote image to PeterTB's desktop.");
+    	try {
+    		BLBallDetector bd = new BLBallDetector();
+    		
+    		//System.out.println(String.format("Center: x='%f' y='%f'", center.x, center.y));
+    		
+    		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    		
+    		FileInputStream fis = new FileInputStream("testScan2.data");
+    		ObjectInputStream ois = new ObjectInputStream(fis);
+    		
+    		LidarScan scan = (LidarScan) ois.readObject();
+    		
+    		Mat map = scan.getMat();
+    		Imgcodecs.imwrite("map2.png", map);
+    		
+    		Mat circles = bd.detectBalls(map);
+    		Imgcodecs.imwrite("lines2.png", circles);
+    		
+    		Mat graph = scan.getGraph(1);
+    		Imgcodecs.imwrite("graph2.png", graph);
+    		
+    	}
+    	catch (ClassNotFoundException | IOException e) {
+    		System.out.println("Could not read test scan data file");
+    	}
     }
     
     public static Point findCenter(Point a, Point b, Point c)
@@ -73,5 +80,43 @@ public class BLBallDetector {
     public boolean ballAtPose(Pose pose) {
     	
     	return false;
+    }
+    
+    public Mat detectBalls(Mat map) {
+    	/*
+    	Mat blur = new Mat();
+    	
+    	double blur_kernel_size = 5;
+    	Size ksize = new Size(blur_kernel_size, blur_kernel_size);
+    	double sigmaX = 0;
+    	Imgproc.GaussianBlur(map, blur, ksize, sigmaX);
+    	*/
+    	
+    	Mat edges = new Mat();
+    	double lo_thresh = 50;
+    	double hi_thresh = 150;
+    	Imgproc.Canny(map, edges, lo_thresh, hi_thresh);
+    	
+    	
+    	double dp = 1;
+    	double minDist = 1;
+    	
+    	Mat circles = new Mat();
+    	Imgproc.HoughCircles(edges, circles, Imgproc.CV_HOUGH_GRADIENT, dp, minDist);
+    	List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+    	Imgproc.findContours(edges, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+    	
+    	double maxArea = 40;
+    	float[] radius = new float[1];
+    	org.opencv.core.Point center = new org.opencv.core.Point();
+    	for (MatOfPoint c : contours) {
+    		if (Imgproc.contourArea(c) > maxArea) {
+                MatOfPoint2f c2f = new MatOfPoint2f(c.toArray());
+                Imgproc.minEnclosingCircle(c2f, center, radius);
+    		}
+    	}
+        Imgproc.circle(map, center, (int)radius[0], new Scalar(255, 0, 0), 2);
+    	
+    	return map;
     }
 }

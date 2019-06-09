@@ -79,17 +79,23 @@ public class LidarScan implements Serializable {
 				hy = p.y;
 		}
 		
+		int alx = Math.abs(lx);
+		int ahx = Math.abs(hx);
+		int aly = Math.abs(ly);
+		int ahy = Math.abs(hy);
+		
 		int h, w;
-		if (Math.abs(lx) > Math.abs(hx))
-			w = lx;
+		if (alx > ahx)
+			w = alx;
 		else
-			w = hx;
+			w = ahx;
 		
-		if (Math.abs(ly) > Math.abs(hy))
-			h = ly;
+		if (aly > ahy)
+			h = aly;
 		else
-			h = hy;
+			h = ahy;
 		
+		System.out.println("h="+h+" w="+w);
 		Mat mat = Mat.zeros(h*2+1, w*2+1, CvType.CV_8U);
 		
 		for (Point p : pts) {
@@ -100,5 +106,17 @@ public class LidarScan implements Serializable {
 		mat.put(h, w, new byte[] {(byte)127});
 		
 		return mat;
+	}
+	
+	public Mat getGraph(double pixelDistPerDeg) {
+		int graphheight = 2000;
+		Mat graph = Mat.zeros(graphheight, (int) (360*pixelDistPerDeg), CvType.CV_8U);
+		
+		for (LidarSample ls : samples)
+		{
+			graph.put(graphheight - (int) ls.distance, (int) (ls.angle*pixelDistPerDeg), new byte[] {(byte) 255});
+		}
+		
+		return graph;
 	}
 }
