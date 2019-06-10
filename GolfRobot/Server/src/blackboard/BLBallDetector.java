@@ -19,6 +19,13 @@ import mapping.LidarScan;
 import objects.LidarSample;
 import objects.Point;
 import objects.Pose;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import org.opencv.core.CvType;
+import org.opencv.core.Rect;
+
+
+
 
 public class BLBallDetector {
 	
@@ -119,4 +126,66 @@ public class BLBallDetector {
     	
     	return map;
     }
+	
+		public static boolean scanImage(Mat frame) {
+		
+		
+		int erosion_value = 0; 
+		int dialation_value = 0;
+		
+		Scalar lower = new Scalar(0,0,0);
+		Scalar upper = new Scalar(150,150,150);
+		
+		
+		//Mat frame = bufferedImageToMat(image);
+		
+		Mat hsv = new Mat();
+		Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_BGR2HSV);
+
+		Mat orangemask = new Mat();
+		Core.inRange(hsv, lower, upper, orangemask);
+		
+		Mat orange_output = new Mat();
+		Core.bitwise_and(frame, frame, orange_output, orangemask);
+		
+		Mat kernel = Mat.ones(erosion_value, erosion_value, CvType.CV_8U);
+		
+		Mat erosion = new Mat();
+		Imgproc.erode(orangemask, erosion, kernel);
+		
+		
+		Mat kernel_dialation = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
+		
+		Mat dialationNerosion = new Mat();
+		Imgproc.dilate(erosion, dialationNerosion, kernel_dialation);
+		
+		
+		Rect roi = new Rect(280, 10, 50, 440);
+		
+		Mat ball_roi = new Mat(dialationNerosion, roi);
+		
+		
+		Mat thresh = new Mat();
+		Imgproc.adaptiveThreshold(ball_roi, thresh, 127, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 40);
+		
+		List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+		Mat hierarchy = new Mat();
+		Imgproc.findContours(thresh, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
+		
+		Imgcodecs.imwrite("C:\\Users\\PC\\Desktop\\test\\test.png", ball_roi);
+		
+		 if (contours.size() != 0) {
+			 return true; 
+			 
+		 }else {
+			 return false;
+		 }
+	}
+	
+	public static Mat bufferedImageToMat(BufferedImage bi) {
+		  Mat mat = new Mat(bi.getHeight(), bi.getWidth(), CvType.CV_8UC3);
+		  byte[] data = ((DataBufferByte) bi.getRaster().getDataBuffer()).getData();
+		  mat.put(0, 0, data);
+		  return mat;
+		}
 }
