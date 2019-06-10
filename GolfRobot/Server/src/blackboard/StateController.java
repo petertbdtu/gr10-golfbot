@@ -85,20 +85,18 @@ public class BLController implements BlackboardListener {
 					
 					// Follow left wall, robot drives clockwise
 
-					if (locateBall() == false) {
+					/*if (locateBall() == false) {
 						state = State.EXPLORE;
 					} else {
 						state = State.VALIDATE_BALL;
-					}
+					}*/
+					state = State.RUN_ROUTE;
 					break;
 
 				case VALIDATE_BALL:
-					/* turnToBall();
-					 * if( stillABall() ){
-					 * 	state = state.PLAN_ROUTE;
-				 	 * } else state = state.EXPLORE;
-					 * */
 					
+					// TurnToBall()
+					// Validate with camera()
 					state = State.PLAN_ROUTE;
 					break;
 
