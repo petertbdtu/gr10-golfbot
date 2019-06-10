@@ -93,12 +93,9 @@ public class BLController implements BlackboardListener {
 					break;
 
 				case VALIDATE_BALL:
-					/* turnToBall();
-					 * if( stillABall() ){
-					 * 	state = state.PLAN_ROUTE;
-				 	 * } else state = state.EXPLORE;
-					 * */
 					
+					// TurnToBall()
+					// Validate with camera()
 					state = State.PLAN_ROUTE;
 					break;
 
