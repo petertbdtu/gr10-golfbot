@@ -109,7 +109,7 @@ public class RemoteMain {
 						System.out.println(">>> DATA <<<");
 						System.out.println("IsMoving: " + bSample.isMoving);
 						System.out.println("IsCollecting: " + bSample.isCollecting);
-						System.out.println("Pose: " + bSample.robotPose.toString());
+						//System.out.println("Pose: " + bSample.robotPose.toString());
 						System.out.print("TheScan: ");
 						LidarScan lScan = bSample.scan;
 						for(LidarSample sample : lScan.getSamples()) {

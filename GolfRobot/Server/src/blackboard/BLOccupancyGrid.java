@@ -1,16 +1,17 @@
-package blackboard;
-
+//package blackboard;
+//
 //import java.io.FileInputStream;
 //import java.io.FileOutputStream;
 //import java.io.ObjectInputStream;
 //import java.io.ObjectOutputStream;
 //import java.io.Serializable;
 //import java.util.HashMap;
-
-
-
-public class BLOccupancyGrid {
-
+//import objects.Point;
+//
+//
+//
+//public class BLOccupancyGrid {
+//
 //	private final double OCCUPANCY_WEIGHT = 0.5;
 //	private HashMap<Point,OccupancyObject> map;
 //	public float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = Float.MIN_VALUE, maxY = Float.MIN_VALUE;
@@ -53,7 +54,7 @@ public class BLOccupancyGrid {
 //		}
 //	}
 //	
-//	public void registerOccupancy(lejos.robotics.geometry.Point point, boolean isOccupied) {
+//	public void registerOccupancy(Point point, boolean isOccupied) {
 //		if(point.x > maxX)
 //			maxX = point.x;
 //		if(point.y > maxY)
@@ -72,7 +73,7 @@ public class BLOccupancyGrid {
 //		}
 //	}
 //	
-//	public void MarkBall(lejos.robotics.geometry.Point point) {
+//	public void MarkBall(Point point) {
 //		if(map.containsKey(point)) {
 //			map.put((Point) point, map.get(point).setBall());
 //		} else {
@@ -80,12 +81,12 @@ public class BLOccupancyGrid {
 //		}
 //	}
 //	
-//	public boolean isOccupied(lejos.robotics.geometry.Point point) {
+//	public boolean isOccupied(Point point) {
 //		OccupancyObject occObj = map.get(point);
 //		return occObj.getOccupancyValue() > OCCUPANCY_WEIGHT;
 //	}
 //	
-//	public boolean isBall(lejos.robotics.geometry.Point point) {
+//	public boolean isBall(Point point) {
 //		OccupancyObject occObj = map.get(point);
 //		return occObj.isBall;
 //	}
@@ -96,7 +97,7 @@ public class BLOccupancyGrid {
 //	 * @param size length of the sides of the square
 //	 * @return whether there are points in the square
 //	 */
-//	public boolean checkCollisions(lejos.robotics.geometry.Point location, float size) {
+//	public boolean checkCollisions(Point location, float size) {
 //		float halfSize = size/2;
 //		Point a = new Point(location.x-halfSize, location.y-halfSize);
 //		Point b = new Point(location.x+halfSize, location.y+halfSize);
@@ -154,4 +155,4 @@ public class BLOccupancyGrid {
 //			return occupancyValue;
 //		}
 //	}
-}
+//}
