@@ -36,38 +36,38 @@ public class RemoteMain {
 			System.out.println("Lidar Receiver failed");
 		}
 			
-		// Build Lego Receiver
-		System.out.println("Building Lego Receiver...");
-		LegoReceiver legoReceiver = new LegoReceiver();
-		if(YesRobotRunYesYes && legoReceiver.connect(3000)) {
-			legoReceiver.start();
-			System.out.println("Lego Receiver succes");
-		} else {
-			YesRobotRunYesYes = false;
-			System.out.println("Lego Receiver failed");
-		}
-		
-		// Command Transmitter
-		System.out.println("Building Command Transmitter...");
-		CommandTransmitter commandTransmitter = new CommandTransmitter();
-		if(YesRobotRunYesYes) {
-			YesRobotRunYesYes = commandTransmitter.connect(3001);
-			System.out.println("Command Transmitter succes");
-		} else {
-			YesRobotRunYesYes = false;
-			System.out.println("Command Transmitter failed");
-		}
-		
-		// Blackboard Controller
-		System.out.println("Building blackboard...");
-		BlackboardController bController = new BlackboardController(null, legoReceiver, null);
-		bController.registerListener(commandTransmitter);
-		if(YesRobotRunYesYes) {
-			bController.start();
-			System.out.println("Blackboard succes");
-		} else {
-			System.out.println("Blackboard not started");
-		}
+//		// Build Lego Receiver
+//		System.out.println("Building Lego Receiver...");
+//		LegoReceiver legoReceiver = new LegoReceiver();
+//		if(YesRobotRunYesYes && legoReceiver.connect(3000)) {
+//			legoReceiver.start();
+//			System.out.println("Lego Receiver succes");
+//		} else {
+//			YesRobotRunYesYes = false;
+//			System.out.println("Lego Receiver failed");
+//		}
+//		
+//		// Command Transmitter
+//		System.out.println("Building Command Transmitter...");
+//		CommandTransmitter commandTransmitter = new CommandTransmitter();
+//		if(YesRobotRunYesYes) {
+//			YesRobotRunYesYes = commandTransmitter.connect(3001);
+//			System.out.println("Command Transmitter succes");
+//		} else {
+//			YesRobotRunYesYes = false;
+//			System.out.println("Command Transmitter failed");
+//		}
+//		
+//		// Blackboard Controller
+//		System.out.println("Building blackboard...");
+//		BlackboardController bController = new BlackboardController(null, legoReceiver, null);
+//		bController.registerListener(commandTransmitter);
+//		if(YesRobotRunYesYes) {
+//			bController.start();
+//			System.out.println("Blackboard succes");
+//		} else {
+//			System.out.println("Blackboard not started");
+//		}
 			
 		//Remove main
 		System.out.println("Start Manual Remote-Control...");
@@ -79,51 +79,54 @@ public class RemoteMain {
 			System.out.println();
 			System.out.println();
 			switch (scan.next()) {
-				case "1" : {
-					System.out.println("How far?");
-					commandTransmitter.robotTravel(0, scan.nextInt()); 
-					break;
-				}
-				case "2" : {
-					System.out.println("How far?");
-					commandTransmitter.robotTravel(0, -scan.nextInt());
-					break;
-				}
-				case "3" : {
-					System.out.println("How much?");
-					commandTransmitter.robotTravel(scan.nextInt(), 0);
-					break;
-				}
-				case "4" : {
-					System.out.println("How much?");
-					commandTransmitter.robotTravel(-scan.nextInt(), 0);
-					break;
-				}
-				case "5" : {
-					// not implemented
-					break;
-				}
-				case "6" : {
-					BlackboardSample bSample = commandTransmitter.getSample();
-					if(bSample != null) {
-						System.out.println(">>> DATA <<<");
-						System.out.println("IsMoving: " + bSample.isMoving);
-						System.out.println("IsCollecting: " + bSample.isCollecting);
-						System.out.println("Pose: " + bSample.robotPose.toString());
-						System.out.print("TheScan: ");
-						LidarScan lScan = bSample.scan;
-						for(LidarSample sample : lScan.getSamples()) {
-							System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
-						}
-					}
-
-					break;
-				}
+//				case "1" : {
+//					System.out.println("How far?");
+//					commandTransmitter.robotTravel(0, scan.nextInt()); 
+//					break;
+//				}
+//				case "2" : {
+//					System.out.println("How far?");
+//					commandTransmitter.robotTravel(0, -scan.nextInt());
+//					break;
+//				}
+//				case "3" : {
+//					System.out.println("How much?");
+//					commandTransmitter.robotTravel(scan.nextInt(), 0);
+//					break;
+//				}
+//				case "4" : {
+//					System.out.println("How much?");
+//					commandTransmitter.robotTravel(-scan.nextInt(), 0);
+//					break;
+//				}
+//				case "5" : {
+//					// not implemented
+//					break;
+//				}
+//				case "6" : {
+//					BlackboardSample bSample = commandTransmitter.getSample();
+//					if(bSample != null) {
+//						System.out.println(">>> DATA <<<");
+//						System.out.println("IsMoving: " + bSample.isMoving);
+//						System.out.println("IsCollecting: " + bSample.isCollecting);
+//						System.out.println("Pose: " + bSample.robotPose.toString());
+//						System.out.print("TheScan: ");
+//						LidarScan lScan = bSample.scan;
+//						for(LidarSample sample : lScan.getSamples()) {
+//							System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
+//						}
+//					}
+//
+//					break;
+//				}
 				case "7" : {
 					LidarScan lScan = lidarReceiver.getScan();
 					if(lScan != null) {
 						try {
-							Imgcodecs.imwrite("testScan2.jpg", lScan.getMat());
+							for(LidarSample sample : lScan.getSamples()) {
+								System.out.println("[" + sample.angle + "," + sample.distance + "] ");	
+							}
+							Imgcodecs.imwrite("testScan2.png", lScan.getMat());
 				            FileOutputStream fileOut = new FileOutputStream("testScan2.data");
 				            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
 				            objectOut.writeObject(lScan);
