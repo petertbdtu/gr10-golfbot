@@ -17,13 +17,12 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 	public static void main(String[] args){
 		StateControllerTemp st = new StateControllerTemp();
 		st.start();
-		
 		try { st.join(); } 
 		catch (InterruptedException e) { e.printStackTrace(); }
 	}
 	
 	private enum State {
-		GET_SAMPLES,
+		DEBUG,
 		COLLISION_AVOIDANCE_TURN,
 		COLLISION_AVOIDANCE_REVERSE,
 		COLLISION_AVOIDANCE_STOP,
@@ -32,6 +31,7 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 		PLAN_ROUTE,
 		RUN_ROUTE,
 		FETCH_BALL,
+		FIND_BALL,
 		FIND_GOAL,
 		GO_TO_GOAL,		
 		COMPLETED,
@@ -43,7 +43,9 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 	private State state;
 	private State lastState;
 	
-	private boolean trigger;
+	
+	
+	private boolean notDone;
 	private boolean ballFound;
 	private int ballcounter;
 	private int ballsDelivered;
@@ -52,38 +54,57 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 	private LidarReceiver lidarReceiver;
 	private LegoReceiver legoReceiver;
 	private BlackboardController bController;
-	private BLCollisionDetector cd;
+	private BLCollisionDetector collisionDetector;
+	private BLBallDetector ballDetector;
 
 
 	public StateControllerTemp() {
+		// Initial state
 		state = State.EXPLORE;
-		trigger = false;
-		ballFound = false;
+		notDone = true;
 		ballcounter = 0;
 		ballsDelivered = 0;
-		startup();
+		
+		// Initialise objects
+		initialiseObjects();
 	}
 
 	@Override
 	public void run() {
-		State tempState = State.FETCH_BALL;
-		while(!trigger) {
+		State tempState = State.DEBUG;
+		while(!notDone) {
+			
+			// DEBUG
 			if(state != tempState) {
 				System.out.println(state);
 				tempState = state;
 			}
-			if (cd.getIsDetected() == true) { 
-				lastState = state;
-				state = State.COLLISION_AVOIDANCE_STOP;
-			}
-//			else if (cd.getSlowDown() == true) {
-//				commandTransmitter.robotSlowDown();
-//				cd.setSlowDown(false);
-//			}
 			
+			// Collision detection state overruling
+			if (collisionDetector.getIsDetected())
+				state = State.COLLISION_AVOIDANCE_STOP;
+			
+			// State switcher
 			switch(state) {
-				case GET_SAMPLES:
+			
+				case EXPLORE:
+					commandTransmitter.robotTravel(0, -1000);
+					nextState = State.FIND_BALL;
+					state = State.WAIT_FOR_RUN;
+					break;
 					
+				case FIND_BALL:
+					LidarScan scan = bbSample.scan;
+					
+					// Ball found?
+					if(ballDetector.getClosestBall(scan) != null) {
+						// Go To Ball
+					}
+					
+					state = State.EXPLORE;
+					break;
+
+				case GET_SAMPLES:
 					commandTransmitter.robotTravel(360, 0);
 					getLidarSamples();
 					state = State.EXPLORE;
@@ -104,17 +125,7 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 					nextState = State.RUN_ROUTE;
 					state = State.WAIT_FOR_RUN;
 					break;
-				case EXPLORE:
-					
-					// Follow left wall, robot drives clockwise
 
-					/*if (locateBall() == false) {
-						state = State.EXPLORE;
-					} else {
-						state = State.VALIDATE_BALL;
-					}*/
-					state = State.RUN_ROUTE;
-					break;
 
 				case VALIDATE_BALL:
 					
@@ -201,11 +212,12 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 					 * trigger = TRUE;
 					 */
 					break;
+					
 				case IS_MOVING:
-					if(!bbSample.isMoving) {
+					if(!bbSample.isMoving)
 						state = nextState;
-					}
 					break;
+					
 				default:
 					state = State.EXPLORE;
 					break;
@@ -213,7 +225,7 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 		}
 	}
 
-	public void startup() {
+	public void initialiseObjects() {
 		// Very important boolean
 		boolean YesRobotRunYesYes = true;
 
