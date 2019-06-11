@@ -97,7 +97,7 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 					LidarScan scan = bbSample.scan;
 					
 					// Ball found?
-					if(ballDetector.findClosestBallLidar(scan) != null) {
+					if(ballDetector.(scan) != null) {
 						// Go To Ball
 					}
 					
