@@ -49,7 +49,7 @@ public class BLBallDetector {
 			Mat map = bd.getMap(scan);
 			Imgcodecs.imwrite("map.png", map);
 
-			Point closestball = bd.findClosestBallLidar(map);
+			Point closestball = bd.findClosestBallLidar(scan);
 			if (closestball == null) {
 				System.out.println("No balls found.");
 			} else {
@@ -135,7 +135,7 @@ public class BLBallDetector {
 				mat.put(h-p.y, w+p.x, new byte[] {(byte)255});
 				
 				if (p.distance(prevPoint) <= 20) {
-					Imgproc.line(mat, new org.opencv.core.Point(w+p.x, h-p.y), new org.opencv.core.Point(w+prevPoint.x, h-prevPoint.y), new Scalar(255), lineThickness, Imgproc.LINE_AA, 0);
+					Imgproc.line(mat, new org.opencv.core.Point(w+p.x, h-p.y), new org.opencv.core.Point(w+prevPoint.x, h-prevPoint.y), new Scalar(255), lineThickness, Imgproc.LINE_8, 0);
 				}
 				
 				prevPoint = p;
@@ -163,7 +163,9 @@ public class BLBallDetector {
 		return graph;
 	}
 
-	public Point findClosestBallLidar(Mat map) {
+	public Point findClosestBallLidar(LidarScan scan) {
+		
+		Mat map = getMap(scan);
 		
 		// Convert to binary image
 		int thresh = 200;
