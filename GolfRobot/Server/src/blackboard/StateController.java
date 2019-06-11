@@ -25,7 +25,9 @@ public class StateController extends Thread implements BlackboardListener  {
 	
 	private enum State {
 		GET_SAMPLES,
-		COLLISION_AVOIDANCE,
+		COLLISION_AVOIDANCE_TURN,
+		COLLISION_AVOIDANCE_REVERSE,
+		COLLISION_AVOIDANCE_STOP,
 		EXPLORE,
 		VALIDATE_BALL,
 		PLAN_ROUTE,
@@ -33,9 +35,12 @@ public class StateController extends Thread implements BlackboardListener  {
 		FETCH_BALL,
 		FIND_GOAL,
 		GO_TO_GOAL,		
-		COMPLETED
+		COMPLETED,
+		IS_MOVING,
+		WAIT_FOR_RUN
 	}
 	
+	private State nextState;
 	private State state;
 	private State lastState;
 	private boolean trigger;
@@ -61,14 +66,20 @@ public class StateController extends Thread implements BlackboardListener  {
 
 	@Override
 	public void run() {
+		State tempState = State.FETCH_BALL;
 		while(!trigger) {
+			if(state != tempState) {
+				System.out.println(state);
+				tempState = state;
+			}
 			if (cd.getIsDetected() == true) { 
 				lastState = state;
-				state = State.COLLISION_AVOIDANCE;
-			} else if (cd.getSlowDown() == true) {
-				commandTransmitter.robotSlowDown();
-				cd.setSlowDown(false);
+				state = State.COLLISION_AVOIDANCE_STOP;
 			}
+//			else if (cd.getSlowDown() == true) {
+//				commandTransmitter.robotSlowDown();
+//				cd.setSlowDown(false);
+//			}
 			
 			switch(state) {
 				case GET_SAMPLES:
@@ -77,18 +88,22 @@ public class StateController extends Thread implements BlackboardListener  {
 					getLidarSamples();
 					state = State.EXPLORE;
 					break;
-				
-				case COLLISION_AVOIDANCE:
-					// Go back, compare right side to left side, turn and go where the distance is largest
+				case COLLISION_AVOIDANCE_STOP:
 					commandTransmitter.robotStop();
-					commandTransmitter.robotTravel(0,-500);
-					commandTransmitter.robotTravel(90,0);
-					
-					cd.setIsDetected(false);
-					state = lastState;
+					nextState = State.COLLISION_AVOIDANCE_REVERSE;
+					state = State.IS_MOVING;
 					break;
-
-
+				case COLLISION_AVOIDANCE_REVERSE:
+					commandTransmitter.robotTravel(0,50);
+					nextState = State.COLLISION_AVOIDANCE_TURN;
+					state = State.WAIT_FOR_RUN;
+					break;
+				case COLLISION_AVOIDANCE_TURN:
+					commandTransmitter.robotTravel(90,0);
+					cd.setIsDetected(false);
+					nextState = State.RUN_ROUTE;
+					state = State.WAIT_FOR_RUN;
+					break;
 				case EXPLORE:
 					
 					// Follow left wall, robot drives clockwise
@@ -122,12 +137,17 @@ public class StateController extends Thread implements BlackboardListener  {
 					 */
 
 					// MOVE ACCORDING TO ROUTEPLANNER
-					commandTransmitter.robotTravel(90, 0);
-					commandTransmitter.robotTravel(0, 1000);
+					//commandTransmitter.robotTravel(90, 0);
+					commandTransmitter.robotTravel(0, -1000);
 
-					state = State.FETCH_BALL;
+					nextState = State.RUN_ROUTE;
+					state = State.WAIT_FOR_RUN;
 					break;
 
+				case WAIT_FOR_RUN:
+					if(bbSample.isMoving)
+						state = State.IS_MOVING;
+					break;
 				case FETCH_BALL:
 					/* pickUpBall();
 					 * ballcounter++;
@@ -181,7 +201,11 @@ public class StateController extends Thread implements BlackboardListener  {
 					 * trigger = TRUE;
 					 */
 					break;
-
+				case IS_MOVING:
+					if(!bbSample.isMoving) {
+						state = nextState;
+					}
+					break;
 				default:
 					state = State.EXPLORE;
 					break;
@@ -251,11 +275,12 @@ public class StateController extends Thread implements BlackboardListener  {
 	}
 
 	public void wallCollisionISR() {
-		state = State.COLLISION_AVOIDANCE;
+		state = State.COLLISION_AVOIDANCE_STOP;
 	}
 
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
+		System.out.println(bbSample.isMoving);
 	}
 
 	public void getLidarSamples() {
