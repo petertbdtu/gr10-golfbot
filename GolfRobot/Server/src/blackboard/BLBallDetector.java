@@ -49,7 +49,7 @@ public class BLBallDetector {
 			Mat map = bd.getMap(scan);
 			Imgcodecs.imwrite("map.png", map);
 
-			Point closestball = bd.scanMap(map);
+			Point closestball = bd.findClosestBallLidar(map);
 			if (closestball == null) {
 				System.out.println("No balls found.");
 			} else {
@@ -163,7 +163,7 @@ public class BLBallDetector {
 		return graph;
 	}
 
-	public Point scanMap(Mat map) {
+	public Point findClosestBallLidar(Mat map) {
 		
 		// Convert to binary image
 		int thresh = 200;
