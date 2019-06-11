@@ -105,7 +105,7 @@ public class LidarReceiver extends Thread {
 				angle = calculated_angle + distCorrection;
 			}
 			if(debug) { System.out.println("Calculated angle: " + angle); }
-			if(!(angle > 34 && angle < 41) && !(angle > 97 && angle < 111)) {
+			if(!(angle > 150 && angle < 210) && !(angle > 15 && angle < 50) && !(angle > 300 && angle < 345)) {
 				// Collects 0-360 degree scan's
 				if(lastAngle > angle + 10) {
 					if(debug) { System.out.println("Scan finished... Found " + tempScan.scanSize() + " samples..."); }
