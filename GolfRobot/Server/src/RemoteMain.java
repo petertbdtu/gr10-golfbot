@@ -10,6 +10,7 @@ import org.opencv.core.Core;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import blackboard.BLBallDetector;
 import blackboard.BlackboardController;
 import blackboard.BlackboardSample;
 import communication.CommandTransmitter;
@@ -72,7 +73,7 @@ public class RemoteMain {
 		//Remove main
 		System.out.println("Start Manual Remote-Control...");
 		Scanner scan = new Scanner(System.in);
-		
+		BLBallDetector ballDetector = new BLBallDetector();
 		
 		while(YesRobotRunYesYes) {
 			printMenu();
@@ -126,7 +127,7 @@ public class RemoteMain {
 							for(LidarSample sample : lScan.getSamples()) {
 								System.out.println("[" + sample.angle + "," + sample.distance + "] ");	
 							}
-							Imgcodecs.imwrite("testScan2.png", lScan.getMat());
+							Imgcodecs.imwrite("testScan2.png", ballDetector.getMap(lScan));
 				            FileOutputStream fileOut = new FileOutputStream("testScan2.data");
 				            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
 				            objectOut.writeObject(lScan);
@@ -136,16 +137,6 @@ public class RemoteMain {
 				        } catch (Exception ex) {
 				            System.out.println("The Object could not be written to a file");
 				        }
-					}
-					break;
-				}
-				case "8" : {
-					LidarScan lScan = lidarReceiver.getScan();
-					for(LidarSample sample : lScan.getSamples()) {
-						System.out.print("[" + sample.angle + "," + sample.distance + "] ");	
-					}
-					if(lScan != null) {
-						Imgcodecs.imwrite("testScan.jpg", lScan.getMat());
 					}
 					break;
 				}
