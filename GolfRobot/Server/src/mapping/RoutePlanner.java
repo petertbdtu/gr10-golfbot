@@ -1,7 +1,11 @@
-package mapping;
+//package mapping;
 //import java.util.ArrayList;
 //import java.util.Collections;
 //import java.util.List;
+//
+//import blackboard.BLOccupancyGrid;
+//import objects.Point;
+//import objects.Pose;
 //
 //
 //public class RoutePlanner {
@@ -22,8 +26,8 @@ package mapping;
 //		this.headingPrecision = headingPrecision;
 //	}
 //	
-//	public List<Waypoint> plan(Point start, Point goal) {
-//		List<Waypoint> route = initRouteTwoWay(start, goal);
+//	public List<Pose> plan(Point start, Point goal) {
+//		List<Pose> route = initRouteTwoWay(start, goal);
 //		System.out.println("Initial route length: "+route.size());
 //		
 //		route = cleanupSameHeading(route);
@@ -35,13 +39,13 @@ package mapping;
 //		return route;
 //	}
 //	
-//	private List<Waypoint> initRouteTwoWay(Point start, Point goal) {
-//		ArrayList<Waypoint> forwards = new ArrayList<>();
-//		ArrayList<Waypoint> reverse = new ArrayList<>();
+//	private ArrayList<Pose> initRouteTwoWay(Point start, Point goal) {
+//		ArrayList<Point> forwards = new ArrayList<>();
+//		ArrayList<Point> reverse = new ArrayList<>();
 //		// TODO find out if it is necessary to add the goal point to the reverse list.
 //		
-//		Waypoint nextf = nextStep(start, goal);
-//		Waypoint nextr = nextStep(goal, start);
+//		Point nextf = nextStep(start, goal);
+//		Point nextr = nextStep(goal, start);
 //		int maxIter = 1000;
 //		int iterations = 0;
 //		// Stop once goal reached in either path.
@@ -58,16 +62,16 @@ package mapping;
 //		if (withinSquare(goal, nextf))
 //		{
 //			System.out.println("forwards");
-//			forwards.add(new Waypoint(goal));
+//			forwards.add(new Point(goal));
 //			return forwards;
 //		}
 //		System.out.println("reverse");
 //		Collections.reverse(reverse);
-//		reverse.add(new Waypoint(goal));
+//		reverse.add(new Point(goal));
 //		return reverse;
 //	}
 //	
-//	private Waypoint nextStep(Point start, Point goal) {
+//	private Pose nextStep(Point start, Point goal) {
 //		Pose s = new Pose(start.x, start.y, 0);
 //		
 //		// Face target
@@ -84,14 +88,14 @@ package mapping;
 //			s = new Pose(start.x, start.y, heading);
 //			s.moveUpdate(checkInterval);
 //		}
-//		return new Waypoint(s);
+//		return new Pose(s);
 //	}
 //	
-//	private List<Waypoint> cleanupSameHeading(List<Waypoint> route) {
-//		ArrayList<Waypoint> cleanRoute = new ArrayList<>();
+//	private List<Pose> cleanupSameHeading(List<Pose> route) {
+//		ArrayList<Pose> cleanRoute = new ArrayList<>();
 //		
-//		Waypoint lastWaypoint = new Waypoint(0,0,-10000);
-//		for (Waypoint wp : route) {
+//		Pose lastWaypoint = new Pose(0,0,-10000);
+//		for (Pose wp : route) {
 //			if (!sameHeading(lastWaypoint, wp))
 //				cleanRoute.add(wp);
 //			lastWaypoint = wp;
@@ -100,8 +104,8 @@ package mapping;
 //		return cleanRoute;
 //	}
 //	
-//	private List<Waypoint> flowBackwards(List<Waypoint> route) {
-//		ArrayList<Waypoint> newRoute = new ArrayList<>();
+//	private List<Point> flowBackwards(List<Point> route) {
+//		ArrayList<Point> newRoute = new ArrayList<>();
 //		
 //		/*
 //		 * Tries to find longest shortcuts by going backwards from the end.
@@ -143,12 +147,12 @@ package mapping;
 //		return true;
 //	}
 //
-//	private boolean sameHeading(Waypoint a, Waypoint b) {
+//	private boolean sameHeading(Pose a, Pose b) {
 //		return a.getHeading()-headingPrecision <= b.getHeading() && b.getHeading() <= a.getHeading()+headingPrecision;
 //	}
 //	
-//	private boolean withinSquare(Point squareCenter, Point p) {
-//		return squareCenter.x-destPrecision <= p.x && p.x <= squareCenter.x+destPrecision &&
-//				squareCenter.y-destPrecision <= p.y && p.y <= squareCenter.y+destPrecision;
+//	private boolean withinSquare(Point squareCenter, Pose nextf) {
+//		return squareCenter.x-destPrecision <= nextf.point.x && nextf.point.x <= squareCenter.x+destPrecision &&
+//				squareCenter.y-destPrecision <= nextf.point.y && nextf.point.y <= squareCenter.y+destPrecision;
 //	}
 //}
