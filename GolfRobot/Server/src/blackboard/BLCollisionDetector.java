@@ -3,6 +3,7 @@ package blackboard;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import communication.CommandTransmitter;
 
@@ -34,7 +35,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 		slowDownDetected = bool;
 	}
 	
-	public void setisDetected(boolean bool) {
+	public void setIsDetected(boolean bool) {
 		isDetected = bool;
 	}
 	
@@ -56,13 +57,15 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	}
 	
 	@Override
-	public void run() {
+	public void run() {		
 		int cycle = -1;
 		while(true) {
+		if(bbSample != null) {
 			if(bbSample.cycle == cycle + 1) {
 				StartAvoidance();
 				cycle++;
 			}
+		}
 		}
 	}
 }

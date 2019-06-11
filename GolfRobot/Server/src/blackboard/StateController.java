@@ -12,10 +12,15 @@ import communication.LidarReceiver;
 import mapping.LidarScan;
 import objects.LidarSample;
 
-public class BLController implements BlackboardListener {
-	public void main(){
-		startup();
-		FSM();
+public class StateController extends Thread implements BlackboardListener  {
+	public static void main(String[] args){
+		StateController st = new StateController();
+		st.start();
+		try {
+			st.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private enum State {
@@ -42,19 +47,22 @@ public class BLController implements BlackboardListener {
 	private LidarReceiver lidarReceiver;
 	private LegoReceiver legoReceiver;
 	private BlackboardController bController;
+	private BLCollisionDetector cd;
 
 
-	public BLController() {
+	public StateController() {
 		state = State.EXPLORE;
 		trigger = false;
 		ballFound = false;
 		ballcounter = 0;
 		ballsDelivered = 0;
+		startup();
 	}
 
-	public void FSM() {
+	@Override
+	public void run() {
 		while(!trigger) {
-			if (cd.isDetected() == true) { 
+			if (cd.getIsDetected() == true) { 
 				lastState = state;
 				state = State.COLLISION_AVOIDANCE;
 			} else if (cd.getSlowDown() == true) {
@@ -187,7 +195,7 @@ public class BLController implements BlackboardListener {
 
 		// Build Lidar receiver
 		System.out.println("Building Lidar Receiver...");
-		LidarReceiver lidarReceiver = new LidarReceiver();
+		lidarReceiver = new LidarReceiver();
 		if(YesRobotRunYesYes && lidarReceiver.bindSocket(5000)) {
 			lidarReceiver.start();
 			System.out.println("Lidar Receiver succes");
@@ -198,7 +206,7 @@ public class BLController implements BlackboardListener {
 
 		// Build Lego Receiver
 		System.out.println("Building Lego Receiver...");
-		LegoReceiver legoReceiver = new LegoReceiver();
+		legoReceiver = new LegoReceiver();
 		if(YesRobotRunYesYes && legoReceiver.connect(3000)) {  //connect(3000, 3001, 3002)
 			legoReceiver.start();
 			System.out.println("Lego Receiver succes");
@@ -209,34 +217,36 @@ public class BLController implements BlackboardListener {
 
 		// Command Transmitter
 		System.out.println("Building Command Transmitter...");
-		CommandTransmitter commandTransmitter = new CommandTransmitter();
+		commandTransmitter = new CommandTransmitter();
 		if(YesRobotRunYesYes) {
-			YesRobotRunYesYes = commandTransmitter.connect(3003);
+			YesRobotRunYesYes = commandTransmitter.connect(3001);
 			System.out.println("Command Transmitter succes");
 		} else {
 			YesRobotRunYesYes = false;
 			System.out.println("Command Transmitter failed");
 		}
-
-		// Blackboard Controller
-		System.out.println("Building blackboard...");
-		BlackboardController bController = new BlackboardController(null, legoReceiver, lidarReceiver);
-		bController.registerListener(commandTransmitter);
-		if(YesRobotRunYesYes) {
-			bController.start();
-			System.out.println("Blackboard succes");
-		} else {
-			System.out.println("Blackboard not started");
-		}
 		
 		//Collision Detection
 		System.out.println("Building Collision Detector...");
-		BLCollisionDetector cd = new BLCollisionDetector();
+		cd = new BLCollisionDetector();
 		if(YesRobotRunYesYes) {
 			cd.start();
 			System.out.println("Collision detection activated");
 		} else {
 			System.out.println("Collision detection aprehended");
+		}
+
+		// Blackboard Controller
+		System.out.println("Building blackboard...");
+		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+		bController.registerListener(commandTransmitter);
+		bController.registerListener(cd);
+		bController.registerListener(this);
+		if(YesRobotRunYesYes) {
+			bController.start();
+			System.out.println("Blackboard succes");
+		} else {
+			System.out.println("Blackboard not started");
 		}
 	}
 
@@ -245,7 +255,7 @@ public class BLController implements BlackboardListener {
 	}
 
 	public void blackboardUpdated(BlackboardSample bbSample) {
-		this.bbSample = bbSample;
+		this.bbSample = new BlackboardSample(bbSample);
 	}
 
 	public void getLidarSamples() {
@@ -293,5 +303,7 @@ public class BLController implements BlackboardListener {
 	public void finished() {
 		// MAKE A FINISHING SOUND
 	}
+	
+	
 
 }

@@ -66,8 +66,7 @@ public class CommandReceiver extends Thread {
 					System.out.println("Collecting ball ....");
 					break;
 				case 'J':
-					manager.slowDown();
-					System.out.println("Slowing down robot for nearby collision")
+					navigation.slowDown();
 			}
 		}
 	}	
