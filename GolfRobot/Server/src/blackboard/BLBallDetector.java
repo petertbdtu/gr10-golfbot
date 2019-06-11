@@ -36,20 +36,25 @@ public class BLBallDetector {
 
 			System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-			FileInputStream fis = new FileInputStream("testScan2.data");
+			FileInputStream fis = new FileInputStream("testScan4.data");
 			ObjectInputStream ois = new ObjectInputStream(fis);
 
 			LidarScan scan = (LidarScan) ois.readObject();
 			ois.close();
 
-			Mat graph = scan.getGraph(1);
-			Imgcodecs.imwrite("graph.png", graph);
+			// graphheight in getGraph sometimes crashes if too low for data.
+			//Mat graph = bd.getGraph(scan, 1);
+			//Imgcodecs.imwrite("graph.png", graph);
 			
-			Mat map = scan.getMap();
+			Mat map = bd.getMap(scan);
 			Imgcodecs.imwrite("map.png", map);
 
-			boolean ballfound = bd.scanLidarMap(map);
-			System.out.println(ballfound ? "ball candidate(s) found." : "no ball found.");
+			Point closestball = bd.scanMap(map);
+			if (closestball == null) {
+				System.out.println("No balls found.");
+			} else {
+				System.out.println("Closest ball found at "+closestball.toString());
+			}
 
 			
 			
@@ -92,38 +97,111 @@ public class BLBallDetector {
 		return false;
 	}
 
-	public boolean scanLidarMap(Mat map) {
+	public Mat getMap(LidarScan scan) {
+		int lx = 0;
+		int hx = 0;
+		int ly = 0;
+		int hy = 0;
 		
-		// Dialation
+		List<Point> pts = scan.getPoints();
 		
-		Mat edges = new Mat();
-		double lo_thresh = 50;
-		double hi_thresh = 150;
-		Imgproc.Canny(map, edges, lo_thresh, hi_thresh);
-
-
-		double dp = 1;
-		double minDist = 1;
-
-		Mat circles = new Mat();
-		Imgproc.HoughCircles(edges, circles, Imgproc.CV_HOUGH_GRADIENT, dp, minDist);
-		List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
-		Imgproc.findContours(edges, contours, new Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-
-		double maxArea = 40;
-		float[] radius = new float[1];
-		org.opencv.core.Point center = new org.opencv.core.Point();
-		for (MatOfPoint c : contours) {
-			if (Imgproc.contourArea(c) > maxArea) {
-				MatOfPoint2f c2f = new MatOfPoint2f(c.toArray());
-				Imgproc.minEnclosingCircle(c2f, center, radius);
+		for (Point p : pts) {
+			if (p.x < lx)
+				lx = p.x;
+			
+			if (p.x > hx)
+				hx = p.x;
+			
+			if (p.y < ly)
+				ly = p.y;
+			
+			if (p.y > hy)
+				hy = p.y;
+		}
+		
+		int w = Integer.max(Math.abs(lx), Math.abs(hx));
+		int h = Integer.max(Math.abs(ly), Math.abs(hy));
+		
+		Mat mat = Mat.zeros(h*2+1, w*2+1, CvType.CV_8U);
+		
+		
+		int lineThickness = 2;
+		if (pts.size() >= 1) {
+			Point prevPoint = pts.get(0);
+			mat.put(h-prevPoint.y,  w+prevPoint.x, new byte[] {(byte)255});
+			
+			for (int i = 1; i < pts.size(); i++) {
+				Point p = pts.get(i);
+				mat.put(h-p.y, w+p.x, new byte[] {(byte)255});
+				
+				if (p.distance(prevPoint) <= 20) {
+					Imgproc.line(mat, new org.opencv.core.Point(w+p.x, h-p.y), new org.opencv.core.Point(w+prevPoint.x, h-prevPoint.y), new Scalar(255), lineThickness, Imgproc.LINE_AA, 0);
+				}
+				
+				prevPoint = p;
 			}
 		}
-		Imgproc.circle(map, center, (int)radius[0], new Scalar(255, 0, 0), 2);
 		
+		// (0, 0) location in grey
+		//mat.put(h, w, new byte[] {(byte)127});
+		// (0, 0) cross which points at 0 degrees.
+		//Imgproc.line(mat, new org.opencv.core.Point(w-10, h), new org.opencv.core.Point(w+30, h), new Scalar(127), 3, Imgproc.LINE_AA, 0);
+		//Imgproc.line(mat, new org.opencv.core.Point(w, h-10), new org.opencv.core.Point(w, h+10), new Scalar(127), 3, Imgproc.LINE_AA, 0);
 		
+		return mat;
+	}
+	
+	public Mat getGraph(LidarScan scan, double pixelDistPerDeg) {
+		int graphheight = 10000;
+		Mat graph = Mat.zeros(graphheight, (int) (360*pixelDistPerDeg), CvType.CV_8U);
 		
-		return false;
+		for (LidarSample ls : scan.getSamples())
+		{
+			graph.put(graphheight - (int) ls.distance, (int) (ls.angle*pixelDistPerDeg), new byte[] {(byte) 255});
+		}
+		
+		return graph;
+	}
+
+	public Point scanMap(Mat map) {
+		
+		// Convert to binary image
+		int thresh = 200;
+		Mat map_bin = new Mat();
+		Imgproc.threshold(map, map_bin, thresh, 255, Imgproc.THRESH_BINARY);
+		
+		// Dialation
+		int dialation_value = 0;
+		Mat dialation_kernel = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
+		Mat map_dial = new Mat();
+		Imgproc.dilate(map_bin, map_dial, dialation_kernel);
+
+		double dp = 1;
+		double minDist = 35;
+		int circleCurveParam1 = 500;
+		int centerDetectionParam2 = 10;
+		int minRadius = 10;
+		int maxRadius = 45;
+		
+		Mat circles = new Mat();
+		Imgproc.HoughCircles(map_dial, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
+		
+		List<Point> ps = new ArrayList<Point>();
+		for (int i = 0; i < circles.cols(); i++) {
+			double[] c = circles.get(0, i);
+			ps.add(new Point((int) c[0], (int) c[1]));
+		}
+		
+		Point origo = new Point(0, 0);
+		Point closest = null;
+		double closestdistance = Double.POSITIVE_INFINITY;
+		for (Point p : ps) {
+			if (origo.distance(p) < closestdistance) {
+				closest = p;
+				closestdistance = origo.distance(p);
+			}
+		}
+		return closest;
 	}
 	
 	public boolean scanCameraImage(Mat frame) {	
