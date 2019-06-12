@@ -12,6 +12,7 @@ import communication.CommandTransmitter;
 import communication.LegoReceiver;
 import communication.LidarReceiver;
 import mapping.LidarScan;
+import objects.LidarSample;
 import objects.Point;
 
 public class StateControllerTemp extends Thread implements BlackboardListener  {
@@ -100,7 +101,7 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 			switch(state) {
 			
 				case EXPLORE:
-					commandTransmitter.robotTravel(0, -1000);
+					commandTransmitter.robotTravel(0, 500);
 					nextState = State.FIND_BALL;
 					state = State.WAIT_FOR_MOVE;
 					break;
@@ -134,11 +135,13 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 				
 				case FIND_BALL: {
 					LidarScan scan = bbSample.scan;
-					Point p = ballDetector.findClosestBallLidar(scan);
-					if(p != null) {
-						float heading = (new Point(0,0)).angleTo(p);
+					currentBall = ballDetector.findClosestBallLidar(scan);
+					if(currentBall != null) {
+						float heading = (new Point(0,0)).angleTo(currentBall);
+						System.out.println("BALL AT HEADING: " + heading);
+						saveScan(scan);
 						commandTransmitter.robotTravel(heading, 0);
-						nextState = State.VALIDATE_BALL;
+						nextState = State.GO_TO_BALL;
 						state = State.WAIT_FOR_MOVE;
 					} else {
 						// Keep exploring
@@ -151,9 +154,12 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 					currentBall = ballDetector.findClosestBallLidar(scan);
 					if(currentBall != null) {
 						float heading = (new Point(0,0)).angleTo(currentBall);
-						if(heading < 1) {
+						System.out.println("BALL VALIDATED AT HEADING: " + heading);
+						if(heading < 1 && heading > -1) {
+							System.out.println("SAME BALL");
 							state = State.GO_TO_BALL;
 						} else {
+							System.out.println("FINDING NEW BALL");
 							state = State.FIND_BALL;
 						}
 					} else {
@@ -275,17 +281,43 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 		return true;
 	}
 
+	private LidarScan tempScan;
+	private LidarScan oldScan;
+
+	
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
-		try {
-			Imgcodecs.imwrite("testScan" + bbSample.cycle + ".png", ballDetector.getMap(bbSample.scan));
-	        FileOutputStream fileOut = new FileOutputStream("testScan" + bbSample.cycle + ".data");
-	        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-	        objectOut.writeObject(bbSample.scan);
-	        objectOut.close();
-		} catch (Exception ex) {
-            System.out.println("The Object could not be written to a file");
-        }
-		
+//		tempScan = bbSample.scan;
+//		if(tempScan != null) {
+//			if(oldScan == null) {
+//				try {
+//					Imgcodecs.imwrite("testScan" + bbSample.cycle + ".png", ballDetector.scanToMap(tempScan));
+//			        FileOutputStream fileOut = new FileOutputStream("testScan" + bbSample.cycle + ".data");
+//			        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+//			        objectOut.writeObject(bbSample.scan);
+//			        objectOut.close();
+//				} catch (Exception ex) {
+//		            System.out.println("The Object could not be written to a file");
+//		        }
+//				oldScan = new LidarScan(tempScan);
+//			} else {
+//				if(tempScan.scanSize() != oldScan.scanSize()) {
+//					try {
+//						Imgcodecs.imwrite("testScan" + bbSample.cycle + ".png", ballDetector.scanToMap(tempScan));
+//				        FileOutputStream fileOut = new FileOutputStream("testScan" + bbSample.cycle + ".data");
+//				        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+//				        objectOut.writeObject(bbSample.scan);
+//				        objectOut.close();
+//					} catch (Exception ex) {
+//			            System.out.println("The Object could not be written to a file");
+//			        }
+//					oldScan = new LidarScan(tempScan);
+//				}
+//			}
+//		}
+	}
+	
+	private void saveScan(LidarScan scan) {
+		Imgcodecs.imwrite("Scanning.png", ballDetector.scanToMap(scan));
 	}
 }

@@ -65,8 +65,6 @@ public class CommandReceiver extends Thread {
 					manager.pickup();
 					System.out.println("Collecting ball ....");
 					break;
-				case 'J':
-					navigation.slowDown();
 			}
 		}
 	}	

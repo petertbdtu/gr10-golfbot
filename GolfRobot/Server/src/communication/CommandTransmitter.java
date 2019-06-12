@@ -15,6 +15,9 @@ public class CommandTransmitter implements BlackboardListener {
 	private ObjectOutputStream oos;
 	private BlackboardSample bbSample = null;
 	
+	private double angularCorrection = 0.0;
+	private double distanceCorrection = 0.0;
+	
 	public boolean connect(int port) {
 		try {
 			serverSocket = new ServerSocket(port);
@@ -39,7 +42,14 @@ public class CommandTransmitter implements BlackboardListener {
 	}
 	
 	public void robotTravel(double angle, double distance) {
-		try { oos.writeObject("M " + angle + ":" + distance); } 
+		if (angle != 0) {
+			angle += angle < 0 ? -angularCorrection : angularCorrection;
+		}
+		
+		if (distance != 0) {
+			distance += distanceCorrection;
+		}
+		try { oos.writeObject("M " + -angle + ":" + -distance); } 
 		catch (IOException e) { e.printStackTrace(); }
 	}
 	

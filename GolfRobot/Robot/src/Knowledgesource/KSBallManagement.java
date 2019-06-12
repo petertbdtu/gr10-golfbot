@@ -6,24 +6,21 @@ import lejos.hardware.port.*;
 
 public class KSBallManagement extends KnowledgeSource {
 
-	EV3MediumRegulatedMotor motor;
-	EV3MediumRegulatedMotor motor2;
+	EV3MediumRegulatedMotor tubeMotor;
+	EV3MediumRegulatedMotor scoopMotor;
 	
-	public KSBallManagement() {
-		motor = new EV3MediumRegulatedMotor(MotorPort.C);
-		motor2 = new EV3MediumRegulatedMotor(MotorPort.D);
+	public KSBallManagement(Port tubeMotorPort, Port scoopMotorPort) {
+		this.tubeMotor = new EV3MediumRegulatedMotor(tubeMotorPort);
+		this.scoopMotor = new EV3MediumRegulatedMotor(scoopMotorPort);
 	}
 	
 	public void pickup() {
-		int tacho = 0;
-		while(!motor.isStalled()) {
-			motor.forward();
-		}
-		motor.flt();
-		motor2.rotate(360);
-		while(!motor.isStalled()) {
-			motor.backward();
-		}
+		tubeMotor.forward();
+		while(!tubeMotor.isStalled());
+		tubeMotor.flt();
+		scoopMotor.rotate(360);
+		tubeMotor.backward();
+		while(!tubeMotor.isStalled());
 	}
 
 	@Override

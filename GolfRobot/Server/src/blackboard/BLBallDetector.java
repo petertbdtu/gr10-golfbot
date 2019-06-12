@@ -87,6 +87,10 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 				prevPoint = p;
 			}
 		}
+
+		// (0, 0) cross which points at 0 degrees.
+		Imgproc.line(mat, new org.opencv.core.Point(w-10, h), new org.opencv.core.Point(w+30, h), new Scalar(127), 3, Imgproc.LINE_AA, 0);
+		Imgproc.line(mat, new org.opencv.core.Point(w, h-10), new org.opencv.core.Point(w, h+10), new Scalar(127), 3, Imgproc.LINE_AA, 0);
 		
 		return mat;
 	}
@@ -133,10 +137,10 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 			// Find circles
 			double dp = 1;
 			double minDist = 35;
-			int circleCurveParam1 = 500;
-			int centerDetectionParam2 = 8;
-			int minRadius = 10;
-			int maxRadius = 45;
+			int circleCurveParam1 = 200;
+			int centerDetectionParam2 = 9;
+			int minRadius = 15;
+			int maxRadius = 40;
 			Mat circles = new Mat();
 			Imgproc.HoughCircles(map_dial, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
 			

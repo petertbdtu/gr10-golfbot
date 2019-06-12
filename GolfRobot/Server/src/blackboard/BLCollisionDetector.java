@@ -27,8 +27,8 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	public boolean slowDownDetected = false;
 	
 	public BLCollisionDetector() {
-		int y = -(ROBOT_WIDTH/2) - DISTANCE_TO_WALL;
-		int x = -(DISTANCE_TO_FRONT + DISTANCE_TO_WALL);
+		int x = -((ROBOT_WIDTH/2) + DISTANCE_TO_WALL);
+		int y = -(DISTANCE_TO_FRONT + DISTANCE_TO_WALL);
 		int width = DISTANCE_TO_WALL;
 		int height = ROBOT_WIDTH + (2 * DISTANCE_TO_WALL);
 		
