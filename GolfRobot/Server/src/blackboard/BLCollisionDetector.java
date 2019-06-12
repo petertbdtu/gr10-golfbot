@@ -9,18 +9,31 @@ import communication.CommandTransmitter;
 
 public class BLCollisionDetector extends Thread implements BlackboardListener {
 
+	private boolean newData;
+	
 	//TODO get real dimensions for robot
-	private int robotWidth = 160; //				mm
-	private int distanceFromLidarToFront = 33; //	mm
-	private int wantedDistanceFromWall = 20; //		mm
-	private Rectangle avoidanceArea = new Rectangle(-(robotWidth/2) - wantedDistanceFromWall, distanceFromLidarToFront + wantedDistanceFromWall, robotWidth + (wantedDistanceFromWall*2), + (wantedDistanceFromWall*2));
-	private Rectangle warningArea = new Rectangle(avoidanceArea.x, avoidanceArea.y + avoidanceArea.height, avoidanceArea.width, avoidanceArea.height);
+	private final int ROBOT_WIDTH = 160; //				mm
+	private final int DISTANCE_TO_FRONT = 200; //	mm
+	private final int DISTANCE_TO_WALL = 50; //		mm
+	
+	private Rectangle avoidanceArea;
+	
+	
+	//private Rectangle warningArea = new Rectangle(avoidanceArea.x, avoidanceArea.y + avoidanceArea.height, avoidanceArea.width, avoidanceArea.height);
+	
 	List<objects.Point> list;
 	private BlackboardSample bbSample;
 	public boolean isDetected = false;
 	public boolean slowDownDetected = false;
 	
 	public BLCollisionDetector() {
+		int x = -((ROBOT_WIDTH/2) + DISTANCE_TO_WALL);
+		int y = -(DISTANCE_TO_FRONT + DISTANCE_TO_WALL);
+		int width = DISTANCE_TO_WALL;
+		int height = ROBOT_WIDTH + (2 * DISTANCE_TO_WALL);
+		
+		avoidanceArea = new Rectangle(x, y, width, height);
+		newData = false;
 	}
 	
 	public boolean getIsDetected() {
@@ -39,33 +52,30 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 		isDetected = bool;
 	}
 	
-	public void StartAvoidance() {
-		   list = bbSample.scan.getPoints();
-		   for(int i = 0; i < list.size(); i++) {
-			   Point point = list.get(i);
-			   if(avoidanceArea.contains(point)) {
-				   isDetected = true;
-			   } else if(warningArea.contains(point)) {
-				   slowDownDetected = true;
-			   }
-		   }
+	public void checkForCollision() {
+	   list = bbSample.scan.getPoints();
+	   for (Point point : list) {
+		   if(avoidanceArea.contains(point)) {
+			   isDetected = true;
+		   } 
+//		   else if(warningArea.contains(point)) {
+//			   slowDownDetected = true;
+//		   }
+	   }
 	}
 
 	@Override
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
+		newData = true;
 	}
 	
 	@Override
 	public void run() {		
-		int cycle = -1;
 		while(true) {
-		if(bbSample != null) {
-			if(bbSample.cycle == cycle + 1) {
-				StartAvoidance();
-				cycle++;
+			if(newData) {
+				checkForCollision();
 			}
-		}
 		}
 	}
 }

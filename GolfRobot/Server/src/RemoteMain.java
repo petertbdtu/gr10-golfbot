@@ -127,7 +127,7 @@ public class RemoteMain {
 							for(LidarSample sample : lScan.getSamples()) {
 								System.out.println("[" + sample.angle + "," + sample.distance + "] ");	
 							}
-							Imgcodecs.imwrite("testScan2.png", ballDetector.getMap(lScan));
+							Imgcodecs.imwrite("testScan2.png", ballDetector.scanToMap(lScan));
 				            FileOutputStream fileOut = new FileOutputStream("testScan2.data");
 				            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
 				            objectOut.writeObject(lScan);

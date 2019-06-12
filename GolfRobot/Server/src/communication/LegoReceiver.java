@@ -10,34 +10,26 @@ import objects.Pose;
 
 public class LegoReceiver extends Thread {
 	private ServerSocket serverSocket;
-	private Socket lSocket;
 	private Socket nSocket;
 	private Socket bSocket;
 	
-	private InputStream lStream;
 	private InputStream nStream;
 	private InputStream bStream;
 	
-	private boolean poseSwitcher = false;
 	private boolean movingSwitcher = false;
 	private boolean collectSwitcher = false;
 
-	private boolean poseNewData = false;
 	private boolean movingNewData = false;
 	private boolean collectNewData = false;
 
-	private Pose pose1;
-	private Pose pose2;
 	private Boolean isMoving1;
 	private Boolean isMoving2;
 	private Boolean isCollecting1;
 	private Boolean isCollecting2;
 	
 	public LegoReceiver() {
-		pose1 = new Pose();
 		isMoving1 = false;
 		isCollecting1 = false;
-		pose2 = new Pose();
 		isMoving2 = false;
 		isCollecting2 = false;
 	}
@@ -47,8 +39,6 @@ public class LegoReceiver extends Thread {
 			serverSocket = new ServerSocket(port);
 			nSocket = serverSocket.accept();
 			nStream = nSocket.getInputStream();
-			lSocket = serverSocket.accept();
-			lStream = lSocket.getInputStream();
 			bSocket = serverSocket.accept();
 			bStream = bSocket.getInputStream();
 			return true;
@@ -61,7 +51,6 @@ public class LegoReceiver extends Thread {
 	@Override
 	public void run() {
 		while(socketsWorking()) {
-			readLocalization();
 			readNavigator();
 			readBallCollector();
 		}
@@ -70,36 +59,10 @@ public class LegoReceiver extends Thread {
 	private boolean socketsWorking() {
 		boolean working = true;
 		if(working)
-			working = (lSocket != null && lStream != null && !lSocket.isClosed() && lSocket.isConnected());
-		if(working)
 			working = (nSocket != null && nStream != null && !nSocket.isClosed() && nSocket.isConnected());
 		if(working)
 			working = (bSocket != null && bStream != null && !bSocket.isClosed() && bSocket.isConnected());
 		return working;
-	}
-	
-	private void readLocalization() {
-		try {
-			int rec = lStream.read();
-			if (rec != -1) {
-				
-				//int x, y; float heading.
-				ByteBuffer inbytes = ByteBuffer.allocate(12);
-				lStream.read(inbytes.array());
-				Pose pose = new Pose(inbytes.getInt(), inbytes.getInt(), inbytes.getFloat());
-				
-				if (poseSwitcher) {
-					pose2 = pose;
-				}
-				else {
-					pose1 = pose;
-				}
-				poseNewData = true;
-			}
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	private void readNavigator() {
@@ -136,15 +99,6 @@ public class LegoReceiver extends Thread {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-		
-	public Pose getPose() {
-		if(poseNewData) { 
-			poseSwitcher = !poseSwitcher; 
-			poseNewData = false;
-		}
-		if(poseSwitcher) { return pose1; }
-		else { return pose2; }
 	}
 
 	public Boolean getIsMoving() {

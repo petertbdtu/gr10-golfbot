@@ -1,35 +1,101 @@
 package Knowledgesource;
 
+import lejos.hardware.motor.EV3LargeRegulatedMotor;
+import lejos.hardware.port.MotorPort;
+import lejos.hardware.port.SensorPort;
+import lejos.hardware.sensor.EV3GyroSensor;
+import lejos.robotics.SampleProvider;
+import lejos.robotics.chassis.Chassis;
+import lejos.robotics.chassis.Wheel;
+import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.navigation.MovePilot;
 
 public class KSNavigation extends KnowledgeSource {
 
-	MovePilot pilot;
+	private volatile boolean isMoving;
+	private final double offset = 78; //distance between the two wheels divided by 2 in mm
+	private final double wheelDiamater = 30; //Diameter of wheels in mm
 	
-	public KSNavigation(MovePilot pilot) {
-		this.pilot = pilot;
+	private Wheel leftWheel;
+	private Wheel rightWheel;
+	private Chassis chassis;
+	private MovePilot movePilot;
+	
+	private EV3GyroSensor gyro;
+	private SampleProvider sampleProvider;
+	
+	public KSNavigation() {
+		this.leftWheel = WheeledChassis.modelWheel(new EV3LargeRegulatedMotor(MotorPort.A), wheelDiamater).offset(offset);
+		this.rightWheel = WheeledChassis.modelWheel(new EV3LargeRegulatedMotor(MotorPort.B), wheelDiamater).offset(-offset);
+		this.chassis = new WheeledChassis(new Wheel[] {leftWheel, rightWheel}, WheeledChassis.TYPE_DIFFERENTIAL);
+		this.movePilot = new MovePilot(chassis);
+		movePilot.setLinearSpeed(300);
+		movePilot.setAngularSpeed(90);
+		
+		this.gyro = new EV3GyroSensor(SensorPort.S2);
+		this.sampleProvider = gyro.getAngleMode();
+
 	}
 	
-	public void forward(double distance) {
-		pilot.travel(distance, true);
+	public void forward(final double distance) {
+		isMoving = true;
+		new Thread(
+			new Runnable() {
+				@Override
+				public void run() {
+					movePilot.travel(distance);
+					isMoving = false;
+				}
+			}
+		).start();
 	}
 	
-	public void turn(double angle) {
-		pilot.rotate(angle, true);
+	public void turn(final double angle) {
+		isMoving = true;
+		final int angleSign = angle > 0 ? 360 : -360;
+		gyro.reset();
+		
+		new Thread(
+			new Runnable() {
+				@Override
+				public void run() {
+					movePilot.rotate(angleSign);
+				}
+			}
+		).start();
+		
+		new Thread(
+				new Runnable() {
+					@Override
+					public void run() {
+						if(angle > 0) {
+							while(getGyroAngle() < angle);
+						} else {
+							while(getGyroAngle() > angle);
+						}
+						movePilot.stop();
+						System.out.println(getGyroAngle());
+						isMoving = false;
+					}
+				}
+		).start();
 	}
 	
 	public void stopMoving() {
-		pilot.stop();
-	}
-	
-	public void slowDown() {
-		pilot.setLinearSpeed(pilot.getLinearSpeed()/4);
+		movePilot.stop();
+		isMoving = false;
 	}
 
 	@Override
 	protected byte[] getKnowledgeAsBytes() {
-		byte val = pilot.isMoving() ? (byte) 1 : (byte) 0;
+		byte val = isMoving ? (byte) 1 : (byte) 0;
 		return new byte[] { val };
+	}
+	
+	private float getGyroAngle() {
+		float[] sample = new float[sampleProvider.sampleSize()];
+		sampleProvider.fetchSample(sample, 0);
+		return sample[0];
 	}
 	
 }
