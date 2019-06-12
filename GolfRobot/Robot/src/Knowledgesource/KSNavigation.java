@@ -28,7 +28,7 @@ public class KSNavigation extends KnowledgeSource {
 
 	@Override
 	protected byte[] getKnowledgeAsBytes() {
-		byte val = pilot.isMoving() ? (byte) 1 : (byte) 0;
+		byte val = pilot.getMovement() != null ? (byte) 1 : (byte) 0;
 		return new byte[] { val };
 	}
 	
