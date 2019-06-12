@@ -44,7 +44,7 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 		}
 	}
 
-	private Mat scanToMap(LidarScan scan) {
+	public Mat scanToMap(LidarScan scan) {
 		int lx = 0;
 		int hx = 0;
 		int ly = 0;
@@ -98,7 +98,7 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 	 * @return the graph
 	 */
 	@SuppressWarnings("unused")
-	private Mat getGraph(LidarScan scan, double pixelDistPerDeg) {
+	public Mat getGraph(LidarScan scan, double pixelDistPerDeg) {
 		int graphheight = 10000;
 		Mat graph = Mat.zeros(graphheight, (int) (360*pixelDistPerDeg), CvType.CV_8U);
 		
@@ -115,7 +115,7 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 	 * @param scan
 	 * @return the location of the closest ball relative to the lidar
 	 */
-	private Point findClosestBallLidar(LidarScan scan) {
+	public Point findClosestBallLidar(LidarScan scan) {
 		try {
 			Mat map = scanToMap(scan);
 			
@@ -225,7 +225,7 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 		return contours.size() != 0;
 	}
 
-	private static Mat bufferedImageToMat(BufferedImage bi) {
+	public static Mat bufferedImageToMat(BufferedImage bi) {
 		Mat mat = new Mat(bi.getHeight(), bi.getWidth(), CvType.CV_8UC3);
 		byte[] data = ((DataBufferByte) bi.getRaster().getDataBuffer()).getData();
 		mat.put(0, 0, data);
