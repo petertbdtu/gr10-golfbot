@@ -11,6 +11,7 @@ import communication.LegoReceiver;
 import communication.LidarReceiver;
 import mapping.LidarScan;
 import objects.LidarSample;
+import objects.Point;
 
 public class StateController extends Thread implements BlackboardListener  {
 	public static void main(String[] args){
@@ -37,7 +38,8 @@ public class StateController extends Thread implements BlackboardListener  {
 		GO_TO_GOAL,		
 		COMPLETED,
 		IS_MOVING,
-		WAIT_FOR_RUN
+		WAIT_FOR_RUN,
+		DETECT_BALL
 	}
 	
 	private State nextState;
@@ -53,10 +55,11 @@ public class StateController extends Thread implements BlackboardListener  {
 	private LegoReceiver legoReceiver;
 	private BlackboardController bController;
 	private BLCollisionDetector cd;
+	private BLBallDetector bd;
 
 
 	public StateController() {
-		state = State.EXPLORE;
+		state = State.DETECT_BALL;
 		trigger = false;
 		ballFound = false;
 		ballcounter = 0;
@@ -82,6 +85,20 @@ public class StateController extends Thread implements BlackboardListener  {
 //			}
 			
 			switch(state) {
+				case DETECT_BALL:
+					if (bbSample != null) {
+						LidarScan scan = bbSample.scan;
+						if (scan != null) {
+							Point p = bd.findClosestBallLidar(scan);
+							if (p != null) {
+								System.out.println("x=" + p.x + ", y=" + p.y);
+							} else {
+								System.out.println("No ball found.");
+							}
+						}
+					}
+					state = State.DETECT_BALL;
+					break;
 				case GET_SAMPLES:
 					
 					commandTransmitter.robotTravel(360, 0);
@@ -259,6 +276,9 @@ public class StateController extends Thread implements BlackboardListener  {
 		} else {
 			System.out.println("Collision detection aprehended");
 		}
+		
+		//Ball Detection
+		bd = new BLBallDetector();
 
 		// Blackboard Controller
 		System.out.println("Building blackboard...");
