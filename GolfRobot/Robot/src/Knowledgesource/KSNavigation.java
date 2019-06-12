@@ -1,5 +1,6 @@
 package Knowledgesource;
 
+import lejos.hardware.lcd.LCD;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
@@ -9,6 +10,7 @@ import lejos.robotics.chassis.Chassis;
 import lejos.robotics.chassis.Wheel;
 import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.navigation.MovePilot;
+import lejos.utility.Delay;
 
 public class KSNavigation extends KnowledgeSource {
 
@@ -29,8 +31,8 @@ public class KSNavigation extends KnowledgeSource {
 		this.rightWheel = WheeledChassis.modelWheel(new EV3LargeRegulatedMotor(MotorPort.B), wheelDiamater).offset(-offset);
 		this.chassis = new WheeledChassis(new Wheel[] {leftWheel, rightWheel}, WheeledChassis.TYPE_DIFFERENTIAL);
 		this.movePilot = new MovePilot(chassis);
-		movePilot.setLinearSpeed(300);
-		movePilot.setAngularSpeed(90);
+		movePilot.setLinearSpeed(200);
+		movePilot.setAngularSpeed(70);
 		
 		this.gyro = new EV3GyroSensor(SensorPort.S2);
 		this.sampleProvider = gyro.getAngleMode();
@@ -39,11 +41,12 @@ public class KSNavigation extends KnowledgeSource {
 	
 	public void forward(final double distance) {
 		isMoving = true;
+		final double distanceSign = distance > 0 ? -distance : distance;
 		new Thread(
 			new Runnable() {
 				@Override
 				public void run() {
-					movePilot.travel(distance);
+					movePilot.travel(distanceSign);
 					isMoving = false;
 				}
 			}
@@ -52,29 +55,26 @@ public class KSNavigation extends KnowledgeSource {
 	
 	public void turn(final double angle) {
 		isMoving = true;
-		final int angleSign = angle > 0 ? 360 : -360;
+		final int angleSign = angle > 0 ? -360 : 360;
 		gyro.reset();
-		
-		new Thread(
-			new Runnable() {
-				@Override
-				public void run() {
-					movePilot.rotate(angleSign);
-				}
-			}
-		).start();
-		
+		movePilot.rotate(angleSign, true);
+
 		new Thread(
 				new Runnable() {
 					@Override
 					public void run() {
 						if(angle > 0) {
-							while(getGyroAngle() < angle);
+							while(getGyroAngle() < angle) {
+								LCD.drawString(getGyroAngle() + "", 0, 0);
+								Delay.msDelay(200);
+							}
 						} else {
-							while(getGyroAngle() > angle);
+							while(getGyroAngle() > angle) {
+								LCD.drawString(getGyroAngle() + "", 0, 0);
+								Delay.msDelay(200);
+							}
 						}
 						movePilot.stop();
-						System.out.println(getGyroAngle());
 						isMoving = false;
 					}
 				}

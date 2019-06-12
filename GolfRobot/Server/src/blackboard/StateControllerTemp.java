@@ -134,6 +134,12 @@ public class StateControllerTemp extends Thread implements BlackboardListener  {
 					break;
 				
 				case FIND_BALL: {
+					LidarScan oldScan = new LidarScan(bbSample.scan);
+					while(oldScan.scanSize() == bbSample.scan.scanSize()) {
+						System.out.println(bbSample.cycle + ": " + bbSample.scan.scanSize());
+					}
+					System.out.println(bbSample.cycle + ": " + bbSample.scan.scanSize());
+
 					LidarScan scan = bbSample.scan;
 					currentBall = ballDetector.findClosestBallLidar(scan);
 					if(currentBall != null) {

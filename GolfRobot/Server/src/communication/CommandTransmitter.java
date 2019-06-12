@@ -49,7 +49,7 @@ public class CommandTransmitter implements BlackboardListener {
 		if (distance != 0) {
 			distance += distanceCorrection;
 		}
-		try { oos.writeObject("M " + -angle + ":" + -distance); } 
+		try { oos.writeObject("M " + angle + ":" + distance); } 
 		catch (IOException e) { e.printStackTrace(); }
 	}
 	
