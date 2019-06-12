@@ -164,46 +164,57 @@ public class BLBallDetector {
 	}
 
 	public Point findClosestBallLidar(LidarScan scan) {
-		
-		Mat map = getMap(scan);
-		
-		// Convert to binary image
-		int thresh = 200;
-		Mat map_bin = new Mat();
-		Imgproc.threshold(map, map_bin, thresh, 255, Imgproc.THRESH_BINARY);
-		
-		// Dialation
-		int dialation_value = 0;
-		Mat dialation_kernel = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
-		Mat map_dial = new Mat();
-		Imgproc.dilate(map_bin, map_dial, dialation_kernel);
-
-		double dp = 1;
-		double minDist = 35;
-		int circleCurveParam1 = 500;
-		int centerDetectionParam2 = 10;
-		int minRadius = 10;
-		int maxRadius = 45;
-		
-		Mat circles = new Mat();
-		Imgproc.HoughCircles(map_dial, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
-		
-		List<Point> ps = new ArrayList<Point>();
-		for (int i = 0; i < circles.cols(); i++) {
-			double[] c = circles.get(0, i);
-			ps.add(new Point((int) c[0], (int) c[1]));
-		}
-		
-		Point origo = new Point(0, 0);
-		Point closest = null;
-		double closestdistance = Double.POSITIVE_INFINITY;
-		for (Point p : ps) {
-			if (origo.distance(p) < closestdistance) {
-				closest = p;
-				closestdistance = origo.distance(p);
+		try {
+			Mat map = getMap(scan);
+			
+			// Convert to binary image
+			int thresh = 200;
+			Mat map_bin = new Mat();
+			Imgproc.threshold(map, map_bin, thresh, 255, Imgproc.THRESH_BINARY);
+			
+			// Dialation
+			int dialation_value = 0;
+			Mat dialation_kernel = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
+			Mat map_dial = new Mat();
+			Imgproc.dilate(map_bin, map_dial, dialation_kernel);
+			
+			double dp = 1;
+			double minDist = 35;
+			int circleCurveParam1 = 500;
+			int centerDetectionParam2 = 8;
+			int minRadius = 10;
+			int maxRadius = 45;
+			
+			Mat circles = new Mat();
+			Imgproc.HoughCircles(map_dial, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
+			
+			List<Point> ps = new ArrayList<Point>();
+			for (int i = 0; i < circles.cols(); i++) {
+				double[] c = circles.get(0, i);
+				ps.add(new Point((int) c[0], (int) c[1]));
 			}
+			
+			int centerW = (int) (map.size().width / 2);
+			int centerH = (int) (map.size().height / 2);
+			
+			Point origo = new Point(centerW+1, centerH+1);
+			Point closest = null;
+			double closestdistance = Double.POSITIVE_INFINITY;
+			for (Point p : ps) {
+				if (origo.distance(p) < closestdistance) {
+					closest = p;
+					closestdistance = origo.distance(p);
+				}
+			}
+			
+			if (closest != null)
+				return new Point(closest.x-centerW, closest.y-centerH);
+			
+			return null;
 		}
-		return closest;
+		catch (Exception e) {
+			return null; // it just werks
+		}
 	}
 	
 	public boolean scanCameraImage(Mat frame) {	
