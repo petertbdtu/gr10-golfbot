@@ -35,7 +35,7 @@ class Lidar:
 		self.__write_command('40')
 		time.sleep(3)
 		self.set_scan_freq()
-		self.set_range_freq()
+		#self.set_range_freq()
 
 	# Will start scanning mode
 	def start_scan(self):
@@ -97,7 +97,6 @@ class Lidar:
 			if self.debug:
 				self.__pretty_print(packet2)
 
-		print('out of while')
 		if self.debug:
 			print("Found packet...")
 
