@@ -1,79 +1,108 @@
 package blackboard;
 
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.Polygon;
+import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import communication.CommandTransmitter;
+import mapping.LidarScan;
 
 public class BLCollisionDetector extends Thread implements BlackboardListener {
 
 	private boolean newData;
 	
-	//TODO get real dimensions for robot
-	private final int ROBOT_WIDTH = 160; //				mm
-	private final int DISTANCE_TO_FRONT = 200; //	mm
-	private final int DISTANCE_TO_WALL = 50; //		mm
+	int ncords = 5;
+
+	int xcords[] = new int[ncords]; 
+	int ycords[] = new int[ncords];
+
+	private final int ROBOT_WIDTH = 160;
+	private final int ROBOT_FRONT_LENGTH = 160;
+	private final int ROBOT_BACK_LENGTH = 80;
+	private final int ROBOT_FRONT_TIP = 200;
 	
-	private Rectangle avoidanceArea;
+	private LidarScan newScan;
 	
-	
-	//private Rectangle warningArea = new Rectangle(avoidanceArea.x, avoidanceArea.y + avoidanceArea.height, avoidanceArea.width, avoidanceArea.height);
-	
-	List<objects.Point> list;
-	private BlackboardSample bbSample;
-	public boolean isDetected = false;
-	public boolean slowDownDetected = false;
-	
-	public BLCollisionDetector() {
-		int x = -((ROBOT_WIDTH/2) + DISTANCE_TO_WALL);
-		int y = -(DISTANCE_TO_FRONT + DISTANCE_TO_WALL);
-		int width = DISTANCE_TO_WALL;
-		int height = ROBOT_WIDTH + (2 * DISTANCE_TO_WALL);
+	objects.Point offset = new objects.Point(-200,0);
+
+	List<objects.Point> listArea = new ArrayList<objects.Point>();
+
+	Polygon collisionHull;
+
+	AffineTransform trans;
 		
-		avoidanceArea = new Rectangle(x, y, width, height);
-		newData = false;
+	private BlackboardSample bbSample;
+	public volatile boolean isDetected = false;
+	
+	public BLCollisionDetector(){
+		  buildCoordsFromOrigin2();
+		  //trans.rotate(Math.toRadians(10),collisionHull.xpoints[0],collisionHull.ypoints[0]);
+		  collisionHull = new Polygon(xcords, ycords, ncords);
+		  
 	}
 	
-	public boolean getIsDetected() {
-		return isDetected;
+	public AffineTransform buildTransform(){
+		return new AffineTransform();
 	}
 	
-	public boolean getSlowDown() {
-		return slowDownDetected;
+	private void buildCoordsFromOrigin(){
+		xcords[0] = offset.x;
+		ycords[0] = offset.y + ROBOT_FRONT_TIP;
+
+		xcords[1] = offset.x - (ROBOT_WIDTH/2);
+		ycords[1] = offset.y + (ROBOT_FRONT_LENGTH);
+
+		xcords[2] = offset.x - (ROBOT_WIDTH/2);
+		ycords[2] = offset.y - (ROBOT_BACK_LENGTH);
+
+		xcords[3] = offset.x + (ROBOT_WIDTH/2);
+		ycords[3] = offset.y - (ROBOT_BACK_LENGTH);
+
+		xcords[4] = offset.x + (ROBOT_WIDTH/2);
+		ycords[4] = offset.y + (ROBOT_FRONT_LENGTH);
 	}
 	
-	public void setSlowDown(boolean bool) {
-		slowDownDetected = bool;
-	}
-	
-	public void setIsDetected(boolean bool) {
-		isDetected = bool;
+	private void buildCoordsFromOrigin2(){
+		xcords[0] = offset.x - ROBOT_FRONT_TIP;
+		ycords[0] = offset.y;
+
+		xcords[1] = offset.x - (ROBOT_FRONT_LENGTH);
+		ycords[1] = offset.y + (ROBOT_WIDTH/2);
+
+		xcords[2] = offset.x + (ROBOT_BACK_LENGTH);
+		ycords[2] = offset.y + (ROBOT_WIDTH/2);
+
+		xcords[3] = offset.x + (ROBOT_BACK_LENGTH);
+		ycords[3] = offset.y - (ROBOT_WIDTH/2);
+
+		xcords[4] = offset.x + (ROBOT_FRONT_LENGTH);
+		ycords[4] = offset.y - (ROBOT_WIDTH/2);
 	}
 	
 	public void checkForCollision() {
-	   list = bbSample.scan.getPoints();
-	   for (Point point : list) {
-		   if(avoidanceArea.contains(point)) {
+	   for (objects.Point point : newScan.getPoints()) {
+		   if(collisionHull.contains(point)) {
 			   isDetected = true;
-		   } 
-//		   else if(warningArea.contains(point)) {
-//			   slowDownDetected = true;
-//		   }
+			   break;
+		   }
 	   }
-	}
-
-	@Override
-	public void blackboardUpdated(BlackboardSample bbSample) {
-		this.bbSample = new BlackboardSample(bbSample);
-		newData = true;
 	}
 	
 	@Override
-	public void run() {		
+	public void blackboardUpdated(BlackboardSample bbSample) {
+		this.bbSample = new BlackboardSample(bbSample);
+	}
+	
+	@Override
+	public void run() {	
+		LidarScan oldScan = new LidarScan();
+
 		while(true) {
-			if(newData) {
+			if(bbSample != null && bbSample.scan != null) {
+				newScan = new LidarScan(bbSample.scan);
+				while(oldScan.scanSize() == newScan.scanSize()) {
+					newScan = new LidarScan(bbSample.scan);
+				}
+				oldScan = newScan;
 				checkForCollision();
 			}
 		}
