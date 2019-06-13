@@ -2,6 +2,7 @@ package Knowledgesource;
 
 import lejos.hardware.motor.EV3MediumRegulatedMotor;
 import lejos.hardware.port.*;
+import lejos.utility.Delay;
 
 
 public class KSBallManagement extends KnowledgeSource {
@@ -12,15 +13,26 @@ public class KSBallManagement extends KnowledgeSource {
 	public KSBallManagement(Port tubeMotorPort, Port scoopMotorPort) {
 		this.tubeMotor = new EV3MediumRegulatedMotor(tubeMotorPort);
 		this.scoopMotor = new EV3MediumRegulatedMotor(scoopMotorPort);
+		this.tubeMotor.setSpeed(360);;
 	}
 	
 	public void pickup() {
-		tubeMotor.forward();
-		while(!tubeMotor.isStalled());
-		tubeMotor.flt();
+		tubeMotor.rotate(400);
 		scoopMotor.rotate(360);
-		tubeMotor.backward();
-		while(!tubeMotor.isStalled());
+		tubeMotor.rotate(-400);
+		//scoopMotor.rotate(20);
+		//tubeMotor.rotate(-200);
+		//scoopMotor.rotate(20);
+		//tubeMotor.rotate(-400);
+		
+		//tubeMotor.backward();
+		//while(!tubeMotor.isStalled());
+	}
+	
+	public void deliverBalls() {
+		scoopMotor.rotate(-60);
+		Delay.msDelay(2000);
+		scoopMotor.rotate(60);
 	}
 
 	@Override

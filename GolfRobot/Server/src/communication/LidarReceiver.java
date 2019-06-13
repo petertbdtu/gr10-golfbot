@@ -35,7 +35,7 @@ public class LidarReceiver extends Thread {
 	@Override
 	public void run() {
 		while(socket != null && socket.isBound()) {
-			byte[] buffer = new byte[100];
+			byte[] buffer = new byte[1000];
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 			try { socket.receive(packet); } 
 			catch (IOException e) { break; }
@@ -108,7 +108,7 @@ public class LidarReceiver extends Thread {
 			
 			if(debug) { System.out.println("Calculated angle: " + angle); }
 
-			if(!(angle > 120.0 && angle < 167.0) && !(angle > 193.0 && angle < 217.0) && !(angle > 328.0 || angle < 32.0)) {
+			if(!(angle > 115.0 && angle < 150.0) && !(angle > 195.0 && angle < 240.0) && !(angle > 325.0 || angle < 35.0)) {
 
 				// Collects 0-360 degree scan's
 				if(lastAngle > angle + 10) {

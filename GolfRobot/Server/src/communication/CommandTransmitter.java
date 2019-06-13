@@ -3,6 +3,7 @@ package communication;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -15,7 +16,7 @@ public class CommandTransmitter implements BlackboardListener {
 	
 	private ServerSocket serverSocket;
 	private Socket socket;
-	private DataOutputStream dout;
+	private OutputStream dout;
 	private ObjectOutputStream oos;
 	private BlackboardSample bbSample = null;
 	
@@ -28,8 +29,7 @@ public class CommandTransmitter implements BlackboardListener {
 		try {
 			serverSocket = new ServerSocket(port);
 			socket = serverSocket.accept();
-			dout = new DataOutputStream(socket.getOutputStream());
-			oos = new ObjectOutputStream(socket.getOutputStream());
+			dout = socket.getOutputStream();
 			return true;
 		} catch (IOException e) { 
 			e.printStackTrace(); 
@@ -57,8 +57,11 @@ public class CommandTransmitter implements BlackboardListener {
 		}
 		short cmdDist = (short) distance;
 		
-		int cmd = (cmdBytes[0] << 16) + cmdDist;
-		
+		//int cmd = (cmdBytes[0] << 16) + cmdDist;
+		byte[] cmd = new byte[3];
+		cmd[0] = cmdBytes[0];
+		cmd[1] = (byte)(cmdDist & 0xff);
+		cmd[2] = (byte)((cmdDist >> 8) & 0xff);
 		try { dout.write(cmd); } catch (IOException e) { e.printStackTrace(); }
 		
 		//try { oos.writeObject("M " + angle + ":" + distance); } 
@@ -72,7 +75,10 @@ public class CommandTransmitter implements BlackboardListener {
 		
 		short cmdAng = (short) angle;
 		
-		int cmd = (cmdBytes[1] << 16) + cmdAng;
+		byte[] cmd = new byte[3];
+		cmd[0] = cmdBytes[1];
+		cmd[1] = (byte)(cmdAng & 0xff);
+		cmd[2] = (byte)((cmdAng >> 8) & 0xff);
 		
 		try { dout.write(cmd); } catch (IOException e) { e.printStackTrace(); }
 	}
@@ -81,7 +87,12 @@ public class CommandTransmitter implements BlackboardListener {
 		
 		//int cmdDummy = 0;
 		
-		int cmd = (cmdBytes[2]);
+		//int cmd = (cmdBytes[2]);
+		
+		byte[] cmd = new byte[3];
+		cmd[0] = cmdBytes[2];
+		cmd[1] = (byte)(0 & 0xff);
+		cmd[2] = (byte)((0 >> 8) & 0xff);
 		
 		try { dout.write(cmd); } catch (IOException e) { e.printStackTrace(); }
 		
@@ -93,7 +104,11 @@ public class CommandTransmitter implements BlackboardListener {
 
 		int cmdDummy = 0;
 		
-		int cmd = (cmdBytes[3]);
+		//int cmd = (cmdBytes[3]);
+		byte[] cmd = new byte[3];
+		cmd[0] = cmdBytes[3];
+		cmd[1] = (byte)(0 & 0xff);
+		cmd[2] = (byte)((0 >> 8) & 0xff);
 		
 		try { dout.write(cmd); } catch (IOException e) { e.printStackTrace(); }
 		
@@ -101,11 +116,16 @@ public class CommandTransmitter implements BlackboardListener {
 		//catch (IOException e) { e.printStackTrace(); }
 	}
 	
-	public void robotSlowDown() {
+	public void robotDeliverBalls() {
 
 		int cmdDummy = 0;
 		
-		int cmd = (cmdBytes[4]);
+		//int cmd = (cmdBytes[4]);
+		
+		byte[] cmd = new byte[4];
+		cmd[0] = cmdBytes[0];
+		cmd[1] = (byte)(0 & 0xff);
+		cmd[2] = (byte)((0 >> 8) & 0xff);
 		
 		try { dout.write(cmd); } catch (IOException e) { e.printStackTrace(); }
 		

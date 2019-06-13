@@ -32,7 +32,7 @@ public class KSNavigation extends KnowledgeSource {
 		this.chassis = new WheeledChassis(new Wheel[] {leftWheel, rightWheel}, WheeledChassis.TYPE_DIFFERENTIAL);
 		this.movePilot = new MovePilot(chassis);
 		movePilot.setLinearSpeed(200);
-		movePilot.setAngularSpeed(70);
+		movePilot.setAngularSpeed(40);
 		
 		this.gyro = new EV3GyroSensor(SensorPort.S2);
 		this.sampleProvider = gyro.getAngleMode();
@@ -41,12 +41,12 @@ public class KSNavigation extends KnowledgeSource {
 	
 	public void forward(final double distance) {
 		isMoving = true;
-		final double distanceSign = distance > 0 ? -distance : distance;
+		//final double distanceSign = distance > 0 ? -distance : distance;
 		new Thread(
 			new Runnable() {
 				@Override
 				public void run() {
-					movePilot.travel(distanceSign);
+					movePilot.travel(-distance);
 					isMoving = false;
 				}
 			}

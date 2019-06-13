@@ -11,6 +11,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import mapping.LidarScan;
@@ -21,24 +22,43 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 	
 	private BlackboardSample bbSample;
 	private Point closestBall;
+	private Mat markedMap;
+	private long counter = 0;
 	
 	public Point getClosestBall() {
+		if(closestBall != null) {
+			Imgcodecs.imwrite("Scanning" + counter++ + ".png", markedMap);
+		}
 		return closestBall;
 	}
 	
+	public Mat getMarkedMap() {
+		return markedMap;
+	}
+	
+	private LidarScan newScan = new LidarScan();
+	private LidarScan oldScan = new LidarScan();
+	
 	@Override
 	public void blackboardUpdated(BlackboardSample bbSample) {
-		this.bbSample = bbSample;
+		this.bbSample = new BlackboardSample(bbSample);
+//		if(bbSample != null && bbSample.scan != null) {
+//			newScan = new LidarScan(bbSample.scan);
+//			if(oldScan.scanSize() != newScan.scanSize()) {
+//				System.out.println("SCAN SIZE: " + newScan.scanSize());
+//			}
+//		}
 	}
 
 	@Override
 	public void run() {		
-		int cycle = -1;
 		while(true) {
-			if(bbSample != null) {
-				if(bbSample.cycle == cycle + 1) {
-					closestBall = findClosestBallLidar(bbSample.scan);
-					cycle++;
+			if(bbSample != null && bbSample.scan != null) {
+				newScan = new LidarScan(bbSample.scan);
+				if(oldScan.scanSize() != newScan.scanSize()) {
+					closestBall = findClosestBallLidar(newScan);
+					oldScan = newScan;
+					//System.out.printf("BALL DETECTOR: New Closest Ball [%d:%d]", closestBall != null ? closestBall.x : 0, closestBall != null ? closestBall.y : 0);
 				}
 			}
 		}
@@ -57,11 +77,15 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 			if (ps.size() > 0) {
 				Point origo = getImageCenterPoint(map);
 				Point closest = findClosestPointToPoint(ps, origo);
+				
+				markedMap = drawCirclesOnMap(map, circles);
+				
 				return subtractPoints(closest, origo);
-			}				
+			}
 			return null;
 			}
 		catch (Exception e) {
+			e.printStackTrace();
 			// Only fails sometimes, can just be repeatedly tried.
 			return null;
 		}
@@ -165,8 +189,8 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 		// Find circles
 		double dp = 1;
 		double minDist = 35;
-		int circleCurveParam1 = 200;
-		int centerDetectionParam2 = 9;
+		int circleCurveParam1 = 500;
+		int centerDetectionParam2 = 11;
 		int minRadius = 15;
 		int maxRadius = 40;
 		Mat circles = new Mat();

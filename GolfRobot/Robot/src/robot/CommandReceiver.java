@@ -3,21 +3,21 @@ package robot;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
 import Knowledgesource.KSBallManagement;
 import Knowledgesource.KSNavigation;
+import lejos.hardware.lcd.LCD;
 
 public class CommandReceiver extends Thread {
 	
 	private Socket socket = null;
-	private DataInputStream dis = null;
+	private InputStream dis = null;
 	KSNavigation navigation;
 	KSBallManagement manager;
 	
-	private final byte[] cmdBytes = new byte[] {0b00000001, 0b00000010, 0b00000011, 0b00000100, 0b00000101};
-
 	public CommandReceiver(KSNavigation navigation, KSBallManagement manager) {
 		this.navigation = navigation;
 		this.manager = manager;
@@ -26,7 +26,7 @@ public class CommandReceiver extends Thread {
 	public boolean connect(String ip, int port) {
 		try {
 			socket = new Socket(ip,port++);
-			dis = new DataInputStream(socket.getInputStream());
+			dis = socket.getInputStream();
 			return true;
 		} catch (IOException e) {
 			System.out.println("Main Receiver : Couldn't connect");
@@ -37,30 +37,40 @@ public class CommandReceiver extends Thread {
 	@Override
 	public void run() {
 		while(socket != null && dis != null && !socket.isClosed() && socket.isConnected()) {
-			byte cmd;
-			try { cmd = dis.readByte();} catch (IOException e) {e.printStackTrace(); break;}
-			switch(cmd) {
-				case 0b00000001:
+			int cmd;
+			byte[] cmdBuff = new byte[3];
+			try { cmd = dis.read(cmdBuff);} catch (IOException e) {e.printStackTrace(); break;}
+			System.out.println("cmd: " +  cmdBuff[0]);
+			switch(cmdBuff[0]) {
+				case 1:
+					LCD.drawString("forward",0,2);
 					short readDist = 0;
-					try {readDist = dis.readShort();} catch (IOException e) { break;}
+							
+					readDist = (short) (((cmdBuff[2] & 0xff) << 8) + (cmdBuff[1] & 0xff));
+					LCD.drawString("dist: " + readDist, 0, 3);
 					if(readDist != 0) {navigation.forward(readDist);}
+					
 					break;
-				case 0b00000010:
+				case 2:
+					LCD.drawString("turn",0,2);
 					short readAng = 0;
-					try {readAng = dis.readShort();} catch (IOException e) {break;}
+					readAng = (short) (((cmdBuff[2] & 0xff) << 8) + (cmdBuff[1] & 0xff));
 					if(readAng != 0) {navigation.turn(readAng);	} 
 					break;
-				case 0b00000011:
+				case 3:
+					LCD.drawString("stop",0,2);
 					navigation.stopMoving();
 					break;
-				case 0b00000100:
+				case 4:
+					LCD.drawString("pickup",0,2);
 					manager.pickup();
-					System.out.println("Collecting ball ....");
 					break;
-				case 0b00000101:
-					//manager.deliver();
+				case 5:
+					LCD.drawString("deliver",0,2);
+					manager.deliverBalls();
 					break;
-				case 0b00000000:
+				case 0:
+					LCD.drawString("nothing",0,2);
 					//filler byte
 					break;
 			}

@@ -1,6 +1,8 @@
 package blackboard;
 
 import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,17 +18,20 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	int ycords[] = new int[ncords];
 
 	private final int ROBOT_WIDTH = 160;
-	private final int ROBOT_FRONT_LENGTH = 160;
+	private final int ROBOT_FRONT_LENGTH = 110;
 	private final int ROBOT_BACK_LENGTH = 80;
-	private final int ROBOT_FRONT_TIP = 200;
+	private final int ROBOT_FRONT_TIP = 185;
 	
 	private LidarScan newScan;
 	
-	objects.Point offset = new objects.Point(-200,0);
+	private boolean switcher;
+	
+	objects.Point offset = new objects.Point(-100,0);
 
 	List<objects.Point> listArea = new ArrayList<objects.Point>();
 
 	Polygon collisionHull;
+	Rectangle ballCollectHull;
 
 	AffineTransform trans;
 		
@@ -37,7 +42,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 		  buildCoordsFromOrigin2();
 		  //trans.rotate(Math.toRadians(10),collisionHull.xpoints[0],collisionHull.ypoints[0]);
 		  collisionHull = new Polygon(xcords, ycords, ncords);
-		  
+		  ballCollectHull = new Rectangle(xcords[4],ycords[4],xcords[2]-xcords[4],ycords[3]-ycords[4]); //??? XD
 	}
 	
 	public AffineTransform buildTransform(){
@@ -80,11 +85,25 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	
 	public void checkForCollision() {
 	   for (objects.Point point : newScan.getPoints()) {
-		   if(collisionHull.contains(point)) {
+		   
+		   Shape curHull;
+		   
+		   if(switcher) {
+			   curHull = collisionHull;
+		   } else {
+			   curHull = ballCollectHull;
+		   }
+		   
+		   if(curHull.contains(point)) {
 			   isDetected = true;
 			   break;
 		   }
 	   }
+	}
+	
+	public void swapHull(boolean usePoly) {
+		switcher = usePoly;
+		isDetected = false;
 	}
 	
 	@Override
