@@ -44,6 +44,40 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 		}
 	}
 
+	/**
+	 * Looks for balls in a lidar scan
+	 * @param scan
+	 * @return the location of the closest ball relative to the lidar
+	 */
+	public Point findClosestBallLidar(LidarScan scan) {
+		try {
+			Mat map = scanToMap(scan);
+			Mat circles = findAllBallsLidar(map);
+			List<Point> ps = getCircleLocsFromMat(circles);
+			if (ps.size() > 0) {
+				Point origo = getImageCenterPoint(map);
+				Point closest = findClosestPointToPoint(ps, origo);
+				return subtractPoints(closest, origo);
+			}				
+			return null;
+			}
+		catch (Exception e) {
+			// Only fails sometimes, can just be repeatedly tried.
+			return null;
+		}
+	}
+	
+	public Point subtractPoints(Point p, Point d) {
+			return new Point(p.x-d.x, p.y-d.y);
+	}
+
+	public Point getImageCenterPoint(Mat map) {
+		return new Point((int) (map.size().width / 2)+1, (int) (map.size().height / 2)+1);
+	}
+	
+	/**
+	 * Convert a LidarScan to an image which is centered around the lidar.
+	 */
 	public Mat scanToMap(LidarScan scan) {
 		int lx = 0;
 		int hx = 0;
@@ -87,97 +121,75 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 				prevPoint = p;
 			}
 		}
-
+		
 		// (0, 0) cross which points at 0 degrees.
 		Imgproc.line(mat, new org.opencv.core.Point(w-10, h), new org.opencv.core.Point(w+30, h), new Scalar(127), 3, Imgproc.LINE_AA, 0);
 		Imgproc.line(mat, new org.opencv.core.Point(w, h-10), new org.opencv.core.Point(w, h+10), new Scalar(127), 3, Imgproc.LINE_AA, 0);
 		
 		return mat;
 	}
-	
-	/**
-	 * Draws a 2d graph of a lidar scan, x is the angle and y is the distance
-	 * @param scan
-	 * @param pixelDistPerDeg the horizontal resolution of the image
-	 * @return the graph
-	 */
-	@SuppressWarnings("unused")
-	public Mat getGraph(LidarScan scan, double pixelDistPerDeg) {
-		int graphheight = 10000;
-		Mat graph = Mat.zeros(graphheight, (int) (360*pixelDistPerDeg), CvType.CV_8U);
-		
-		for (LidarSample ls : scan.getSamples())
-		{
-			graph.put(graphheight - (int) ls.distance, (int) (ls.angle*pixelDistPerDeg), new byte[] {(byte) 255});
+
+	public Point findClosestPointToPoint(List<Point> points, Point origo) {
+		Point closest = null;
+		double closestdistance = Double.POSITIVE_INFINITY;
+		for (Point p : points) {
+			if (origo.distance(p) < closestdistance) {
+				closest = p;
+				closestdistance = origo.distance(p);
+			}
 		}
-		
-		return graph;
+		return closest;
+	}
+
+	public List<Point> getCircleLocsFromMat(Mat circles) {
+		List<Point> ps = new ArrayList<Point>();
+		for (int i = 0; i < circles.cols(); i++) {
+			double[] c = circles.get(0, i);
+			ps.add(new Point((int) c[0], (int) c[1]));
+		}
+		return ps;
 	}
 	
-	/**
-	 * Looks for balls in a lidar scan
-	 * @param scan
-	 * @return the location of the closest ball relative to the lidar
-	 */
-	public Point findClosestBallLidar(LidarScan scan) {
-		try {
-			Mat map = scanToMap(scan);
-			
-			// Convert to binary image
-			int thresh = 200;
-			Mat map_bin = new Mat();
-			Imgproc.threshold(map, map_bin, thresh, 255, Imgproc.THRESH_BINARY);
-			
-			// Dialate to connect points
-			int dialation_value = 0;
-			Mat dialation_kernel = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
-			Mat map_dial = new Mat();
-			Imgproc.dilate(map_bin, map_dial, dialation_kernel);
-			
-			// Find circles
-			double dp = 1;
-			double minDist = 35;
-			int circleCurveParam1 = 200;
-			int centerDetectionParam2 = 9;
-			int minRadius = 15;
-			int maxRadius = 40;
-			Mat circles = new Mat();
-			Imgproc.HoughCircles(map_dial, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
-			
-			// Find circle locations on image
-			List<Point> ps = new ArrayList<Point>();
-			for (int i = 0; i < circles.cols(); i++) {
-				double[] c = circles.get(0, i);
-				ps.add(new Point((int) c[0], (int) c[1]));
-			}
-			
-			int centerW = (int) (map.size().width / 2);
-			int centerH = (int) (map.size().height / 2);
-			
-			// Find closest circle to robot
-			Point origo = new Point(centerW+1, centerH+1);
-			Point closest = null;
-			double closestdistance = Double.POSITIVE_INFINITY;
-			for (Point p : ps) {
-				if (origo.distance(p) < closestdistance) {
-					closest = p;
-					closestdistance = origo.distance(p);
-				}
-			}
-			
-			if (closest != null) {
-				// Convert image location to physical location
-				return new Point(closest.x-centerW, closest.y-centerH);
-			}
-			
-			return null;
+	public Mat findAllBallsLidar(Mat map) {
+		// Convert to binary image
+		int thresh = 200;
+		Mat map_bin = new Mat();
+		Imgproc.threshold(map, map_bin, thresh, 255, Imgproc.THRESH_BINARY);
+		
+		// Dialate to connect points
+		int dialation_value = 0;
+		Mat dialation_kernel = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
+		Mat map_dial = new Mat();
+		Imgproc.dilate(map_bin, map_dial, dialation_kernel);
+		
+		// Find circles
+		double dp = 1;
+		double minDist = 35;
+		int circleCurveParam1 = 200;
+		int centerDetectionParam2 = 9;
+		int minRadius = 15;
+		int maxRadius = 40;
+		Mat circles = new Mat();
+		Imgproc.HoughCircles(map_dial, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
+		
+		return circles;
+	}
+	
+	public Mat drawCirclesOnMap(Mat map, Mat circles) {
+		Mat res = new Mat();
+		Imgproc.cvtColor(map, res, Imgproc.COLOR_GRAY2BGR);
+		
+		for (int i = 0; i < circles.cols(); i++) {
+			double[] c = circles.get(0, i);
+            org.opencv.core.Point center = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
+            // circle center
+            Imgproc.circle(res, center, 1, new Scalar(0,100,100), 3, 8, 0 );
+            // circle outline
+            int radius = (int) Math.round(c[2]);
+            Imgproc.circle(res, center, radius, new Scalar(255,0,255), 3, 8, 0 );
 		}
-		catch (Exception e) {
-			// Sometimes the search fails for no clear reason
-			// As long as it works most of the time, the scan
-			// can just be repeatedly tried.
-			return null;
-		}
+		
+		return res;
 	}
 	
 	/**
@@ -234,5 +246,23 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 		byte[] data = ((DataBufferByte) bi.getRaster().getDataBuffer()).getData();
 		mat.put(0, 0, data);
 		return mat;
+	}
+	
+	/**
+	 * Draws a 2d graph of a lidar scan, x is the angle and y is the distance
+	 * @param scan
+	 * @param pixelDistPerDeg the horizontal resolution of the image
+	 * @return the graph
+	 */
+	public Mat getGraph(LidarScan scan, double pixelDistPerDeg) {
+		int graphheight = 10000;
+		Mat graph = Mat.zeros(graphheight, (int) (360*pixelDistPerDeg), CvType.CV_8U);
+		
+		for (LidarSample ls : scan.getSamples())
+		{
+			graph.put(graphheight - (int) ls.distance, (int) (ls.angle*pixelDistPerDeg), new byte[] {(byte) 255});
+		}
+		
+		return graph;
 	}
 }

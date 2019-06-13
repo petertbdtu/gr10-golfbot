@@ -3,6 +3,7 @@ package test;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.List;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -20,12 +21,27 @@ public class BallDetectorTest {
 
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-		for (int i = 1; i <= 1835; i++) {
+		for (int i = 1; i <= 28; i++) {
 			try {
 				FileInputStream fis = new FileInputStream("data/testScan"+i+".data");
 				ObjectInputStream ois = new ObjectInputStream(fis);
-				Point p = bd.findClosestBallLidar((LidarScan) ois.readObject());
-				System.out.println("success "+i+"; point="+p.toString());
+				
+				Mat map = bd.scanToMap((LidarScan) ois.readObject());
+				Mat circles = bd.findAllBallsLidar(map);
+				
+				
+				Point origo = bd.getImageCenterPoint(map);
+				List<Point> ps = bd.getCircleLocsFromMat(circles);
+				if (ps.size() > 0) {
+					Point closest = bd.findClosestPointToPoint(ps, origo);
+					System.out.println("Success "+i+"; closest="+closest.toString());
+					
+					Mat painted = bd.drawCirclesOnMap(map, circles);
+					Imgcodecs.imwrite("data/testScan"+i+".png", painted);
+				}
+				else {
+					System.out.println("No balls found.");
+				}
 				ois.close();
 			}
 			catch (IOException e) {
