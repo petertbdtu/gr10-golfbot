@@ -1,15 +1,10 @@
 package blackboard;
 
-import java.awt.Point;
 import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import communication.CommandTransmitter;
+import mapping.LidarScan;
 
 public class BLCollisionDetector extends Thread implements BlackboardListener {
 
@@ -25,7 +20,9 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	private final int ROBOT_BACK_LENGTH = 80;
 	private final int ROBOT_FRONT_TIP = 200;
 	
-	objects.Point offset = new objects.Point(-30,0);
+	private LidarScan newScan;
+	
+	objects.Point offset = new objects.Point(-200,0);
 
 	List<objects.Point> listArea = new ArrayList<objects.Point>();
 
@@ -36,8 +33,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	private BlackboardSample bbSample;
 	public volatile boolean isDetected = false;
 	
-	public BLCollisionDetector(objects.Point p, List<objects.Point> areaToCheck){
-		  listArea = areaToCheck;
+	public BLCollisionDetector(){
 		  buildCoordsFromOrigin2();
 		  //trans.rotate(Math.toRadians(10),collisionHull.xpoints[0],collisionHull.ypoints[0]);
 		  collisionHull = new Polygon(xcords, ycords, ncords);
@@ -83,9 +79,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	}
 	
 	public void checkForCollision() {
-	isDetected = false;
-	   listArea = bbSample.scan.getPoints();
-	   for (objects.Point point : listArea) {
+	   for (objects.Point point : newScan.getPoints()) {
 		   if(collisionHull.contains(point)) {
 			   isDetected = true;
 			   break;
@@ -96,13 +90,19 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	@Override
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
-		newData = true;
 	}
 	
 	@Override
-	public void run() {		
+	public void run() {	
+		LidarScan oldScan = new LidarScan();
+
 		while(true) {
-			if(newData) {
+			if(bbSample != null && bbSample.scan != null) {
+				newScan = new LidarScan(bbSample.scan);
+				while(oldScan.scanSize() == newScan.scanSize()) {
+					newScan = new LidarScan(bbSample.scan);
+				}
+				oldScan = newScan;
 				checkForCollision();
 			}
 		}
