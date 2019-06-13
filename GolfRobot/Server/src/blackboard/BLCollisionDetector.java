@@ -25,7 +25,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	private final int ROBOT_BACK_LENGTH = 80;
 	private final int ROBOT_FRONT_TIP = 200;
 	
-	objects.Point offset = new objects.Point(0,30);
+	objects.Point offset = new objects.Point(-30,0);
 
 	List<objects.Point> listArea = new ArrayList<objects.Point>();
 
@@ -38,7 +38,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	
 	public BLCollisionDetector(objects.Point p, List<objects.Point> areaToCheck){
 		  listArea = areaToCheck;
-		  buildCoordsFromOrigin();
+		  buildCoordsFromOrigin2();
 		  //trans.rotate(Math.toRadians(10),collisionHull.xpoints[0],collisionHull.ypoints[0]);
 		  collisionHull = new Polygon(xcords, ycords, ncords);
 		  
@@ -63,6 +63,23 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 
 		xcords[4] = offset.x + (ROBOT_WIDTH/2);
 		ycords[4] = offset.y + (ROBOT_FRONT_LENGTH);
+	}
+	
+	private void buildCoordsFromOrigin2(){
+		xcords[0] = offset.x - ROBOT_FRONT_TIP;
+		ycords[0] = offset.y;
+
+		xcords[1] = offset.x - (ROBOT_FRONT_LENGTH);
+		ycords[1] = offset.y + (ROBOT_WIDTH/2);
+
+		xcords[2] = offset.x + (ROBOT_BACK_LENGTH);
+		ycords[2] = offset.y + (ROBOT_WIDTH/2);
+
+		xcords[3] = offset.x + (ROBOT_BACK_LENGTH);
+		ycords[3] = offset.y - (ROBOT_WIDTH/2);
+
+		xcords[4] = offset.x + (ROBOT_FRONT_LENGTH);
+		ycords[4] = offset.y - (ROBOT_WIDTH/2);
 	}
 	
 	public void checkForCollision() {
