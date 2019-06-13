@@ -21,13 +21,14 @@ import objects.Point;
 public class BLBallDetector extends Thread implements BlackboardListener {
 	
 	private BlackboardSample bbSample;
-	private Point closestBall;
-	private Mat markedMap;
+	private volatile Point closestBall;
+	private volatile Mat markedMap;
 	private long counter = 0;
 	
 	public Point getClosestBall() {
 		if(closestBall != null) {
 			Imgcodecs.imwrite("Scanning" + counter++ + ".png", markedMap);
+			System.out.println("Ny Scanning Gemt");
 		}
 		return closestBall;
 	}
@@ -85,7 +86,6 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 			return null;
 			}
 		catch (Exception e) {
-			e.printStackTrace();
 			// Only fails sometimes, can just be repeatedly tried.
 			return null;
 		}
@@ -189,10 +189,10 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 		// Find circles
 		double dp = 1;
 		double minDist = 35;
-		int circleCurveParam1 = 500;
-		int centerDetectionParam2 = 11;
+		int circleCurveParam1 = 300;
+		int centerDetectionParam2 = 9;
 		int minRadius = 15;
-		int maxRadius = 40;
+		int maxRadius = 25;
 		Mat circles = new Mat();
 		Imgproc.HoughCircles(map_dial, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
 		

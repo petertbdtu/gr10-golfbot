@@ -44,6 +44,7 @@ public class StateController extends Thread implements BlackboardListener  {
 		FIND_BALL,
 		VALIDATE_BALL,
 		GO_TO_BALL,
+		TURN_TO_BALL,
 		GO_TO_STARTING_POINT,
 		FETCH_BALL,
 		WAIT_FOR_COLLECT,
@@ -63,6 +64,7 @@ public class StateController extends Thread implements BlackboardListener  {
 	private Point currentBall;
 	private boolean notDone;
 	private boolean lastMoveState = false;
+	private int ballCollectedCount = 0;
 	
 	private LinkedList<PolarPoint> travelQueue;
 	private LinkedList<PolarPoint> reverseQueue;
@@ -76,7 +78,7 @@ public class StateController extends Thread implements BlackboardListener  {
 	private BLBallDetector ballDetector;
 
 	public StateController() {
-		state = State.EXPLORE;
+		state = State.FIND_BALL;
 		travelQueue = new LinkedList<PolarPoint>();
 		reverseQueue = new LinkedList<PolarPoint>();
 		notDone = true;
@@ -107,7 +109,19 @@ public class StateController extends Thread implements BlackboardListener  {
 			switch(state) {
 			
 				case EXPLORE: {
-					commandTransmitter.robotTurn(50);
+					commandTransmitter.robotTurn(45);
+					
+//					Point ball = ballDetector.getClosestBall();
+//					while(ball == null) {
+//						ball = ballDetector.getClosestBall();
+//					}
+//					
+//					double angle = ((double) (new Point(0,0)).angleTo(ball));
+//					System.out.println("0.0: " + angle);
+//					angle = ((double) (new Point(-95,0)).angleTo(ball));
+//					System.out.println("-95.0: " + angle);
+
+					
 					nextState = State.FIND_BALL;
 					state = State.WAIT_FOR_MOVE;
 					break;
@@ -142,17 +156,22 @@ public class StateController extends Thread implements BlackboardListener  {
 						collisionDetector.swapHull(false);
 						
 						//Heading command
-						double heading = ((double) (new Point(-95,0)).angleTo(ball)) - 180;
-						travelQueue.add(new PolarPoint(heading,0));
-						reverseQueue.addFirst(new PolarPoint(-heading, 0));
-						
-						//Distance command
-						double distance = (new Point(0,0)).distance(ball.x, ball.y);
-						travelQueue.add(new PolarPoint(0,distance));
-						reverseQueue.addFirst(new PolarPoint(0,-distance));
-						
-//						saveScan(bbSample.scan);
-						state = State.GO_TO_BALL;
+						double angleBefore = ((double) (new Point(-155,0)).angleTo(ball));
+						double angle = angleBefore > 0 ? (angleBefore-180) * -1 : (angleBefore + 180) * -1;
+						if(angle > -3 && angle < 3) {
+							//Distance command
+							double distance = (new Point(-155,0)).distance(ball.x, ball.y);				
+							reverseQueue.addFirst(new PolarPoint(0,-distance));
+							commandTransmitter.robotTravel(distance);
+							nextState = State.FETCH_BALL;
+							state = State.WAIT_FOR_MOVE;
+						} else {
+							System.out.println("BALL FOUND AT HEADING: " + angleBefore + " | " + angle);
+							reverseQueue.addFirst(new PolarPoint(-angle, 0));
+							commandTransmitter.robotTurn(angle);
+							nextState = State.FIND_BALL;
+							state = State.WAIT_FOR_MOVE;
+						}
 					} else {
 						collisionDetector.swapHull(true);
 						// Keep exploring
@@ -179,23 +198,21 @@ public class StateController extends Thread implements BlackboardListener  {
 					break;
 				}
 				
-				case GO_TO_BALL: {
-					PolarPoint command = travelQueue.pop();
-					
-					if(command.distance != 0)
-						commandTransmitter.robotTravel(command.distance);
-					else
-						commandTransmitter.robotTurn(command.angle);					
-					
-					if(travelQueue.isEmpty())
-						nextState = State.FETCH_BALL;
-					else
-						nextState = State.GO_TO_BALL;					
-					
-					state = State.WAIT_FOR_MOVE;
-					break;
-					
-				}
+//				case GO_TO_BALL: {
+//					PolarPoint command = travelQueue.pop();
+//					commandTransmitter.robotTravel(command.distance);
+//					nextState = State.FETCH_BALL;
+//					state = State.WAIT_FOR_MOVE;
+//					break;
+//				}
+//				
+//				case TURN_TO_BALL: {
+//					PolarPoint command = travelQueue.pop();
+//					commandTransmitter.robotTurn(command.angle);					
+//					nextState = State.FIND_BALL;
+//					state = State.WAIT_FOR_MOVE;
+//					break;
+//				}
 				
 				case FETCH_BALL: {
 					commandTransmitter.robotCollectBall();
@@ -211,10 +228,17 @@ public class StateController extends Thread implements BlackboardListener  {
 					else
 						commandTransmitter.robotTurn(command.angle);
 
-					if(travelQueue.isEmpty())
-						nextState = State.EXPLORE;
-					else
+					if(travelQueue.isEmpty()) {
+						if(ballCollectedCount >= 4) {
+							nextState = State.COMPLETED;
+						} else {
+							nextState = State.FIND_BALL;
+						}
+
+					} else {
 						nextState = State.GO_TO_STARTING_POINT;
+					}
+
 					
 					state = State.WAIT_FOR_MOVE;
 					break;

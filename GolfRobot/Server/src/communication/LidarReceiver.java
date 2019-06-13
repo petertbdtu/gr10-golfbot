@@ -39,7 +39,9 @@ public class LidarReceiver extends Thread {
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 			try { socket.receive(packet); } 
 			catch (IOException e) { break; }
-			decryptPacket(packet.getData());
+			byte[] data = packet.getData();
+			//System.out.println(data.length);
+			decryptPacket(data);
 		}
 	}
 	
@@ -108,10 +110,14 @@ public class LidarReceiver extends Thread {
 			
 			if(debug) { System.out.println("Calculated angle: " + angle); }
 
-			if(!(angle > 115.0 && angle < 150.0) && !(angle > 195.0 && angle < 240.0) && !(angle > 325.0 || angle < 35.0)) {
+			if( 	!(angle > 115.0 && angle < 160.0) 	// Venstre Forhjul
+				&& 	!(angle > 200.0 && angle < 245.0) 	// Højre Forhjul (måske)
+				&& 	!(angle > 325.0 || angle < 35.0) 	// Baghjul
+				) {
 
 				// Collects 0-360 degree scan's
 				if(lastAngle > angle + 10) {
+					//System.out.println("Scan finished... Found " + tempScan.scanSize() + " samples...");
 					if(debug) { System.out.println("Scan finished... Found " + tempScan.scanSize() + " samples..."); }
 					if(switcher) {
 						scan2 = new LidarScan(tempScan);

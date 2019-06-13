@@ -31,8 +31,9 @@ public class KSNavigation extends KnowledgeSource {
 		this.rightWheel = WheeledChassis.modelWheel(new EV3LargeRegulatedMotor(MotorPort.B), wheelDiamater).offset(-offset);
 		this.chassis = new WheeledChassis(new Wheel[] {leftWheel, rightWheel}, WheeledChassis.TYPE_DIFFERENTIAL);
 		this.movePilot = new MovePilot(chassis);
-		movePilot.setLinearSpeed(200);
-		movePilot.setAngularSpeed(40);
+		movePilot.setLinearSpeed(150);
+		movePilot.setAngularSpeed(30);
+		movePilot.setAngularAcceleration(10);
 		
 		this.gyro = new EV3GyroSensor(SensorPort.S2);
 		this.sampleProvider = gyro.getAngleMode();
