@@ -66,6 +66,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	}
 	
 	public void checkForCollision() {
+	isDetected = false;
 	   listArea = bbSample.scan.getPoints();
 	   for (objects.Point point : listArea) {
 		   if(collisionHull.contains(point)) {
