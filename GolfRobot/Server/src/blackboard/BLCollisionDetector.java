@@ -1,7 +1,11 @@
 package blackboard;
 
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -11,59 +15,66 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 
 	private boolean newData;
 	
-	//TODO get real dimensions for robot
-	private final int ROBOT_WIDTH = 160; //				mm
-	private final int DISTANCE_TO_FRONT = 200; //	mm
-	private final int DISTANCE_TO_WALL = 50; //		mm
+	int ncords = 5;
+
+	int xcords[] = new int[ncords]; 
+	int ycords[] = new int[ncords];
+
+	private final int ROBOT_WIDTH = 160;
+	private final int ROBOT_FRONT_LENGTH = 160;
+	private final int ROBOT_BACK_LENGTH = 80;
+	private final int ROBOT_FRONT_TIP = 200;
 	
-	private Rectangle avoidanceArea;
-	
-	
-	//private Rectangle warningArea = new Rectangle(avoidanceArea.x, avoidanceArea.y + avoidanceArea.height, avoidanceArea.width, avoidanceArea.height);
-	
-	List<objects.Point> list;
-	private BlackboardSample bbSample;
-	public boolean isDetected = false;
-	public boolean slowDownDetected = false;
-	
-	public BLCollisionDetector() {
-		int x = -((ROBOT_WIDTH/2) + DISTANCE_TO_WALL);
-		int y = -(DISTANCE_TO_FRONT + DISTANCE_TO_WALL);
-		int width = DISTANCE_TO_WALL;
-		int height = ROBOT_WIDTH + (2 * DISTANCE_TO_WALL);
+	objects.Point offset = new objects.Point(0,30);
+
+	List<objects.Point> listArea = new ArrayList<objects.Point>();
+
+	Polygon collisionHull;
+
+	AffineTransform trans;
 		
-		avoidanceArea = new Rectangle(x, y, width, height);
-		newData = false;
+	private BlackboardSample bbSample;
+	public volatile boolean isDetected = false;
+	
+	public BLCollisionDetector(objects.Point p, List<objects.Point> areaToCheck){
+		  listArea = areaToCheck;
+		  buildCoordsFromOrigin();
+		  //trans.rotate(Math.toRadians(10),collisionHull.xpoints[0],collisionHull.ypoints[0]);
+		  collisionHull = new Polygon(xcords, ycords, ncords);
+		  
 	}
 	
-	public boolean getIsDetected() {
-		return isDetected;
+	public AffineTransform buildTransform(){
+		return new AffineTransform();
 	}
 	
-	public boolean getSlowDown() {
-		return slowDownDetected;
-	}
-	
-	public void setSlowDown(boolean bool) {
-		slowDownDetected = bool;
-	}
-	
-	public void setIsDetected(boolean bool) {
-		isDetected = bool;
+	private void buildCoordsFromOrigin(){
+		xcords[0] = offset.x;
+		ycords[0] = offset.y + ROBOT_FRONT_TIP;
+
+		xcords[1] = offset.x - (ROBOT_WIDTH/2);
+		ycords[1] = offset.y + (ROBOT_FRONT_LENGTH);
+
+		xcords[2] = offset.x - (ROBOT_WIDTH/2);
+		ycords[2] = offset.y - (ROBOT_BACK_LENGTH);
+
+		xcords[3] = offset.x + (ROBOT_WIDTH/2);
+		ycords[3] = offset.y - (ROBOT_BACK_LENGTH);
+
+		xcords[4] = offset.x + (ROBOT_WIDTH/2);
+		ycords[4] = offset.y + (ROBOT_FRONT_LENGTH);
 	}
 	
 	public void checkForCollision() {
-	   list = bbSample.scan.getPoints();
-	   for (Point point : list) {
-		   if(avoidanceArea.contains(point)) {
+	   listArea = bbSample.scan.getPoints();
+	   for (objects.Point point : listArea) {
+		   if(collisionHull.contains(point)) {
 			   isDetected = true;
-		   } 
-//		   else if(warningArea.contains(point)) {
-//			   slowDownDetected = true;
-//		   }
+			   break;
+		   }
 	   }
 	}
-
+	
 	@Override
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
