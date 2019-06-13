@@ -6,8 +6,8 @@ import objects.Pose;
 public class BlackboardSample {
 	public long cycle;
 	public LidarScan scan;
-	public boolean isMoving;
-	public boolean isCollecting;
+	public volatile boolean isMoving;
+	public volatile boolean isCollecting;
 	
 	public BlackboardSample(BlackboardSample bbSample) {
 		this.cycle = bbSample.cycle;
