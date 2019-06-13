@@ -10,7 +10,8 @@ client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 ## LIDAR
 print("Starting Lidar...")
-lidar = yd.Lidar("/dev/ttyS0", 230400, 3.0, False)  
+lidar = yd.Lidar("/dev/ttyS0", 230400, 3.0, False)
+print("Starting Scan...")
 lidar.start_scan()
 
 ## SENDING

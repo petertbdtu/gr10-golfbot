@@ -11,7 +11,7 @@ class Lidar:
 		self.debug = debug
 		self.restart()
 
-		
+
 	## SERIAL
 	# Method for closing serial connection
 	def open_serial(self, port, baudrate, timeout):
@@ -35,7 +35,7 @@ class Lidar:
 		self.__write_command('40')
 		time.sleep(3)
 		self.set_scan_freq()
-		self.set_range_freq()
+		#self.set_range_freq()
 
 	# Will start scanning mode
 	def start_scan(self):
@@ -48,17 +48,17 @@ class Lidar:
 	# Will toggle ranging frequency (4,8 or 9 KHz)
 	def set_range_freq(self):
 		self.__write_command('D0')
-		
+
 	# Will get the current ranging frequency
 	def get_range_freq(self):
 		self.__write_command('D1')
-		
+
 	# Will set frequency
 	def set_scan_freq(self):
 		self.__write_command('0C')
 		self.__write_command('0C')
 		self.__write_command('0A')
-				
+
 	"""
 	def calc_scan_freq(self):
 		self.__get_scan_freq()
@@ -68,7 +68,7 @@ class Lidar:
 		freq = ((response[8] << 8) + response[7])/10		# Only bytes 7+8 is the data, in little endian mode, in deciHz
 		return freq
 	"""
-	
+
 	# Will get the current scan frequency
 	def __get_scan_freq(self):
 		self.__write_command('0D')
@@ -77,13 +77,13 @@ class Lidar:
 	# Directly prints the port input
 	def write_output(self, number):
 		self.__pretty_print((self.__sp.read(number)))
-		
+
 	def read_output(self, number):
 		return (self.__sp.read(number))
 
 	# Reads the serialport and finds a packet
 	def read_packet(self):
-		packet = list()
+		packet = bytearray()
 		#self.__sp.reset_input_buffer()
 
 		# Find Package Header
@@ -92,17 +92,18 @@ class Lidar:
 		packet1 = self.__sp.read(1)
 		packet2 = self.__sp.read(1)
 		while self.__to_int(packet1) != 0xaa and self.__to_int(packet2) != 0x55:
-				packet1 = packet2
-				packet2 = self.__sp.read(1)
-				if self.debug:
-					self.__pretty_print(packet2)
+			packet1 = packet2
+			packet2 = self.__sp.read(1)
+			if self.debug:
+				self.__pretty_print(packet2)
+
 		if self.debug:
 			print("Found packet...")
 
-		packet.append(self.__sp.read(1))
-		packet.append(self.__sp.read(1))
-		sample_quantity = self.__to_int(packet[1])
-		packet += self.__sp.read(6+(sample_quantity*2))
+		packet += self.__sp.read(1)
+		sample_quantity = self.__sp.read(1)
+		packet += sample_quantity
+		packet += self.__sp.read(6+(self.__to_int(sample_quantity)*2))
 
 		#if self.debug:
 		return packet
@@ -115,7 +116,7 @@ class Lidar:
 
 	#Converts input to int by asumming its encoded as hex
 	def __to_int(self, input):
-		return int(input.encode('hex'),16)
+		return int.from_bytes(input, "big")
 
 ###### TESTING ######
 #lidar = Lidar("/dev/ttyAMA0", 230400, 3.0, True)
