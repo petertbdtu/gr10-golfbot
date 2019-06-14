@@ -56,10 +56,11 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 		while(true) {
 			if(bbSample != null && bbSample.scan != null) {
 				newScan = new LidarScan(bbSample.scan);
+				System.out.println("BALL DETECTOR: Still Alive");
 				if(oldScan.scanSize() != newScan.scanSize()) {
 					closestBall = findClosestBallLidar(newScan);
 					oldScan = newScan;
-					//System.out.printf("BALL DETECTOR: New Closest Ball [%d:%d]", closestBall != null ? closestBall.x : 0, closestBall != null ? closestBall.y : 0);
+					System.out.printf("BALL DETECTOR: New Closest Ball [%d:%d]", closestBall != null ? closestBall.x : 0, closestBall != null ? closestBall.y : 0);
 				}
 			}
 		}
@@ -80,7 +81,8 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 				Point closest = findClosestPointToPoint(ps, origo);
 				
 				markedMap = drawCirclesOnMap(map, circles);
-				
+				Imgcodecs.imwrite("Scanning" + counter++ + ".png", markedMap);
+
 				return subtractPoints(closest, origo);
 			}
 			return null;

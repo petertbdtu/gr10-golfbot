@@ -32,8 +32,8 @@ public class KSNavigation extends KnowledgeSource {
 		this.chassis = new WheeledChassis(new Wheel[] {leftWheel, rightWheel}, WheeledChassis.TYPE_DIFFERENTIAL);
 		this.movePilot = new MovePilot(chassis);
 		movePilot.setLinearSpeed(150);
-		movePilot.setAngularSpeed(30);
-		movePilot.setAngularAcceleration(10);
+		movePilot.setAngularSpeed(40);
+		movePilot.setAngularAcceleration(15);
 		
 		this.gyro = new EV3GyroSensor(SensorPort.S2);
 		this.sampleProvider = gyro.getAngleMode();
@@ -66,13 +66,9 @@ public class KSNavigation extends KnowledgeSource {
 					public void run() {
 						if(angle > 0) {
 							while(getGyroAngle() < angle) {
-								LCD.drawString(getGyroAngle() + "", 0, 0);
-								Delay.msDelay(200);
 							}
 						} else {
 							while(getGyroAngle() > angle) {
-								LCD.drawString(getGyroAngle() + "", 0, 0);
-								Delay.msDelay(200);
 							}
 						}
 						movePilot.stop();

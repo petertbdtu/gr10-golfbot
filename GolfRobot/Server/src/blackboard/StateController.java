@@ -78,7 +78,7 @@ public class StateController extends Thread implements BlackboardListener  {
 	private BLBallDetector ballDetector;
 
 	public StateController() {
-		state = State.FIND_BALL;
+		state = State.EXPLORE;
 		travelQueue = new LinkedList<PolarPoint>();
 		reverseQueue = new LinkedList<PolarPoint>();
 		notDone = true;
@@ -95,23 +95,23 @@ public class StateController extends Thread implements BlackboardListener  {
 		while(notDone) {
 			
 			// Collision detection state overruling
-			if (collisionDetector.isDetected && state != State.COLLISION_AVOIDANCE) {
-				state = State.COLLISION_AVOIDANCE;
-			}
+			//if (collisionDetector.isDetected && state != State.COLLISION_AVOIDANCE) {
+			//	state = State.COLLISION_AVOIDANCE;
+			//}
 			
 			// DEBUG
-			if(state != tempState) {
+			//if(state != tempState) {
 				System.out.println("STATE:  " + state);
-				tempState = state;
-			}
+				//tempState = state;
+			//}
 			
 			// State switcher
 			switch(state) {
 			
 				case EXPLORE: {
-					commandTransmitter.robotTurn(45);
-					
-//					Point ball = ballDetector.getClosestBall();
+					//commandTransmitter.robotTurn(45);
+					while(bbSample == null || bbSample.scan == null);
+					ballDetector.findClosestBallLidar(bbSample.scan);
 //					while(ball == null) {
 //						ball = ballDetector.getClosestBall();
 //					}
@@ -120,24 +120,28 @@ public class StateController extends Thread implements BlackboardListener  {
 //					System.out.println("0.0: " + angle);
 //					angle = ((double) (new Point(-95,0)).angleTo(ball));
 //					System.out.println("-95.0: " + angle);
+					
+					
 
 					
-					nextState = State.FIND_BALL;
-					state = State.WAIT_FOR_MOVE;
+					//nextState = State.FIND_BALL;
+					state = State.COMPLETED;
 					break;
 				}
 
-				case WAIT_FOR_MOVE:
+				case WAIT_FOR_MOVE: {
 					if(bbSample.isMoving)
 						state = State.IS_MOVING;
 					break;
-					
-				case IS_MOVING:
+				}
+				
+				case IS_MOVING: {
 					if(!bbSample.isMoving)
 						state = nextState;
 					break;
-					
-				case COLLISION_AVOIDANCE:
+				}
+				
+				case COLLISION_AVOIDANCE: {
 					commandTransmitter.robotStop();
 					while(bbSample.isMoving); // wait for stop
 					commandTransmitter.robotTravel(-50);
@@ -149,16 +153,20 @@ public class StateController extends Thread implements BlackboardListener  {
 					collisionDetector.isDetected = false;
 					state = State.EXPLORE;
 					break;
-
+				}
 				case FIND_BALL: {
-					Point ball = ballDetector.getClosestBall();
+					System.out.println("Finding Ball");
+					Point ball = ballDetector.findClosestBallLidar(bbSample.scan);
+					System.out.println("Done Searching");
 					if(ball != null) {
 						collisionDetector.swapHull(false);
 						
 						//Heading command
-						double angleBefore = ((double) (new Point(-155,0)).angleTo(ball));
+						double angleBefore = ((double) (new Point(-115,0)).angleTo(ball));
 						double angle = angleBefore > 0 ? (angleBefore-180) * -1 : (angleBefore + 180) * -1;
-						if(angle > -3 && angle < 3) {
+						System.out.println("Angle Calculated: " + angle);
+						
+						if(angle > -4 && angle < 4) {
 							//Distance command
 							double distance = (new Point(-155,0)).distance(ball.x, ball.y);				
 							reverseQueue.addFirst(new PolarPoint(0,-distance));
@@ -228,7 +236,7 @@ public class StateController extends Thread implements BlackboardListener  {
 					else
 						commandTransmitter.robotTurn(command.angle);
 
-					if(travelQueue.isEmpty()) {
+					if(reverseQueue.isEmpty()) {
 						if(ballCollectedCount >= 4) {
 							nextState = State.COMPLETED;
 						} else {
@@ -330,7 +338,7 @@ public class StateController extends Thread implements BlackboardListener  {
 		// Ball Detector
 		System.out.println("Building Ball Detector...");
 		ballDetector = new BLBallDetector();
-		ballDetector.start();
+		//ballDetector.start();
 		System.out.println("Ball detection activated");
 
 		// Blackboard Controller
@@ -338,7 +346,7 @@ public class StateController extends Thread implements BlackboardListener  {
 		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
 		bController.registerListener(commandTransmitter);
 		bController.registerListener(collisionDetector);
-		bController.registerListener(ballDetector);
+		//bController.registerListener(ballDetector);
 		bController.registerListener(this);
 		bController.start();
 		System.out.println("Blackboard succes");

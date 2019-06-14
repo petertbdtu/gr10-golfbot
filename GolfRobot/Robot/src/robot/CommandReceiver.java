@@ -1,15 +1,12 @@
 package robot;
 
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.net.Socket;
 
 import Knowledgesource.KSBallManagement;
 import Knowledgesource.KSNavigation;
-import lejos.hardware.lcd.LCD;
 
 public class CommandReceiver extends Thread {
 	
@@ -40,37 +37,29 @@ public class CommandReceiver extends Thread {
 			int cmd;
 			byte[] cmdBuff = new byte[3];
 			try { cmd = dis.read(cmdBuff);} catch (IOException e) {e.printStackTrace(); break;}
-			System.out.println("cmd: " +  cmdBuff[0]);
 			switch(cmdBuff[0]) {
 				case 1:
-					LCD.drawString("forward",0,2);
 					short readDist = 0;
 							
 					readDist = (short) (((cmdBuff[2] & 0xff) << 8) + (cmdBuff[1] & 0xff));
-					LCD.drawString("dist: " + readDist, 0, 3);
 					if(readDist != 0) {navigation.forward(readDist);}
 					
 					break;
 				case 2:
-					LCD.drawString("turn",0,2);
 					short readAng = 0;
 					readAng = (short) (((cmdBuff[2] & 0xff) << 8) + (cmdBuff[1] & 0xff));
 					if(readAng != 0) {navigation.turn(readAng);	} 
 					break;
 				case 3:
-					LCD.drawString("stop",0,2);
 					navigation.stopMoving();
 					break;
 				case 4:
-					LCD.drawString("pickup",0,2);
 					manager.pickup();
 					break;
 				case 5:
-					LCD.drawString("deliver",0,2);
 					manager.deliverBalls();
 					break;
 				case 0:
-					LCD.drawString("nothing",0,2);
 					//filler byte
 					break;
 			}
