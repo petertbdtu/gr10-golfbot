@@ -65,7 +65,25 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 			}
 		}
 	}
-
+	/**
+	 * Looks for balls in a specific direction in a lidar scan
+	 * @param scan
+	 * @param lower lower bound angle on the direction, in degrees
+	 * @param upper upper bound angle on the direction, in degrees
+	 * @return the location of the closest ball relative to the lidar, in the region
+	 */
+	public Point findClosestBallInDirection(LidarScan scan, float lower, float upper) {
+		LidarScan directionalScan = new LidarScan();
+		
+		for (LidarSample sample : scan.getSamples()) {
+			if (lower < sample.angle && sample.angle < upper) {
+				directionalScan.addSample(sample);
+			}
+		}
+		
+		return findClosestBallLidar(directionalScan);
+	}
+	
 	/**
 	 * Looks for balls in a lidar scan
 	 * @param scan
