@@ -18,24 +18,17 @@ import objects.Point;
 import objects.PolarPoint;
 import test.BallDetectorTest;
 
-public class StateController extends Thread implements BlackboardListener  {
+public class BLStateController extends Thread implements BlackboardListener  {
 	
-	public static void main(String[] args){
-		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-		StateController st = new StateController();
-		if(st.initialiseObjects()) {
-			st.start();
-			try { st.join(); } 
-			catch (InterruptedException e) { e.printStackTrace(); }
-		} 
-	}
+	public volatile int ballCollectedCount = 0;
+	public volatile boolean pauseStateMachine = false;
+	public volatile boolean stopStateMachine = false;
 	
-	private enum State {
+	public static enum State {
 		DEBUG,
+		PAUSE,
 		
 		EXPLORE,
-		EXPLOREV2,
-		EXPLOREV3,
 		IS_MOVING,
 		WAIT_FOR_MOVE,
 		
@@ -58,41 +51,40 @@ public class StateController extends Thread implements BlackboardListener  {
 		COMPLETED
 	}
 	
+	private CommandTransmitter commandTransmitter;
+	private BLCollisionDetector collisionDetector;
+	private BLBallDetector ballDetector;
 	private State nextState;
 	private State state;
 	
 	private Point currentBall;
 	private boolean notDone;
 	private boolean lastMoveState = false;
-	private int ballCollectedCount = 0;
-	
-	private LinkedList<PolarPoint> travelQueue;
 	private LinkedList<PolarPoint> reverseQueue;
 	
 	private BlackboardSample bbSample;
-	private CommandTransmitter commandTransmitter;
-	private LidarReceiver lidarReceiver;
-	private LegoReceiver legoReceiver;
-	private BlackboardController bController;
-	private BLCollisionDetector collisionDetector;
-	private BLBallDetector ballDetector;
+	
 
-	public StateController() {
-		state = State.EXPLORE;
-		travelQueue = new LinkedList<PolarPoint>();
+
+	public BLStateController(CommandTransmitter commandTransmitter, BLCollisionDetector collisionDetector, State state) {
+		this.commandTransmitter = commandTransmitter;
+		this.collisionDetector = collisionDetector;
+		this.state = state;
 		reverseQueue = new LinkedList<PolarPoint>();
 		notDone = true;
-	}
-	
-	PolarPoint hej;
-	private int count = 0;
-	
+	}	
 	
 	@Override
 	public void run() {
-		System.out.println("Starting State Machine");
-		State tempState = State.DEBUG;
 		while(notDone) {
+			
+			if(pauseStateMachine && state != State.IS_MOVING && state != State.IS_COLLECTING) {
+				nextState = state;
+				state = State.PAUSE;
+			}
+				
+			if(!pauseStateMachine && state == State.PAUSE)
+				state = nextState;
 			
 			// Collision detection state overruling
 			//if (collisionDetector.isDetected && state != State.COLLISION_AVOIDANCE) {
@@ -296,68 +288,6 @@ public class StateController extends Thread implements BlackboardListener  {
 		}
 	}
 
-	public boolean initialiseObjects() {
-		// Build Lidar receiver
-		System.out.println("Building Lidar Receiver...");
-		lidarReceiver = new LidarReceiver();
-		if(lidarReceiver.bindSocket(5000)) {
-			lidarReceiver.start();
-			System.out.println("Lidar Receiver succes");
-		} else {
-			System.out.println("Lidar Receiver failed");
-			return false;
-		}
-
-		// Build Lego Receiver
-		System.out.println("Building Lego Receiver...");
-		legoReceiver = new LegoReceiver();
-		if(legoReceiver.connect(3000)) {  //connect(3000, 3001, 3002)
-			legoReceiver.start();
-			System.out.println("Lego Receiver succes");
-		} else {
-			System.out.println("Lego Receiver failed");
-			return false;
-		}
-
-		// Command Transmitter
-		System.out.println("Building Command Transmitter...");
-		commandTransmitter = new CommandTransmitter();
-		if(commandTransmitter.connect(3001)) {
-			System.out.println("Command Transmitter succes");
-		} else {
-			System.out.println("Command Transmitter failed");
-			return false;
-		}
-		
-		// Collision Detection
-		System.out.println("Building Collision Detector...");
-		collisionDetector = new BLCollisionDetector();
-		collisionDetector.start();
-		System.out.println("Collision detection activated");
-	
-		// Ball Detector
-		System.out.println("Building Ball Detector...");
-		ballDetector = new BLBallDetector();
-		//ballDetector.start();
-		System.out.println("Ball detection activated");
-
-		// Blackboard Controller
-		System.out.println("Building blackboard...");
-		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
-		bController.registerListener(commandTransmitter);
-		bController.registerListener(collisionDetector);
-		//bController.registerListener(ballDetector);
-		bController.registerListener(this);
-		bController.start();
-		System.out.println("Blackboard succes");
-		
-		return true;
-	}
-	
-	private LidarScan tempScan;
-	private LidarScan oldScan;
-
-	
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
 		if(bbSample != null) {

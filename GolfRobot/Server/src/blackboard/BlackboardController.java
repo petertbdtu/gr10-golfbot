@@ -13,6 +13,7 @@ public class BlackboardController extends Thread {
 	private LidarReceiver lidar;
 
 	private BlackboardSample bSample;
+	private volatile boolean stopBlackboard = false;
 	private long cycle = 0;
 	
 	public BlackboardController(CameraReceiver camera, LegoReceiver lego, LidarReceiver lidar) {
@@ -28,7 +29,7 @@ public class BlackboardController extends Thread {
 	
 	@Override
 	public void run() {
-		while(!bbListeners.isEmpty()) {
+		while(!bbListeners.isEmpty() && !stopBlackboard) {
 			newBlackboardValues();
 			notifyListeners(bSample);
 		}
@@ -42,11 +43,28 @@ public class BlackboardController extends Thread {
 	
 	private void newBlackboardValues() {
 		bSample = new BlackboardSample();
-		bSample.cycle = cycle;
-		bSample.isMoving = lego.getIsMoving();
-		bSample.isCollecting = lego.getIsCollecting();
-		bSample.scan = lidar.getScan();
+		bSample.cycle = cycle++;
 		
-		cycle += 1;
+		if(camera != null) {
+			//TODO ADD FRAME???
+		}
+		
+		if(lego != null) {
+			bSample.isMoving = lego.getIsMoving();
+			bSample.isCollecting = lego.getIsCollecting();
+		}
+		
+		if(lidar != null) {
+			bSample.scan = lidar.getScan();
+		}
+	}
+
+	public void stopBlackboard() {
+		stopBlackboard = true;
+	}
+
+	public void removeListener(BlackboardListener bbListener) {
+		bbListeners.remove(bbListener);
+		
 	}
 }

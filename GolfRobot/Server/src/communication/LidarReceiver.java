@@ -10,17 +10,16 @@ import mapping.LidarScan;
 public class LidarReceiver extends Thread {
 
 	private DatagramSocket socket;
-	private boolean debug;
+	private boolean debug = false;
 	private double lastAngle = 0;
 	private boolean switcher = false;
 	private boolean newData = false;
 	private LidarScan scan1 = new LidarScan();
 	private LidarScan scan2 = new LidarScan();
 	private LidarScan tempScan = new LidarScan();
+	private boolean closeConnection = false;
 	
-	public LidarReceiver() {
-		this.debug = false;
-	}
+	public LidarReceiver() { }
 	
 	public LidarReceiver(boolean debug) {
 		this.debug = debug;
@@ -34,7 +33,7 @@ public class LidarReceiver extends Thread {
 	
 	@Override
 	public void run() {
-		while(socket != null && socket.isBound()) {
+		while(socket != null && socket.isBound() && !closeConnection) {
 			byte[] buffer = new byte[1000];
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 			try { socket.receive(packet); } 
@@ -43,6 +42,12 @@ public class LidarReceiver extends Thread {
 			//System.out.println(data.length);
 			decryptPacket(data);
 		}
+		
+		socket.close();
+	}
+	
+	public void stopReceiver() {
+		closeConnection = true;
 	}
 	
 	// Returns the newest complete scan
