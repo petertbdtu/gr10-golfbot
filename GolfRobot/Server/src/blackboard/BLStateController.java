@@ -1,5 +1,7 @@
 package blackboard;
 
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 
 import org.opencv.imgcodecs.Imgcodecs;
@@ -126,7 +128,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				case EXPLORE: {
 					commandTransmitter.robotTurn(45);
 					curMove = "D:45";
-					nextState = State.FIND_BALL;
+					nextState = State.EXPLORE;
 					state = State.WAIT_FOR_MOVE;
 					break;
 				}
@@ -288,6 +290,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		}
 	}
 
+	private LidarScan tempScan;
+	private LidarScan oldScan = new LidarScan();
+	private int count = 0;
+	
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
 		if(bbSample != null) {
@@ -297,34 +303,34 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				lastMoveState = newMoveState;
 			}
 		}
-//		tempScan = bbSample.scan;
-//		if(tempScan != null) {
-//			if(oldScan == null) {
-//				try {
-//					Imgcodecs.imwrite("testScan" + bbSample.cycle + ".png", ballDetector.scanToMap(tempScan));
-//			        FileOutputStream fileOut = new FileOutputStream("testScan" + bbSample.cycle + ".data");
-//			        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-//			        objectOut.writeObject(bbSample.scan);
-//			        objectOut.close();
-//				} catch (Exception ex) {
-//		            System.out.println("The Object could not be written to a file");
-//		        }
-//				oldScan = new LidarScan(tempScan);
-//			} else {
-//				if(tempScan.scanSize() != oldScan.scanSize()) {
-//					try {
-//						Imgcodecs.imwrite("testScan" + bbSample.cycle + ".png", ballDetector.scanToMap(tempScan));
-//				        FileOutputStream fileOut = new FileOutputStream("testScan" + bbSample.cycle + ".data");
-//				        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-//				        objectOut.writeObject(bbSample.scan);
-//				        objectOut.close();
-//					} catch (Exception ex) {
-//			            System.out.println("The Object could not be written to a file");
-//			        }
-//					oldScan = new LidarScan(tempScan);
-//				}
-//			}
-//		}
+		tempScan = bbSample.scan;
+		if(tempScan != null) {
+			if(oldScan == null) {
+				try {
+					Imgcodecs.imwrite("testScan" + count + ".png", ballDetector.scanToMap(tempScan));
+			        FileOutputStream fileOut = new FileOutputStream("testScan" + count++ + ".data");
+			        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+			        objectOut.writeObject(bbSample.scan);
+			        objectOut.close();
+				} catch (Exception ex) {
+		            System.out.println("The Object could not be written to a file");
+		        }
+				oldScan = new LidarScan(tempScan);
+			} else {
+				if(tempScan.scanSize() != oldScan.scanSize()) {
+					try {
+						Imgcodecs.imwrite("testScan" + count + ".png", ballDetector.scanToMap(tempScan));
+				        FileOutputStream fileOut = new FileOutputStream("testScan" + count++ + ".data");
+				        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+				        objectOut.writeObject(bbSample.scan);
+				        objectOut.close();
+					} catch (Exception ex) {
+			            System.out.println("The Object could not be written to a file");
+			        }
+					oldScan = new LidarScan(tempScan);
+				}
+			}
+		}
 	}
 	
 	private void saveScan(LidarScan scan) {

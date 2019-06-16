@@ -19,6 +19,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import mapping.LidarAnalyser;
 
 public class ServerGUI {
 
@@ -44,6 +45,7 @@ public class ServerGUI {
 
     private Thread networkThread;
 	private LidarReceiver lidarReceiver;
+	private LidarAnalyser lidarAnalyser;
 	private LegoReceiver legoReceiver;
 	private CommandTransmitter commandTransmitter;
 	private BlackboardController bController;
@@ -129,12 +131,15 @@ public class ServerGUI {
         	circleLidar.setFill(Color.YELLOW);
         	circleLego.setFill(Color.YELLOW);
         	circleTransmitter.setFill(Color.YELLOW);
+        	ServerGUI tmpGUI = this;
         	networkThread = new Thread(new Runnable() {
         		@Override
         		public void run() {
         			lidarReceiver = new LidarReceiver();
         			if(lidarReceiver.bindSocket(5000)) {
 	        			lidarReceiver.start();
+	        			lidarAnalyser = new LidarAnalyser(lidarReceiver, tmpGUI);
+	        			lidarAnalyser.start();
 	        	    	circleLidar.setFill(Color.LIGHTGREEN);
         			} else {
         				lidarReceiver = null;
@@ -172,6 +177,11 @@ public class ServerGUI {
         	networkThread = null;
     	}
     		
+    	if(lidarAnalyser != null) {
+    		lidarAnalyser.keepAlive = false;
+    		lidarAnalyser = null;
+    	}
+    	
     	if(lidarReceiver != null) {
     		lidarReceiver.stopReceiver();
     		lidarReceiver = null;

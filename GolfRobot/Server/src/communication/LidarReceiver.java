@@ -9,21 +9,14 @@ import mapping.LidarScan;
 
 public class LidarReceiver extends Thread {
 
-	private DatagramSocket socket;
-	private boolean debug = false;
-	private double lastAngle = 0;
-	private boolean switcher = false;
-	private boolean newData = false;
-	private LidarScan scan1 = new LidarScan();
-	private LidarScan scan2 = new LidarScan();
-	private LidarScan tempScan = new LidarScan();
 	private volatile boolean closeConnection = false;
+	private final boolean debug = false;
 	
-	public LidarReceiver() { }
-	
-	public LidarReceiver(boolean debug) {
-		this.debug = debug;
-	}
+	private DatagramSocket socket;
+	private double lastAngle = 0;
+
+	private LidarScan scan = new LidarScan();
+	private LidarScan tempScan = new LidarScan();
 	
 	public boolean bindSocket(int port) {
 		try { socket = new DatagramSocket(port); } 
@@ -47,16 +40,6 @@ public class LidarReceiver extends Thread {
 	public void stopReceiver() {
 		closeConnection = true;
 		socket.close();
-	}
-	
-	// Returns the newest complete scan
-	public LidarScan getScan() {
-		if(newData) {
-			switcher = !switcher;
-			newData = false;
-		}
-		if (switcher) {	return scan1; }
-		else { return scan2; }
 	}
 	
 	public void decryptPacket(byte[] buffer) {
@@ -123,13 +106,7 @@ public class LidarReceiver extends Thread {
 				if(lastAngle > angle + 10) {
 					//System.out.println("Scan finished... Found " + tempScan.scanSize() + " samples...");
 					if(debug) { System.out.println("Scan finished... Found " + tempScan.scanSize() + " samples..."); }
-					if(switcher) {
-						scan2 = new LidarScan(tempScan);
-						if(!newData) { newData = true; }
-					} else {
-						scan1 = new LidarScan(tempScan);
-						if(!newData) { newData = true; }
-					}
+					setScan(tempScan);
 					tempScan.clear();
 				}
 				lastAngle = angle;
@@ -160,11 +137,19 @@ public class LidarReceiver extends Thread {
 		return (Math.abs(dValue + distanceCorrection(distance))) % 360;
 	}
 	
-	//?
+	// Gets the difference
 	private double getAngleDifference(double start_angle, double end_angle) {
 		double diff_angle = Math.abs(end_angle - start_angle);
 		if(diff_angle > 180)
 			diff_angle = (end_angle + 360) - start_angle;
 		return diff_angle;
+	}
+
+	public synchronized void setScan(LidarScan scan) {
+		this.scan = new LidarScan(scan);
+	}
+	
+	public synchronized LidarScan getScan() {
+		return new LidarScan(scan);
 	}
 }

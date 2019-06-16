@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-
-import objects.Pose;
 
 public class LegoReceiver extends Thread {
 	private ServerSocket serverSocket;
