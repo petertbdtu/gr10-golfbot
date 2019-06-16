@@ -17,7 +17,7 @@ public class LidarReceiver extends Thread {
 	private LidarScan scan1 = new LidarScan();
 	private LidarScan scan2 = new LidarScan();
 	private LidarScan tempScan = new LidarScan();
-	private boolean closeConnection = false;
+	private volatile boolean closeConnection = false;
 	
 	public LidarReceiver() { }
 	
@@ -36,18 +36,17 @@ public class LidarReceiver extends Thread {
 		while(socket != null && socket.isBound() && !closeConnection) {
 			byte[] buffer = new byte[1000];
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-			try { socket.receive(packet); } 
-			catch (IOException e) { break; }
-			byte[] data = packet.getData();
-			//System.out.println(data.length);
-			decryptPacket(data);
+			try { 
+				socket.receive(packet); 
+				byte[] data = packet.getData();
+				decryptPacket(data);
+			} catch (IOException e) { closeConnection = true; }
 		}
-		
-		socket.close();
 	}
 	
 	public void stopReceiver() {
 		closeConnection = true;
+		socket.close();
 	}
 	
 	// Returns the newest complete scan

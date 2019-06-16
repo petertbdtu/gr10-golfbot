@@ -1,5 +1,7 @@
 package gui;
 
+import java.io.ByteArrayInputStream;
+
 import org.opencv.core.Core;
 
 import blackboard.BLCollisionDetector;
@@ -8,10 +10,12 @@ import blackboard.BLStateController;
 import communication.CommandTransmitter;
 import communication.LegoReceiver;
 import communication.LidarReceiver;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -38,6 +42,7 @@ public class ServerGUI {
     private BLStateController stateController;
     private BLCollisionDetector collisionDetector;
 
+    private Thread networkThread;
 	private LidarReceiver lidarReceiver;
 	private LegoReceiver legoReceiver;
 	private CommandTransmitter commandTransmitter;
@@ -55,12 +60,15 @@ public class ServerGUI {
     @FXML
     private void onClickStart() 
     {
+		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+    	
     	collisionDetector = new BLCollisionDetector();
     	bController.registerListener(collisionDetector);
     	
-    	stateController = new BLStateController(commandTransmitter, collisionDetector, cbStartState.getValue());
+    	stateController = new BLStateController(this, commandTransmitter, collisionDetector, cbStartState.getValue());
     	bController.registerListener(stateController);
     	
+		bController.start();
     	stateController.start();
     	collisionDetector.start();
     }
@@ -79,15 +87,20 @@ public class ServerGUI {
     
     @FXML
     private void onClickStop() 
-    {
+    { 
+    	if(bController != null) {
+    		bController.stopBlackboard();
+    		bController = null;
+    	}
+    	
         if(stateController != null) {
         	stateController.stopStateMachine = true;
-        	bController.removeListener(stateController);
+        	stateController = null;
         }
         
         if(collisionDetector != null) {
         	collisionDetector.keepDetecting = false;
-        	bController.removeListener(collisionDetector);
+        	collisionDetector = null;
         }
     }
     
@@ -112,81 +125,137 @@ public class ServerGUI {
     @FXML
     private void onClickStartNetwork() 
     {
-		lidarReceiver = new LidarReceiver();
-		lidarReceiver.bindSocket(5000);
-		lidarReceiver.start();
-    	circleLidar.setFill(Color.RED);
+    	if(networkThread == null || !networkThread.isAlive()) {
+        	circleLidar.setFill(Color.YELLOW);
+        	circleLego.setFill(Color.YELLOW);
+        	circleTransmitter.setFill(Color.YELLOW);
+        	networkThread = new Thread(new Runnable() {
+        		@Override
+        		public void run() {
+        			lidarReceiver = new LidarReceiver();
+        			if(lidarReceiver.bindSocket(5000)) {
+	        			lidarReceiver.start();
+	        	    	circleLidar.setFill(Color.LIGHTGREEN);
+        			} else {
+        				lidarReceiver = null;
+	        	    	circleLidar.setFill(Color.RED);
+        			}
+        	    	
+        			legoReceiver = new LegoReceiver();
+        			if(legoReceiver.connect(3000)) {
+        				legoReceiver.start();
+            	    	circleLego.setFill(Color.LIGHTGREEN);
+        			} else {
+        				legoReceiver = null;
+        				circleLego.setFill(Color.RED);
+        			}
 
-		legoReceiver = new LegoReceiver();
-		legoReceiver.connect(3000);
-		legoReceiver.start();
-    	circleLego.setFill(Color.RED);
-
-		commandTransmitter = new CommandTransmitter();
-		commandTransmitter.connect(3001);
-    	circleTransmitter.setFill(Color.RED);
-
-		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+        			commandTransmitter = new CommandTransmitter();
+        			if(commandTransmitter.connect(3001)) {
+        				circleTransmitter.setFill(Color.LIGHTGREEN);
+        			} else {
+        				commandTransmitter = null;
+        				circleTransmitter.setFill(Color.RED);
+        			}
+        		}
+        	});
+        	networkThread.start();
+    	}
     }
     
-    @FXML
+    @SuppressWarnings("deprecation")
+	@FXML
     private void onClickStopNetwork() 
     {
-    	if(lidarReceiver != null)
+    	if(networkThread != null && networkThread.isAlive()) {
+    		networkThread.stop();
+        	networkThread = null;
+    	}
+    		
+    	if(lidarReceiver != null) {
     		lidarReceiver.stopReceiver();
+    		lidarReceiver = null;
+    	}
     	circleLidar.setFill(Color.RED);
 
     	
-    	if(legoReceiver != null)
+    	if(legoReceiver != null) {
     		legoReceiver.stopReceiver();
+    		legoReceiver = null;
+    	}
     	circleLego.setFill(Color.RED);
 
     	
-    	if(lidarReceiver != null)
-    		commandTransmitter.stopTransmitter();
-    	circleTransmitter.setFill(Color.RED);
-
-    	if(bController != null)
-    		bController.stopBlackboard();
+    	if(commandTransmitter != null) {
+    		commandTransmitter.closeConnections();
+    		commandTransmitter = null;
+    	}
+		circleTransmitter.setFill(Color.RED);
     }
     
     public void setState(String newState) {
-		this.lblStateValue.setText(newState);
+    	Platform.runLater(() -> {
+    		this.lblStateValue.setText(newState);
+    	});
 	}
 
 	public void setIsMoving(String isMoving) {
-		this.lblMovingValue.setText(isMoving);
+		Platform.runLater(() -> {
+			this.lblMovingValue.setText(isMoving);
+		});
 	}
 
 	public void setIsCollecting(String isCollecting) {
-		this.lblCollectingValue.setText(isCollecting);
+		Platform.runLater(() -> {
+			this.lblCollectingValue.setText(isCollecting);
+		});
 	}
 
 	public void setCollisionDetected(String collisionDetected) {
-		this.lblCollisionValue.setText(collisionDetected);
+		Platform.runLater(() -> {
+			this.lblCollisionValue.setText(collisionDetected);
+		});
 	}
 
 	public void setLastMove(String lastMove) {
-		this.lblMoveValue.setText(lastMove);
+		Platform.runLater(() -> {
+			this.lblMoveValue.setText(lastMove);
+		});
 	}
 
 	public void setBallLocation(String ballLocation) {
-		this.lblBallLocationValue.setText(ballLocation);
+		Platform.runLater(() -> {
+			this.lblBallLocationValue.setText(ballLocation);
+		});
 	}
 
 	public void setBallHeading(String ballHeading) {
-		this.lblBallHeadingValue.setText(ballHeading);
+		Platform.runLater(() -> {
+			this.lblBallHeadingValue.setText(ballHeading);
+		});
 	}
 
 	public void setBallDistance(String ballDistance) {
-		this.lblBallDistanceValue.setText(ballDistance);
+		Platform.runLater(() -> {
+			this.lblBallDistanceValue.setText(ballDistance);
+		});
 	}
 
 	public void setBallsCollected(String ballsCollected) {
-		this.lblCollectedValue.setText(ballsCollected);
+		Platform.runLater(() -> {
+			this.lblCollectedValue.setText(ballsCollected);
+		});
 	}
 
 	public void setTimer(String timerValue) {
-		this.lblTimerValue.setText(timerValue);
+		Platform.runLater(() -> {
+			this.lblTimerValue.setText(timerValue);
+		});
+	}
+	
+	public void setLidarScan(byte[] imageBuffer) {
+		Platform.runLater(() -> {
+			ivLidar.setImage(new Image(new ByteArrayInputStream(imageBuffer))); 
+		});
 	}
 }

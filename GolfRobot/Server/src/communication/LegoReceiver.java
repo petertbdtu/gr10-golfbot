@@ -18,7 +18,7 @@ public class LegoReceiver extends Thread {
 	
 	private volatile boolean movingSwitcher = false;
 	private volatile boolean collectSwitcher = false;
-	private boolean closeConnection = false;
+	private volatile boolean closeConnection = false;
 
 	private Boolean isMoving1;
 	private Boolean isMoving2;
@@ -50,13 +50,11 @@ public class LegoReceiver extends Thread {
 	public void run() {
 		while(socketsWorking() && !closeConnection) {
 			try { readNavigator(); }
-			catch (IOException e) { }
+			catch (IOException e) { closeConnection = true; }
 			
 			try { readBallCollector(); }
-			catch (IOException e) { }
+			catch (IOException e) { closeConnection = true; }
 		}
-		
-		closeConnections();
 	}
 	
 	private boolean socketsWorking() {
@@ -70,19 +68,19 @@ public class LegoReceiver extends Thread {
 	
 	private void closeConnections() {
 		try { nStream.close(); } 
-		catch (IOException e) { }
+		catch (Exception e) { }
 		
 		try { bStream.close(); } 
-		catch (IOException e) { }
+		catch (Exception e) { }
 		
 		try { nSocket.close(); } 
-		catch (IOException e) { }
+		catch (Exception e) { }
 		
 		try { bSocket.close(); } 
-		catch (IOException e) { }
+		catch (Exception e) { }
 		
 		try { serverSocket.close(); } 
-		catch (IOException e) { }
+		catch (Exception e) { }
 	}
 	
 	private void readNavigator() throws IOException {
@@ -119,5 +117,6 @@ public class LegoReceiver extends Thread {
 
 	public void stopReceiver() {
 		closeConnection = true;
+		closeConnections();
 	}
 }

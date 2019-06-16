@@ -8,6 +8,7 @@ import communication.LidarReceiver;
 
 public class BlackboardController extends Thread {
 	private ArrayList<BlackboardListener> bbListeners;
+	
 	private CameraReceiver camera;
 	private LegoReceiver lego;
 	private LidarReceiver lidar;
@@ -29,7 +30,7 @@ public class BlackboardController extends Thread {
 	
 	@Override
 	public void run() {
-		while(!bbListeners.isEmpty() && !stopBlackboard) {
+		while(!stopBlackboard) {
 			newBlackboardValues();
 			notifyListeners(bSample);
 		}

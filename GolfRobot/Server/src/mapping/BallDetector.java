@@ -1,4 +1,4 @@
-package blackboard;
+package mapping;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,17 +8,19 @@ import java.awt.image.DataBufferByte;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import mapping.LidarScan;
+import blackboard.BlackboardListener;
+import blackboard.BlackboardSample;
 import objects.LidarSample;
 import objects.Point;
 
-public class BLBallDetector extends Thread implements BlackboardListener {
+public class BallDetector {
 	
 	private BlackboardSample bbSample;
 	private volatile Point closestBall;
@@ -40,31 +42,6 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 	private LidarScan newScan = new LidarScan();
 	private LidarScan oldScan = new LidarScan();
 	
-	@Override
-	public void blackboardUpdated(BlackboardSample bbSample) {
-		this.bbSample = new BlackboardSample(bbSample);
-//		if(bbSample != null && bbSample.scan != null) {
-//			newScan = new LidarScan(bbSample.scan);
-//			if(oldScan.scanSize() != newScan.scanSize()) {
-//				System.out.println("SCAN SIZE: " + newScan.scanSize());
-//			}
-//		}
-	}
-
-	@Override
-	public void run() {		
-		while(true) {
-			if(bbSample != null && bbSample.scan != null) {
-				newScan = new LidarScan(bbSample.scan);
-				System.out.println("BALL DETECTOR: Still Alive");
-				if(oldScan.scanSize() != newScan.scanSize()) {
-					closestBall = findClosestBallLidar(newScan);
-					oldScan = newScan;
-					System.out.printf("BALL DETECTOR: New Closest Ball [%d:%d]", closestBall != null ? closestBall.x : 0, closestBall != null ? closestBall.y : 0);
-				}
-			}
-		}
-	}
 	/**
 	 * Looks for balls in a specific direction in a lidar scan
 	 * @param scan
@@ -308,5 +285,14 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 		}
 		
 		return graph;
+	}
+	
+	public byte[] getByteArrayFromLidarScan(LidarScan scan) {
+		Mat map = scanToMap(scan);
+		map = drawCirclesOnMap(map, findAllBallsLidar(map));
+		MatOfByte buffer = new MatOfByte();
+		Imgcodecs.imencode(".png", map, buffer);
+		return buffer.toArray();
+
 	}
 }

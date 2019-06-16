@@ -9,7 +9,7 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
-import blackboard.BLBallDetector;
+import mapping.BallDetector;
 import mapping.LidarScan;
 import objects.Point;
 
@@ -17,7 +17,7 @@ public class BallDetectorTest {
 	
 	public static void main(String args[])
 	{
-		BLBallDetector bd = new BLBallDetector();
+		BallDetector bd = new BallDetector();
 
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 

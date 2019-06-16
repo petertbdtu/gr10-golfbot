@@ -10,12 +10,12 @@ import org.opencv.core.Core;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import blackboard.BLBallDetector;
 import blackboard.BlackboardController;
 import blackboard.BlackboardSample;
 import communication.CommandTransmitter;
 import communication.LegoReceiver;
 import communication.LidarReceiver;
+import mapping.BallDetector;
 import mapping.LidarScan;
 import objects.LidarSample;
 
@@ -73,7 +73,7 @@ public class RemoteMain {
 		//Remove main
 		System.out.println("Start Manual Remote-Control...");
 		Scanner scan = new Scanner(System.in);
-		BLBallDetector ballDetector = new BLBallDetector();
+		BallDetector ballDetector = new BallDetector();
 		
 		while(YesRobotRunYesYes) {
 			printMenu();

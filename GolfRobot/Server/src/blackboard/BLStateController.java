@@ -1,22 +1,17 @@
 package blackboard;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 
-import org.opencv.core.Core;
 import org.opencv.imgcodecs.Imgcodecs;
 
-import blackboard.BlackboardController;
 import blackboard.BlackboardSample;
 import communication.CommandTransmitter;
-import communication.LegoReceiver;
-import communication.LidarReceiver;
+import gui.ServerGUI;
+import mapping.BallDetector;
 import mapping.LidarScan;
 import objects.LidarSample;
 import objects.Point;
 import objects.PolarPoint;
-import test.BallDetectorTest;
 
 public class BLStateController extends Thread implements BlackboardListener  {
 	
@@ -51,13 +46,14 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		COMPLETED
 	}
 	
+	private ServerGUI serverGUI;
+	
 	private CommandTransmitter commandTransmitter;
 	private BLCollisionDetector collisionDetector;
-	private BLBallDetector ballDetector;
+	private BallDetector ballDetector;
 	private State nextState;
 	private State state;
 	
-	private Point currentBall;
 	private boolean notDone;
 	private boolean lastMoveState = false;
 	private LinkedList<PolarPoint> reverseQueue;
@@ -66,9 +62,11 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	
 
 
-	public BLStateController(CommandTransmitter commandTransmitter, BLCollisionDetector collisionDetector, State state) {
+	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, BLCollisionDetector collisionDetector, State state) {
+		this.serverGUI = gui;
 		this.commandTransmitter = commandTransmitter;
 		this.collisionDetector = collisionDetector;
+		this.ballDetector = new BallDetector();
 		this.state = state;
 		reverseQueue = new LinkedList<PolarPoint>();
 		notDone = true;
@@ -76,6 +74,13 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	
 	@Override
 	public void run() {
+		Point ball = null;
+		double ballAngle = 0.0;
+		double ballDistance = 0.0;
+		String curMove = "";
+		byte[] curLidarImage = null;
+		State tempState = State.DEBUG;
+		
 		while(notDone) {
 			
 			if(pauseStateMachine && state != State.IS_MOVING && state != State.IS_COLLECTING) {
@@ -89,46 +94,51 @@ public class BLStateController extends Thread implements BlackboardListener  {
 			// Collision detection state overruling
 			//if (collisionDetector.isDetected && state != State.COLLISION_AVOIDANCE) {
 			//	state = State.COLLISION_AVOIDANCE;
+			//	curMove = "AVOIDANCE";
 			//}
 			
 			// DEBUG
-			//if(state != tempState) {
+			if(state != tempState) {
 				System.out.println("STATE:  " + state);
-				//tempState = state;
-			//}
+				tempState = state;
+			}
 			
+				
+			// Update GUI
+			serverGUI.setState(state.toString());
+			if(bbSample != null) {
+				serverGUI.setIsMoving(bbSample.isMoving + "");
+				serverGUI.setIsCollecting(bbSample.isCollecting + "");
+				if(bbSample.scan != null)
+					serverGUI.setLidarScan(ballDetector.getByteArrayFromLidarScan(bbSample.scan));
+			}
+
+			serverGUI.setCollisionDetected(collisionDetector.isDetected + "");
+			serverGUI.setLastMove(curMove);
+			serverGUI.setBallLocation(ball != null ? String.format("[%d:%d]", ball.x, ball.y) : "null");
+			serverGUI.setBallHeading((int)ballAngle + "");
+			serverGUI.setBallDistance((int)ballDistance + "");
+			serverGUI.setBallsCollected(ballCollectedCount + "");			
+
 			// State switcher
 			switch(state) {
 			
 				case EXPLORE: {
-					//commandTransmitter.robotTurn(45);
-					while(bbSample == null || bbSample.scan == null);
-					ballDetector.findClosestBallLidar(bbSample.scan);
-//					while(ball == null) {
-//						ball = ballDetector.getClosestBall();
-//					}
-//					
-//					double angle = ((double) (new Point(0,0)).angleTo(ball));
-//					System.out.println("0.0: " + angle);
-//					angle = ((double) (new Point(-95,0)).angleTo(ball));
-//					System.out.println("-95.0: " + angle);
-					
-					
-
-					
-					//nextState = State.FIND_BALL;
-					state = State.COMPLETED;
+					commandTransmitter.robotTurn(45);
+					curMove = "D:45";
+					nextState = State.FIND_BALL;
+					state = State.WAIT_FOR_MOVE;
 					break;
 				}
 
 				case WAIT_FOR_MOVE: {
-					if(bbSample.isMoving)
+					if(bbSample != null && bbSample.isMoving)
 						state = State.IS_MOVING;
 					break;
 				}
 				
 				case IS_MOVING: {
-					if(!bbSample.isMoving)
+					if(bbSample != null && !bbSample.isMoving)
 						state = nextState;
 					break;
 				}
@@ -147,28 +157,28 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					break;
 				}
 				case FIND_BALL: {
-					System.out.println("Finding Ball");
-					Point ball = ballDetector.findClosestBallLidar(bbSample.scan);
-					System.out.println("Done Searching");
+					ball = bbSample != null ? ballDetector.findClosestBallLidar(bbSample.scan) : null;
 					if(ball != null) {
 						collisionDetector.swapHull(false);
 						
 						//Heading command
 						double angleBefore = ((double) (new Point(-115,0)).angleTo(ball));
-						double angle = angleBefore > 0 ? (angleBefore-180) * -1 : (angleBefore + 180) * -1;
-						System.out.println("Angle Calculated: " + angle);
+						ballAngle = angleBefore > 0 ? (angleBefore-180) * -1 : (angleBefore + 180) * -1;
+						System.out.println("Angle Calculated: " + ballAngle);
 						
-						if(angle > -4 && angle < 4) {
+						if(ballAngle > -4 && ballAngle < 4) {
 							//Distance command
-							double distance = (new Point(-155,0)).distance(ball.x, ball.y);				
-							reverseQueue.addFirst(new PolarPoint(0,-distance));
-							commandTransmitter.robotTravel(distance);
+							ballDistance = (new Point(-155,0)).distance(ball.x, ball.y);				
+							reverseQueue.addFirst(new PolarPoint(0,-ballDistance));
+							commandTransmitter.robotTravel(ballDistance);
+							curMove = "K:" + (int)ballDistance;
 							nextState = State.FETCH_BALL;
 							state = State.WAIT_FOR_MOVE;
 						} else {
-							System.out.println("BALL FOUND AT HEADING: " + angleBefore + " | " + angle);
-							reverseQueue.addFirst(new PolarPoint(-angle, 0));
-							commandTransmitter.robotTurn(angle);
+							System.out.println("BALL FOUND AT HEADING: " + angleBefore + " | " + ballAngle);
+							reverseQueue.addFirst(new PolarPoint(-ballAngle, 0));
+							commandTransmitter.robotTurn(ballAngle);
+							curMove = "D:" + (int)ballAngle;
 							nextState = State.FIND_BALL;
 							state = State.WAIT_FOR_MOVE;
 						}
@@ -179,42 +189,28 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					}
 					break;
 				}
-				case VALIDATE_BALL: {
-					LidarScan scan = bbSample.scan;
-					currentBall = ballDetector.findClosestBallLidar(scan);
-					if(currentBall != null) {
-						float heading = (new Point(0,0)).angleTo(currentBall);
-						System.out.println("BALL VALIDATED AT HEADING: " + heading);
-						if(heading < 1 && heading > -1) {
-							System.out.println("SAME BALL");
-							state = State.GO_TO_BALL;
-						} else {
-							System.out.println("FINDING NEW BALL");
-							state = State.FIND_BALL;
-						}
-					} else {
-						state = State.EXPLORE;
-					}
-					break;
-				}
 				
-//				case GO_TO_BALL: {
-//					PolarPoint command = travelQueue.pop();
-//					commandTransmitter.robotTravel(command.distance);
-//					nextState = State.FETCH_BALL;
-//					state = State.WAIT_FOR_MOVE;
-//					break;
-//				}
-//				
-//				case TURN_TO_BALL: {
-//					PolarPoint command = travelQueue.pop();
-//					commandTransmitter.robotTurn(command.angle);					
-//					nextState = State.FIND_BALL;
-//					state = State.WAIT_FOR_MOVE;
+//				case VALIDATE_BALL: {
+//					LidarScan scan = bbSample.scan;
+//					currentBall = ballDetector.findClosestBallLidar(scan);
+//					if(currentBall != null) {
+//						float heading = (new Point(0,0)).angleTo(currentBall);
+//						System.out.println("BALL VALIDATED AT HEADING: " + heading);
+//						if(heading < 1 && heading > -1) {
+//							System.out.println("SAME BALL");
+//							state = State.GO_TO_BALL;
+//						} else {
+//							System.out.println("FINDING NEW BALL");
+//							state = State.FIND_BALL;
+//						}
+//					} else {
+//						state = State.EXPLORE;
+//					}
 //					break;
 //				}
 				
 				case FETCH_BALL: {
+					curMove = "O";
 					commandTransmitter.robotCollectBall();
 					state = State.GO_TO_STARTING_POINT;
 					break;
@@ -223,11 +219,14 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				case GO_TO_STARTING_POINT: {
 					PolarPoint command = reverseQueue.pop();
 					
-					if(command.distance != 0)
+					if(command.distance != 0) {
+						curMove = "K:" + (int)command.distance;
 						commandTransmitter.robotTravel(command.distance);
-					else
+					} else {
+						curMove = "D:" + (int)command.angle;
 						commandTransmitter.robotTurn(command.angle);
-
+					}		
+						
 					if(reverseQueue.isEmpty()) {
 						if(ballCollectedCount >= 4) {
 							nextState = State.COMPLETED;
@@ -245,14 +244,14 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				}
 				
 				case WAIT_FOR_COLLECT: {
-					if(bbSample.isCollecting) { state = State.IS_MOVING; }
+					if(bbSample.isCollecting)
+						state = State.IS_MOVING; 
 					break;
 				}
 					
 				case IS_COLLECTING: {
-					if(!bbSample.isCollecting) { 
+					if(!bbSample.isCollecting)
 						state = State.FIND_BALL; 
-					}
 					break;
 				}
 				
@@ -272,6 +271,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				}
 					
 				case DELIVER_BALLS: {
+					curMove = "A";
 					commandTransmitter.robotDeliverBalls();
 				}
 					

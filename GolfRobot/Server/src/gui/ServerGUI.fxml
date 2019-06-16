@@ -313,7 +313,7 @@
                         </Label>
                         <HBox alignment="CENTER_LEFT">
                            <children>
-                              <Circle fx:id="circleLidar" fill="#616161" radius="5.0" stroke="BLACK" strokeType="INSIDE">
+                              <Circle fx:id="circleLidar" fill="RED" radius="5.0" stroke="BLACK" strokeType="INSIDE">
                                  <HBox.margin>
                                     <Insets left="5.0" />
                                  </HBox.margin>
@@ -333,7 +333,7 @@
                         </HBox>
                         <HBox alignment="CENTER_LEFT">
                            <children>
-                              <Circle fx:id="circleLego" fill="#616161" radius="5.0" stroke="BLACK" strokeType="INSIDE">
+                              <Circle fx:id="circleLego" fill="RED" radius="5.0" stroke="BLACK" strokeType="INSIDE">
                                  <HBox.margin>
                                     <Insets left="5.0" />
                                  </HBox.margin>
@@ -353,7 +353,7 @@
                         </HBox>
                         <HBox alignment="CENTER_LEFT">
                            <children>
-                              <Circle fx:id="circleTransmitter" fill="#616161" radius="5.0" stroke="BLACK" strokeType="INSIDE">
+                              <Circle fx:id="circleTransmitter" fill="RED" radius="5.0" stroke="BLACK" strokeType="INSIDE">
                                  <HBox.margin>
                                     <Insets left="5.0" />
                                  </HBox.margin>
@@ -376,7 +376,7 @@
                               <Insets left="5.0" right="5.0" top="5.0" />
                            </VBox.margin>
                         </Button>
-                        <Button fx:id="btnStopNetwork" mnemonicParsing="false" onAction="#onClickStopNetwork" prefWidth="2000.0" text="Stop network">
+                        <Button fx:id="btnStopNetwork" mnemonicParsing="false" onAction="#onClickStopNetwork" prefWidth="2000.0" text="Stop Network">
                            <VBox.margin>
                               <Insets left="5.0" right="5.0" top="5.0" />
                            </VBox.margin>

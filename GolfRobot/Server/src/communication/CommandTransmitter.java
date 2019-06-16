@@ -26,13 +26,13 @@ public class CommandTransmitter {
 	
 	public void closeConnections() {
 		try { out.close(); }
-		catch (IOException e) { e.printStackTrace(); }
+		catch (Exception e) { }
 		
 		try { socket.close(); } 
-		catch (IOException e) { e.printStackTrace(); }
+		catch (Exception e) { }
 		
 		try { serverSocket.close(); } 
-		catch (IOException e) { e.printStackTrace(); }
+		catch (Exception e) { }
 	}
 	
 	public void robotTravel(double distance) {
@@ -96,10 +96,4 @@ public class CommandTransmitter {
 		try { out.write(cmd); } 
 		catch (IOException e) { e.printStackTrace(); }
 	}
-
-	public void stopTransmitter() {
-		// TODO Auto-generated method stub
-		
-	}
-	
 }

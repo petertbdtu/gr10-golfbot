@@ -7,7 +7,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 public class GuiApplication extends Application {
-
+	
 	public static void main(String[] args) {
 		launch(args);
 	}
@@ -20,5 +20,4 @@ public class GuiApplication extends Application {
 		stage.setScene(new Scene(root, 1280, 720));
 		stage.show();
 	}
-
 }
