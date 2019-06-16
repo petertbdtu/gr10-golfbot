@@ -12,6 +12,7 @@ import mapping.LidarScan;
 import objects.LidarSample;
 import objects.Point;
 import objects.PolarPoint;
+import java.lang.Math;
 
 public class BLStateController extends Thread implements BlackboardListener  {
 	
@@ -26,6 +27,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		EXPLORE,
 		IS_MOVING,
 		WAIT_FOR_MOVE,
+		
+		EXPLORE_V2,
+		WALL_SAMPLE,
+		WALL_CORRECTION,
 		
 		COLLISION_AVOIDANCE,
 		
@@ -60,6 +65,9 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	
 	private BlackboardSample bbSample;
 	
+	private LidarScan wallScan;
+	private double startDist;
+	
 
 
 	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, BLCollisionDetector collisionDetector, State state) {
@@ -92,14 +100,14 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				state = nextState;
 			
 			// Collision detection state overruling
-			//if (collisionDetector.isDetected && state != State.COLLISION_AVOIDANCE) {
-			//	state = State.COLLISION_AVOIDANCE;
-			//	curMove = "AVOIDANCE";
-			//}
+			if (collisionDetector.isDetected && state != State.COLLISION_AVOIDANCE) {
+				state = State.COLLISION_AVOIDANCE;
+				curMove = "AVOIDANCE";
+			}
 			
 			// DEBUG
 			if(state != tempState) {
-				System.out.println("STATE:  " + state);
+				//System.out.println("STATE:  " + state);
 				tempState = state;
 			}
 			
@@ -109,8 +117,12 @@ public class BLStateController extends Thread implements BlackboardListener  {
 			if(bbSample != null) {
 				serverGUI.setIsMoving(bbSample.isMoving + "");
 				serverGUI.setIsCollecting(bbSample.isCollecting + "");
-				if(bbSample.scan != null)
-					serverGUI.setLidarScan(ballDetector.getByteArrayFromLidarScan(bbSample.scan));
+				if(bbSample.scan != null) {}
+					//try {
+						//serverGUI.setLidarScan(ballDetector.getByteArrayFromLidarScan(bbSample.scan));
+					//} catch(Exception e) {
+						//TODO		
+					//}
 			}
 
 			serverGUI.setCollisionDetected(collisionDetector.isDetected + "");
@@ -143,17 +155,83 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					break;
 				}
 				
+				/*
+				case EXPLORE_V2: {
+					collisionDetector.swapHull(true);
+					commandTransmitter.robotTravel(300.0);
+					curMove = "K:30";
+					nextState = State.EXPLORE_V2;
+					state = State.WAIT_FOR_MOVE;
+					break;
+				}*/
+				
+				case EXPLORE_V2: {
+					if (bbSample != null && bbSample.scan != null) {
+						collisionDetector.swapHull(true);
+						wallScan = new LidarScan(bbSample.scan);
+						startDist = 0.0;
+						for (LidarSample s : bbSample.scan.getSamples()) {
+							if (s.angle > 88.0 && s.angle < 92.0) {
+								startDist = s.distance;
+								System.out.println(startDist);
+								break;
+							}
+						}
+						
+						commandTransmitter.robotTravel(200.0);
+						curMove = "K:20";
+						nextState = State.WALL_CORRECTION;
+						state = State.WAIT_FOR_MOVE;
+						
+
+						if (startDist == 0.0) {
+							nextState = State.EXPLORE_V2;
+						}
+					}
+					break;
+				}
+				
+				case WALL_CORRECTION: {
+					if (bbSample != null && bbSample.scan != null) {
+						collisionDetector.swapHull(true);
+						double diff = 1000.0;
+						double angleDiff, currDist = 0.0;
+						LidarScan wallScanNew = new LidarScan(bbSample.scan);
+						if (wallScanNew.scanSize() != wallScan.scanSize()) {
+							for (LidarSample s : wallScanNew.getSamples()) {
+								if (s.angle > 88.0 && s.angle < 92.0) {
+									currDist = s.distance;
+									break;
+								}
+							}
+							diff = startDist - currDist;
+							wallScan = wallScanNew;
+							state = State.WALL_CORRECTION;
+							angleDiff = Math.asin(diff/200.0);
+							System.out.println("[Start: "+startDist+", curr: "+currDist+", angle: "+angleDiff+"]");
+							if (diff != startDist && angleDiff > 5.0 && angleDiff < -5.0) {
+								commandTransmitter.robotTurn(angleDiff);
+								curMove = "D:"+angleDiff;
+							}
+							nextState = State.EXPLORE_V2;
+							state = State.WAIT_FOR_MOVE;
+
+						}
+					}
+					break;
+				}
+				
 				case COLLISION_AVOIDANCE: {
 					commandTransmitter.robotStop();
-					while(bbSample.isMoving); // wait for stop
+					while(bbSample.isMoving) System.out.print(""); // wait for stop
 					commandTransmitter.robotTravel(-50);
-					while(!bbSample.isMoving); // Wait for move
-					while(bbSample.isMoving); // Wait for stop
+					while(!bbSample.isMoving) System.out.print(""); // Wait for move
+					while(bbSample.isMoving) System.out.print(""); // Wait for stop
 					commandTransmitter.robotTurn(90);
-					while(!bbSample.isMoving); // Wait for move
-					while(bbSample.isMoving); // Wait for stop
+					while(!bbSample.isMoving) System.out.print(""); // Wait for move
+					while(bbSample.isMoving) System.out.print(""); // Wait for stop
 					collisionDetector.isDetected = false;
-					state = State.EXPLORE;
+					state = State.EXPLORE_V2;
 					break;
 				}
 				case FIND_BALL: {
@@ -164,7 +242,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 						//Heading command
 						double angleBefore = ((double) (new Point(-115,0)).angleTo(ball));
 						ballAngle = angleBefore > 0 ? (angleBefore-180) * -1 : (angleBefore + 180) * -1;
-						System.out.println("Angle Calculated: " + ballAngle);
+						//System.out.println("Angle Calculated: " + ballAngle);
 						
 						if(ballAngle > -4 && ballAngle < 4) {
 							//Distance command
@@ -175,7 +253,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 							nextState = State.FETCH_BALL;
 							state = State.WAIT_FOR_MOVE;
 						} else {
-							System.out.println("BALL FOUND AT HEADING: " + angleBefore + " | " + ballAngle);
+							//System.out.println("BALL FOUND AT HEADING: " + angleBefore + " | " + ballAngle);
 							reverseQueue.addFirst(new PolarPoint(-ballAngle, 0));
 							commandTransmitter.robotTurn(ballAngle);
 							curMove = "D:" + (int)ballAngle;
@@ -281,7 +359,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				}
 	
 				default: {
-					state = State.EXPLORE;
+					state = State.EXPLORE_V2;
 					break;
 				}
 			}
@@ -293,7 +371,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		if(bbSample != null) {
 			boolean newMoveState = bbSample.isMoving;
 			if(lastMoveState != newMoveState) {
-				System.out.println("KØRER VI ELLER HVAD?: " + newMoveState);
+				//System.out.println("KØRER VI ELLER HVAD?: " + newMoveState);
 				lastMoveState = newMoveState;
 			}
 		}

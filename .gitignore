@@ -1,1 +1,7 @@
 /.project
+GolfRobot/Gui/target/classes/gui/application.css
+*.class
+*.fxml
+GolfRobot/Robot/RobotMain.jar
+GolfRobot/Server/.classpath
+GolfRobot/Server/.classpath

@@ -7,7 +7,7 @@ import lejos.hardware.port.MotorPort;
 public class RobotMain {
 	public static void main(String [ ] args) {
 		// Server IP hello
-		String ip = "172.20.10.2";
+		String ip = "172.20.10.13";
 		int portSend = 3000;
 		int portReceive = 3001;
 		
