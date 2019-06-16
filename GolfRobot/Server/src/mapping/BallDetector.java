@@ -257,4 +257,12 @@ public class BallDetector {
 		
 		return graph;
 	}
+
+	public byte[] getByteArrayFromLidarScan(LidarScan scan) {
+		Mat map = scanToMap(scan);
+		markedMap = drawCirclesOnMap(map, findAllBallsLidar(map));
+		MatOfByte byteMat = new MatOfByte();
+		Imgcodecs.imencode(".bmp", markedMap, byteMat);
+		return byteMat.toArray();
+	}
 }
