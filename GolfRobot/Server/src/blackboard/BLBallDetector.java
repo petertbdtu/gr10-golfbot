@@ -20,6 +20,11 @@ import objects.Point;
 
 public class BLBallDetector extends Thread implements BlackboardListener {
 	
+	private final int SQ_SIZE = 4000;
+	private final int CENTER_X = SQ_SIZE / 2;
+	private final int CENTER_Y = SQ_SIZE / 2;
+	private final Point CENTER = new Point(CENTER_X, CENTER_Y);
+	
 	private BlackboardSample bbSample;
 	private volatile Point closestBall;
 	private volatile Mat markedMap;
@@ -95,7 +100,7 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 			Mat circles = findAllBallsLidar(map);
 			List<Point> ps = getCircleLocsFromMat(circles);
 			if (ps.size() > 0) {
-				Point origo = getImageCenterPoint(map);
+				Point origo = getImageCenterPoint();
 				Point closest = findClosestPointToPoint(ps, origo);
 				
 				markedMap = drawCirclesOnMap(map, circles);
@@ -115,60 +120,30 @@ public class BLBallDetector extends Thread implements BlackboardListener {
 			return new Point(p.x-d.x, p.y-d.y);
 	}
 
-	public Point getImageCenterPoint(Mat map) {
-		return new Point((int) (map.size().width / 2)+1, (int) (map.size().height / 2)+1);
+	public Point getImageCenterPoint() {
+		return new Point(CENTER_X, CENTER_Y);
 	}
 	
 	/**
 	 * Convert a LidarScan to an image which is centered around the lidar.
 	 */
 	public Mat scanToMap(LidarScan scan) {
-		int lx = 0;
-		int hx = 0;
-		int ly = 0;
-		int hy = 0;
-		
 		List<Point> pts = scan.getPoints();
 		
-		for (Point p : pts) {
-			if (p.x < lx)
-				lx = p.x;
-			
-			if (p.x > hx)
-				hx = p.x;
-			
-			if (p.y < ly)
-				ly = p.y;
-			
-			if (p.y > hy)
-				hy = p.y;
-		}
+		Mat mat = Mat.zeros(SQ_SIZE, SQ_SIZE, CvType.CV_8U);
 		
-		int w = Integer.max(Math.abs(lx), Math.abs(hx));
-		int h = Integer.max(Math.abs(ly), Math.abs(hy));
-		
-		Mat mat = Mat.zeros(h*2+1, w*2+1, CvType.CV_8U);
-		
-		int lineThickness = 2;
-		if (pts.size() >= 1) {
-			Point prevPoint = pts.get(0);
-			mat.put(h-prevPoint.y,  w+prevPoint.x, new byte[] {(byte)255});
-			
-			for (int i = 1; i < pts.size(); i++) {
-				Point p = pts.get(i);
-				mat.put(h-p.y, w+p.x, new byte[] {(byte)255});
-				
-				if (p.distance(prevPoint) <= 20) {
-					Imgproc.line(mat, new org.opencv.core.Point(w+p.x, h-p.y), new org.opencv.core.Point(w+prevPoint.x, h-prevPoint.y), new Scalar(255), lineThickness, Imgproc.LINE_8, 0);
-				}
-				
-				prevPoint = p;
+		for (int i = 0; i < pts.size(); i++) {
+			Point p = pts.get(i);
+			int pxl_x = CENTER_X - p.x;
+			int pxl_y = CENTER_Y - p.y;
+			if (0 <= pxl_x && pxl_x <= SQ_SIZE && 0 <= pxl_y && pxl_y <= SQ_SIZE) {
+				mat.put(pxl_y, pxl_x, new byte[] {(byte)255});
 			}
 		}
 		
 		// (0, 0) cross which points at 0 degrees.
-		Imgproc.line(mat, new org.opencv.core.Point(w-10, h), new org.opencv.core.Point(w+30, h), new Scalar(127), 3, Imgproc.LINE_AA, 0);
-		Imgproc.line(mat, new org.opencv.core.Point(w, h-10), new org.opencv.core.Point(w, h+10), new Scalar(127), 3, Imgproc.LINE_AA, 0);
+		Imgproc.line(mat, new org.opencv.core.Point(CENTER_X-10, CENTER_Y), new org.opencv.core.Point(CENTER_X+30, CENTER_Y), new Scalar(127), 3, Imgproc.LINE_AA, 0);
+		Imgproc.line(mat, new org.opencv.core.Point(CENTER_X, CENTER_Y-10), new org.opencv.core.Point(CENTER_X, CENTER_Y+10), new Scalar(127), 3, Imgproc.LINE_AA, 0);
 		
 		return mat;
 	}

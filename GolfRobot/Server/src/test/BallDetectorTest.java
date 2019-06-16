@@ -21,7 +21,7 @@ public class BallDetectorTest {
 
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-		for (int i = 1; i <= 28; i++) {
+		for (int i = 1; i <= 98; i++) {
 			try {
 				FileInputStream fis = new FileInputStream("data/testScan"+i+".data");
 				ObjectInputStream ois = new ObjectInputStream(fis);
@@ -30,7 +30,7 @@ public class BallDetectorTest {
 				Mat circles = bd.findAllBallsLidar(map);
 				
 				
-				Point origo = bd.getImageCenterPoint(map);
+				Point origo = bd.getImageCenterPoint();
 				List<Point> ps = bd.getCircleLocsFromMat(circles);
 				if (ps.size() > 0) {
 					Point closest = bd.findClosestPointToPoint(ps, origo);
@@ -41,6 +41,7 @@ public class BallDetectorTest {
 				}
 				else {
 					System.out.println("No balls found.");
+					Imgcodecs.imwrite("data/testScan"+i+"f.png", map);
 				}
 				ois.close();
 			}
