@@ -1,4 +1,4 @@
-package mapping;
+package blackboard;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,25 +8,24 @@ import java.awt.image.DataBufferByte;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import blackboard.BlackboardListener;
-import blackboard.BlackboardSample;
+import mapping.LidarScan;
 import objects.LidarSample;
 import objects.Point;
 
-public class BallDetector {
+public class BLBallDetector extends Thread implements BlackboardListener {
 	
 	private final int SQ_SIZE = 4000;
 	private final int CENTER_X = SQ_SIZE / 2;
 	private final int CENTER_Y = SQ_SIZE / 2;
 	private final Point CENTER = new Point(CENTER_X, CENTER_Y);
 	
+	private BlackboardSample bbSample;
 	private volatile Point closestBall;
 	private volatile Mat markedMap;
 	private long counter = 0;
@@ -42,7 +41,35 @@ public class BallDetector {
 	public Mat getMarkedMap() {
 		return markedMap;
 	}
+	
+	private LidarScan newScan = new LidarScan();
+	private LidarScan oldScan = new LidarScan();
+	
+	@Override
+	public void blackboardUpdated(BlackboardSample bbSample) {
+		this.bbSample = new BlackboardSample(bbSample);
+//		if(bbSample != null && bbSample.scan != null) {
+//			newScan = new LidarScan(bbSample.scan);
+//			if(oldScan.scanSize() != newScan.scanSize()) {
+//				System.out.println("SCAN SIZE: " + newScan.scanSize());
+//			}
+//		}
+	}
 
+	@Override
+	public void run() {		
+		while(true) {
+			if(bbSample != null && bbSample.scan != null) {
+				newScan = new LidarScan(bbSample.scan);
+				System.out.println("BALL DETECTOR: Still Alive");
+				if(oldScan.scanSize() != newScan.scanSize()) {
+					closestBall = findClosestBallLidar(newScan);
+					oldScan = newScan;
+					System.out.printf("BALL DETECTOR: New Closest Ball [%d:%d]", closestBall != null ? closestBall.x : 0, closestBall != null ? closestBall.y : 0);
+				}
+			}
+		}
+	}
 	/**
 	 * Looks for balls in a specific direction in a lidar scan
 	 * @param scan
