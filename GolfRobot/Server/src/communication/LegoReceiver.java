@@ -16,11 +16,9 @@ public class LegoReceiver extends Thread {
 	private InputStream nStream;
 	private InputStream bStream;
 	
-	private boolean movingSwitcher = false;
-	private boolean collectSwitcher = false;
-
-	private boolean movingNewData = false;
-	private boolean collectNewData = false;
+	private volatile boolean movingSwitcher = false;
+	private volatile boolean collectSwitcher = false;
+	private boolean closeConnection = false;
 
 	private Boolean isMoving1;
 	private Boolean isMoving2;
@@ -50,10 +48,15 @@ public class LegoReceiver extends Thread {
 	
 	@Override
 	public void run() {
-		while(socketsWorking()) {
-			readNavigator();
-			readBallCollector();
+		while(socketsWorking() && !closeConnection) {
+			try { readNavigator(); }
+			catch (IOException e) { }
+			
+			try { readBallCollector(); }
+			catch (IOException e) { }
 		}
+		
+		closeConnections();
 	}
 	
 	private boolean socketsWorking() {
@@ -65,57 +68,56 @@ public class LegoReceiver extends Thread {
 		return working;
 	}
 	
-	private void readNavigator() {
-		try {
-			int rec = nStream.read();
-			if (rec != -1) {
-				if (movingSwitcher) {
-					isMoving2 = rec == 1;
-				}
-				else {
-					isMoving1 = rec == 1;
-				}
-				movingNewData = true;
-			}
-		}
-		catch (IOException e) {
-			e.printStackTrace();
+	private void closeConnections() {
+		try { nStream.close(); } 
+		catch (IOException e) { }
+		
+		try { bStream.close(); } 
+		catch (IOException e) { }
+		
+		try { nSocket.close(); } 
+		catch (IOException e) { }
+		
+		try { bSocket.close(); } 
+		catch (IOException e) { }
+		
+		try { serverSocket.close(); } 
+		catch (IOException e) { }
+	}
+	
+	private void readNavigator() throws IOException {
+		int rec = nStream.read();
+		if (rec != -1) {
+			if (movingSwitcher)
+				isMoving2 = rec == 1;
+			else
+				isMoving1 = rec == 1;
 		}
 	}
 	
-	private void readBallCollector() {
-		try {
-			int rec = bStream.read();
-			if (rec != -1) {
-				if (collectSwitcher) {
-					isCollecting2 = rec == 1;
-				}
-				else {
-					isCollecting1 = rec == 1;
-				}
-				collectNewData = true;
-			}
-		}
-		catch (IOException e) {
-			e.printStackTrace();
+	private void readBallCollector() throws IOException {
+		int rec = bStream.read();
+		if (rec != -1) {
+			if (collectSwitcher)
+				isCollecting2 = rec == 1;
+			else
+				isCollecting1 = rec == 1;
 		}
 	}
 
 	public Boolean getIsMoving() {
-		if(movingNewData) { 
-			movingSwitcher = !movingSwitcher; 
-			movingNewData = false;
-		}
+		movingSwitcher = !movingSwitcher; 
 		if(movingSwitcher) { return isMoving1; }
 		else { return isMoving2; }
 	}
 
 	public Boolean getIsCollecting() {
-		if(collectNewData) { 
-			collectSwitcher = !collectSwitcher;
-			collectNewData = false;
-		}
+		collectSwitcher = !collectSwitcher;
 		if(collectSwitcher) { return isCollecting1; }
 		else { return isCollecting2; }
+	}
+
+	public void stopReceiver() {
+		closeConnection = true;
 	}
 }
