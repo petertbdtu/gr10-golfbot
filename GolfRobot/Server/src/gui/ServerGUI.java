@@ -3,6 +3,7 @@ package gui;
 import java.io.ByteArrayInputStream;
 
 import org.opencv.core.Core;
+import org.opencv.core.Mat;
 
 import blackboard.BLCollisionDetector;
 import blackboard.BlackboardController;
@@ -20,6 +21,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import mapping.LidarAnalyser;
+import mapping.Vision;
 
 public class ServerGUI {
 
@@ -57,23 +59,33 @@ public class ServerGUI {
     @FXML
     private void initialize() {
     	cbStartState.getItems().setAll(BLStateController.State.values());
+    	Mat mat = Vision.readImageFromFile("hammer.jpg");
+    	setLidarScan(Vision.matToImageBuffer(mat));
     }
+    
+  
+	@FXML
+	private void onClickStart() {
+    	Mat mat = Vision.readImageFromFile("TestImage.png");
+    	Mat lines = Vision.findLines(mat);
+    	setLidarScan(Vision.matToImageBuffer(lines));
+	}
      
-    @FXML
-    private void onClickStart() 
-    {
-		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
-    	
-    	collisionDetector = new BLCollisionDetector();
-    	bController.registerListener(collisionDetector);
-    	
-    	stateController = new BLStateController(this, commandTransmitter, collisionDetector, cbStartState.getValue());
-    	bController.registerListener(stateController);
-    	
-		bController.start();
-    	stateController.start();
-    	collisionDetector.start();
-    }
+//    @FXML
+//    private void onClickStart() 
+//    {
+//		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+//    	
+//    	collisionDetector = new BLCollisionDetector();
+//    	bController.registerListener(collisionDetector);
+//    	
+//    	stateController = new BLStateController(this, commandTransmitter, collisionDetector, cbStartState.getValue());
+//    	bController.registerListener(stateController);
+//    	
+//		bController.start();
+//    	stateController.start();
+//    	collisionDetector.start();
+//    }
     
     @FXML
     private void onClickPause() 

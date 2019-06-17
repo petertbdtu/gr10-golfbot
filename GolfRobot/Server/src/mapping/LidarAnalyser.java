@@ -39,6 +39,18 @@ public class LidarAnalyser extends Thread {
 		try { serverGUI.setLidarScan(Vision.getAsImage(scan)); } 
 		catch (Exception e) { e.printStackTrace(); }
 	}
+	
+	private void getRectangle() {
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 
 	public synchronized List<Point> getObstacles() {
 		return new ArrayList<Point>(obstacles);
