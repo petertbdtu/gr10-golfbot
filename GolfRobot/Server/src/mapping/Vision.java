@@ -58,7 +58,7 @@ public class Vision {
 		int maxRadius = 25;
 		Mat circles = new Mat();
 		Imgproc.HoughCircles(map, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
-		
+		map.release();
 		return circles;
 	}
 	
@@ -132,6 +132,7 @@ public class Vision {
 	            Imgproc.circle(map, center, radius, new Scalar(255,0,255), 3, 8, 0 );
 			}
 		}
+		circles.release();
 	}
 	
 	/**
@@ -153,6 +154,7 @@ public class Vision {
 			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
 		}
 		
+		
 		lines = findWallLines(wallsOut);
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
@@ -173,6 +175,7 @@ public class Vision {
 			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
 			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 2);
 		}
+		lines.release();
 		
 //		MatOfPoint corners = new MatOfPoint();
 //		Imgproc.goodFeaturesToTrack(wallsOut, corners, 4, 0.5, 900.0);
@@ -202,7 +205,7 @@ public class Vision {
 			Point pt2 = new Point(x2, y2);
 			Imgproc.line(map, pt1, pt2, new Scalar(255,255,255), 2);
 		}
-		
+		lines.release();
 	}
 	
 	public static Mat findLines(Mat map) {
