@@ -6,6 +6,7 @@ import java.util.List;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -120,8 +121,6 @@ public class Vision {
 	 */
 	public static void findWallsAndRemove(Mat mapInOut, Mat wallsOut) {
 		Mat lines = findLines(mapInOut);
-		
-		Mat tmp = new Mat(mapInOut.size(), mapInOut.type());
 		System.out.println("Found lines: " + lines.rows());
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
@@ -131,10 +130,11 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-			Imgproc.line(tmp, pt1, pt2, new Scalar(255,255,255), 15);
+			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
+			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
 		}
 		
-		lines = findWallLines(tmp);
+		lines = findWallLines(wallsOut);
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
 			double x1 = l[0];
@@ -152,16 +152,24 @@ public class Vision {
 			Point pt2 = new Point(SQ_SIZE, y_end);
 			
 			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
+			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 2);
 		}
+		
+//		MatOfPoint corners = new MatOfPoint();
+//		Imgproc.goodFeaturesToTrack(wallsOut, corners, 4, 0.5, 900.0);
+//		for (int i = 0; i < corners.rows(); i++) {
+//			double[] corner = corners.get(i,0);
+//			System.out.println("ehhhh: " + corner[0] + ":" + corner[1]);
+//			Imgproc.circle(wallsOut, new Point(corner[0],corner[1]), 100, new Scalar(255,255,255), -1);
+//		}
 	}
 	
 	public static Mat findLines(Mat map) {
 		int rho = 1;
 		double theta = Math.PI / 180;
-		int threshold = 10;
-		int min_line_length = 30;
-		int max_line_gap = 150;		
+		int threshold = 2;
+		int min_line_length = 10;
+		int max_line_gap = 10;		
 		
 		// ALSO WRITES TO linesOUT
 		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
@@ -174,9 +182,9 @@ public class Vision {
 	public static Mat findWallLines(Mat map) {
 		int rho = 1;
 		double theta = Math.PI / 180;
-		int threshold = 360;
-		int min_line_length = 300;
-		int max_line_gap = 1800;		
+		int threshold = 150;
+		int min_line_length = 200;
+		int max_line_gap = 100;		
 		
 		// ALSO WRITES TO linesOUT
 		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)

@@ -43,6 +43,7 @@ public class LidarAnalyser extends Thread {
 			Mat map = Vision.scanToMap(scan);
 			Mat obstacles = new Mat(map.size(), map.type());
 			Vision.findWallsAndRemove(map, obstacles);
+			List<Point> lidarMap = Vision.
 			Mat circles = Vision.findAllBallsLidar(map);
 			setBalls(Vision.getCircleLocsFromMat(circles));
 			map = Vision.drawCirclesOnMap(map, circles);
