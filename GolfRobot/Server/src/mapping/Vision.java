@@ -193,4 +193,18 @@ public class Vision {
 		
 		return lines;
 	}
+	
+	public static List<objects.Point> collisionMapToPoints(Mat map) {
+		List<objects.Point> points = new ArrayList<objects.Point>();
+		
+		for (int x = 0; x < SQ_SIZE; x++) {
+			for (int y = 0; y < SQ_SIZE; y++) {
+				if (map.get(x,y)[0] == 255) {
+					points.add(new objects.Point(x, y));
+				}
+			}
+		}
+		
+		return points;
+	}
 }
