@@ -15,8 +15,7 @@ public class LidarAnalyser extends Thread {
 	private List<Point> obstacles;
 	private List<Point> balls;
 	private Point goal;
-
-	
+	private LidarScan scan;
 	
 	public LidarAnalyser(LidarReceiver lidarReceiver, ServerGUI serverGUI) {
 		this.lidarReceiver = lidarReceiver;
@@ -25,12 +24,12 @@ public class LidarAnalyser extends Thread {
 	
 	@Override
 	public void run() {
-		LidarScan oldScan = new LidarScan();
+		setScan(new LidarScan());
 		while(keepAlive) {
 			LidarScan newScan = lidarReceiver.getScan();
-			if(newScan != null && newScan.scanSize() != oldScan.scanSize()) {
+			if(newScan != null && newScan.scanSize() != getScan().scanSize()) {
 				analyseData(newScan);
-				oldScan = new LidarScan(newScan);
+				setScan(new LidarScan(newScan));
 			}
 		}
 	}
@@ -74,6 +73,14 @@ public class LidarAnalyser extends Thread {
 
 	public synchronized void setGoal(Point goal) {
 		this.goal = goal;
+	}
+	
+	public synchronized LidarScan getScan() {
+		return new LidarScan(scan);
+	}
+
+	public synchronized void setScan(LidarScan scan) {
+		this.scan = scan;
 	}
 	
 	

@@ -59,33 +59,23 @@ public class ServerGUI {
     @FXML
     private void initialize() {
     	cbStartState.getItems().setAll(BLStateController.State.values());
-    	Mat mat = Vision.readImageFromFile("hammer.jpg");
-    	setLidarScan(Vision.matToImageBuffer(mat));
     }
     
-  
-	@FXML
-	private void onClickStart() {
-    	Mat mat = Vision.readImageFromFile("TestImage.png");
-    	Mat lines = Vision.findLines(mat);
-    	setLidarScan(Vision.matToImageBuffer(lines));
-	}
-     
-//    @FXML
-//    private void onClickStart() 
-//    {
-//		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
-//    	
-//    	collisionDetector = new BLCollisionDetector();
-//    	bController.registerListener(collisionDetector);
-//    	
-//    	stateController = new BLStateController(this, commandTransmitter, collisionDetector, cbStartState.getValue());
-//    	bController.registerListener(stateController);
-//    	
-//		bController.start();
-//    	stateController.start();
-//    	collisionDetector.start();
-//    }
+    @FXML
+    private void onClickStart() 
+    {
+		bController = new BlackboardController(null, legoReceiver, lidarAnalyser);
+    	
+    	collisionDetector = new BLCollisionDetector();
+    	bController.registerListener(collisionDetector);
+    	
+    	stateController = new BLStateController(this, commandTransmitter, collisionDetector, cbStartState.getValue());
+    	bController.registerListener(stateController);
+    	
+		bController.start();
+    	stateController.start();
+    	collisionDetector.start();
+    }
     
     @FXML
     private void onClickPause() 

@@ -31,6 +31,9 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		
 		COLLISION_AVOIDANCE,
 		
+		FOLLOW_WALL,
+		WALL_CORRECTION,
+		
 		FIND_BALL,
 		VALIDATE_BALL,
 		GO_TO_BALL,
@@ -52,7 +55,6 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	
 	private CommandTransmitter commandTransmitter;
 	private BLCollisionDetector collisionDetector;
-	private BallDetector ballDetector;
 	private State nextState;
 	private State state;
 	
@@ -62,13 +64,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	
 	private BlackboardSample bbSample;
 	
-
-
 	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, BLCollisionDetector collisionDetector, State state) {
 		this.serverGUI = gui;
 		this.commandTransmitter = commandTransmitter;
 		this.collisionDetector = collisionDetector;
-		this.ballDetector = new BallDetector();
 		this.state = state;
 		reverseQueue = new LinkedList<PolarPoint>();
 		notDone = true;
@@ -82,6 +81,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		String curMove = "";
 		byte[] curLidarImage = null;
 		State tempState = State.DEBUG;
+		LidarScan wallScanOld = new LidarScan();
+		int startDist = 0;
 		
 		while(notDone) {
 			
@@ -111,15 +112,13 @@ public class BLStateController extends Thread implements BlackboardListener  {
 			if(bbSample != null) {
 				serverGUI.setIsMoving(bbSample.isMoving + "");
 				serverGUI.setIsCollecting(bbSample.isCollecting + "");
-				if(bbSample.scan != null)
-					serverGUI.setLidarScan(ballDetector.getByteArrayFromLidarScan(bbSample.scan));
 			}
 
 			serverGUI.setCollisionDetected(collisionDetector.isDetected + "");
 			serverGUI.setLastMove(curMove);
-			serverGUI.setBallLocation(ball != null ? String.format("[%d:%d]", ball.x, ball.y) : "null");
-			serverGUI.setBallHeading((int)ballAngle + "");
-			serverGUI.setBallDistance((int)ballDistance + "");
+			//serverGUI.setBallLocation(ball != null ? String.format("[%d:%d]", ball.x, ball.y) : "null");
+			//serverGUI.setBallHeading((int)ballAngle + "");
+			//serverGUI.setBallDistance((int)ballDistance + "");
 			serverGUI.setBallsCollected(ballCollectedCount + "");			
 
 			// State switcher
@@ -130,6 +129,60 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					curMove = "D:45";
 					nextState = State.EXPLORE;
 					state = State.WAIT_FOR_MOVE;
+					break;
+				}
+				
+				case FOLLOW_WALL: {
+					startDist = 0;
+					if (bbSample != null && bbSample.scan != null) {
+						LidarScan wallScanNew = new LidarScan(bbSample.scan);
+						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
+							for (LidarSample s : wallScanNew.getSamples()) {
+								if (s.angle > 88.0 && s.angle < 92.0) {
+									startDist = (int)s.distance;
+									break;
+								}
+							}
+							wallScanOld = wallScanNew;
+						}
+					}
+					if(startDist != 0) {
+						collisionDetector.swapHull(true);
+						commandTransmitter.robotTravel(200.0);
+						curMove = "K:200";
+						nextState = State.WALL_CORRECTION;
+						state = State.WAIT_FOR_MOVE;
+					}
+					break;
+				}
+				
+				case WALL_CORRECTION: {
+					int endDist = 0;
+					if (bbSample != null && bbSample.scan != null) {
+						LidarScan wallScanNew = new LidarScan(bbSample.scan);
+						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
+							for (LidarSample s : wallScanNew.getSamples()) {
+								if (s.angle > 88.0 && s.angle < 92.0) {
+									endDist = (int)s.distance;
+									break;
+								}
+							}
+							wallScanOld = wallScanNew;
+						}
+					}
+					if(endDist != 0) {
+						double diff = startDist - endDist;
+						double angleDiff = Math.asin(diff/200.0);
+						System.out.println("[Start: "+startDist+", curr: "+endDist+", angle: "+angleDiff+"]");
+						if (angleDiff > 5.0 && angleDiff < -5.0) {
+							commandTransmitter.robotTurn(angleDiff);
+							curMove = "D:"+angleDiff;
+							nextState = State.FOLLOW_WALL;
+							state = State.WAIT_FOR_MOVE;
+						} else {
+							state = State.FOLLOW_WALL;
+						}
+					}
 					break;
 				}
 
@@ -159,7 +212,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					break;
 				}
 				case FIND_BALL: {
-					ball = bbSample != null ? ballDetector.findClosestBallLidar(bbSample.scan) : null;
+					ball = (bbSample != null && bbSample.balls.size() > 0) ? bbSample.balls.get(0) : null;
 					if(ball != null) {
 						collisionDetector.swapHull(false);
 						
@@ -192,28 +245,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					break;
 				}
 				
-//				case VALIDATE_BALL: {
-//					LidarScan scan = bbSample.scan;
-//					currentBall = ballDetector.findClosestBallLidar(scan);
-//					if(currentBall != null) {
-//						float heading = (new Point(0,0)).angleTo(currentBall);
-//						System.out.println("BALL VALIDATED AT HEADING: " + heading);
-//						if(heading < 1 && heading > -1) {
-//							System.out.println("SAME BALL");
-//							state = State.GO_TO_BALL;
-//						} else {
-//							System.out.println("FINDING NEW BALL");
-//							state = State.FIND_BALL;
-//						}
-//					} else {
-//						state = State.EXPLORE;
-//					}
-//					break;
-//				}
-				
 				case FETCH_BALL: {
 					curMove = "O";
 					commandTransmitter.robotCollectBall();
+					ballCollectedCount++;
 					state = State.GO_TO_STARTING_POINT;
 					break;
 				}
@@ -289,55 +324,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 			}
 		}
 	}
-
-	private LidarScan tempScan;
-	private LidarScan oldScan = new LidarScan();
-	private int count = 0;
 	
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
-		if(bbSample != null) {
-			boolean newMoveState = bbSample.isMoving;
-			if(lastMoveState != newMoveState) {
-				System.out.println("KØRER VI ELLER HVAD?: " + newMoveState);
-				lastMoveState = newMoveState;
-			}
-		}
-		tempScan = bbSample.scan;
-		if(tempScan != null) {
-			if(oldScan == null) {
-				try {
-					Imgcodecs.imwrite("testScan" + count + ".png", ballDetector.scanToMap(tempScan));
-			        FileOutputStream fileOut = new FileOutputStream("testScan" + count++ + ".data");
-			        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-			        objectOut.writeObject(bbSample.scan);
-			        objectOut.close();
-				} catch (Exception ex) {
-		            System.out.println("The Object could not be written to a file");
-		        }
-				oldScan = new LidarScan(tempScan);
-			} else {
-				if(tempScan.scanSize() != oldScan.scanSize()) {
-					try {
-						Imgcodecs.imwrite("testScan" + count + ".png", ballDetector.scanToMap(tempScan));
-				        FileOutputStream fileOut = new FileOutputStream("testScan" + count++ + ".data");
-				        ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
-				        objectOut.writeObject(bbSample.scan);
-				        objectOut.close();
-					} catch (Exception ex) {
-			            System.out.println("The Object could not be written to a file");
-			        }
-					oldScan = new LidarScan(tempScan);
-				}
-			}
-		}
-	}
-	
-	private void saveScan(LidarScan scan) {
-		System.out.println("Scans;");
-		for(LidarSample sample : scan.getSamples()) {
-			System.out.printf("[%3.2f] [%4.2f]\n", sample.angle, sample.distance);
-		}
-		Imgcodecs.imwrite("Scanning.png", ballDetector.scanToMap(scan));
 	}
 }
