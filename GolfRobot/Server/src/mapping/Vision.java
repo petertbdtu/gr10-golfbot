@@ -35,7 +35,7 @@ public class Vision {
 	
 	public static byte[] getAsImage(LidarScan scan) {
 		Mat map = scanToPointMap(scan);
-		map = drawCirclesOnMap(map, findAllBallsLidar(map));
+		drawCirclesOnMap(map, findAllBallsLidar(map));
 		return matToImageBuffer(map);
 	}
 	
@@ -56,9 +56,10 @@ public class Vision {
 		int centerDetectionParam2 = 8;
 		int minRadius = 15;
 		int maxRadius = 25;
-		Imgproc.HoughCircles(map, map, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
+		Mat circles = new Mat();
+		Imgproc.HoughCircles(map, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
 		
-		return map;
+		return circles;
 	}
 	
 	public static List<objects.Point> getCircleLocsFromMat(Mat circles) {
@@ -119,21 +120,18 @@ public class Vision {
 		Imgproc.line(map, new Point(CENTER_X, CENTER_Y-10), new Point(CENTER_X, CENTER_Y+10), new Scalar(127), 3, Imgproc.LINE_AA, 0);
 	}
 	
-	public static Mat drawCirclesOnMap(Mat map, Mat circles) {
-		Mat res = new Mat();
-		Imgproc.cvtColor(map, res, Imgproc.COLOR_GRAY2BGR);
-		
-		for (int i = 0; i < circles.cols(); i++) {
-			double[] c = circles.get(0, i);
-            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
-            // circle center
-            Imgproc.circle(res, center, 1, new Scalar(0,100,100), 3, 8, 0 );
-            // circle outline
-            int radius = (int) Math.round(c[2]);
-            Imgproc.circle(res, center, radius, new Scalar(255,0,255), 3, 8, 0 );
+	public static void drawCirclesOnMap(Mat map, Mat circles) {
+		for (int i = 0; i < circles.rows(); i++) {
+			double[] c = circles.get(i, 0);
+			if(c.length > 1) {
+	            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
+	            // circle center
+	            Imgproc.circle(map, center, 1, new Scalar(0,100,100), 3, 8, 0 );
+	            // circle outline
+	            int radius = (int) Math.round(c[2]);
+	            Imgproc.circle(map, center, radius, new Scalar(255,0,255), 3, 8, 0 );
+			}
 		}
-		
-		return res;
 	}
 	
 	/**

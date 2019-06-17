@@ -18,12 +18,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import mapping.LidarAnalyser;
 
 public class ServerGUI {
 
     @FXML
-    private Label 	lblStateValue, lblMovingValue, lblCollectingValue, lblCollisionValue, lblMoveValue, 
+    private Label 	lblStateValue, lblMovingValue, lblCollectingValue, lblMoveValue, 
     				lblBallLocationValue, lblBallHeadingValue, lblBallDistanceValue, lblCollectedValue, lblTimerValue;
     
 	@FXML
@@ -37,7 +36,7 @@ public class ServerGUI {
     private Circle circleLidar, circleLego, circleTransmitter;
     
     @FXML
-    private ImageView ivLidar, ivCamera;
+    private ImageView ivLidar, ivLidarAnalyzed;
     private BLStateController stateController;
 
     private Thread networkThread;
@@ -46,6 +45,18 @@ public class ServerGUI {
 	private CommandTransmitter commandTransmitter;
 	private BlackboardController bbController;
 	private ServerGUI serverGUI;
+	private volatile byte[] imgLidar = new byte[1];
+	private volatile byte[] imgAnalysed = new byte[1];
+	private String timer = "";
+	private String collected = "";
+	private String distanceBall = "";
+	private String headingBall = "";
+	private String locationBall = "";
+	private String moveLast = "";
+	private String collecting = "";
+	private String moving = "";
+	private String state = "";
+	Thread updater;
     
     public ServerGUI() {
     	System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -113,39 +124,56 @@ public class ServerGUI {
         	circleLidar.setFill(Color.YELLOW);
         	circleLego.setFill(Color.YELLOW);
         	circleTransmitter.setFill(Color.YELLOW);
-        	networkThread = new Thread(new Runnable() {
-        		@Override
-        		public void run() {
-        			lidarReceiver = new LidarReceiver();
-        			if(lidarReceiver.bindSocket(5000)) {
-	        			lidarReceiver.start();
-	        	    	circleLidar.setFill(Color.LIGHTGREEN);
-        			} else {
-        				lidarReceiver = null;
-	        	    	circleLidar.setFill(Color.RED);
-        			}
-        	    	
-        			legoReceiver = new LegoReceiver();
-        			if(legoReceiver.connect(3000)) {
-        				legoReceiver.start();
-            	    	circleLego.setFill(Color.LIGHTGREEN);
-        			} else {
-        				legoReceiver = null;
-        				circleLego.setFill(Color.RED);
-        			}
+        	
+        	updater = new Thread(() -> {
+	    		while(true) {
+    				ivLidar.setImage(new Image(new ByteArrayInputStream(imgLidar)));
+    				ivLidarAnalyzed.setImage(new Image(new ByteArrayInputStream(imgAnalysed)));
+    				Platform.runLater(() -> lblBallDistanceValue.setText(distanceBall));
+    				Platform.runLater(() -> lblBallHeadingValue.setText(headingBall));
+    				Platform.runLater(() -> lblBallLocationValue.setText(locationBall));
+    				Platform.runLater(() -> lblCollectedValue.setText(collected));
+    				Platform.runLater(() -> lblCollectingValue.setText(collecting));
+    				Platform.runLater(() -> lblMoveValue.setText(moveLast));
+    				Platform.runLater(() -> lblMovingValue.setText(moving));
+    				Platform.runLater(() -> lblStateValue.setText(state));
+    				Platform.runLater(() -> lblTimerValue.setText(timer));
+    				try { Thread.sleep(250); } 
+    				catch (InterruptedException e) { }
+	    		}
+        	});
+        	updater.start();
+        	
+        	networkThread = new Thread(() -> {
+    			bbController = new BlackboardController(serverGUI);
+    			bbController.start();
+    			
+    			lidarReceiver = new LidarReceiver();
+    			if(lidarReceiver.bindSocket(5000)) {
+    				bbController.addLidarReceiver(lidarReceiver);
+        			lidarReceiver.start();
+        	    	circleLidar.setFill(Color.LIGHTGREEN);
+    			} else {
+    				lidarReceiver = null;
+        	    	circleLidar.setFill(Color.RED);
+    			}
+    			legoReceiver = new LegoReceiver();
+    			if(legoReceiver.connect(3000)) {
+    				bbController.addLegoReceiver(legoReceiver);
+    				legoReceiver.start();
+        	    	circleLego.setFill(Color.LIGHTGREEN);
+    			} else {
+    				legoReceiver = null;
+    				circleLego.setFill(Color.RED);
+    			}
 
-        			commandTransmitter = new CommandTransmitter();
-        			if(commandTransmitter.connect(3001)) {
-        				circleTransmitter.setFill(Color.LIGHTGREEN);
-        			} else {
-        				commandTransmitter = null;
-        				circleTransmitter.setFill(Color.RED);
-        			}
-        			
-        			bbController = new BlackboardController(null, legoReceiver, lidarReceiver, serverGUI);
-        			bbController.start();
-
-        		}
+    			commandTransmitter = new CommandTransmitter();
+    			if(commandTransmitter.connect(3001)) {
+    				circleTransmitter.setFill(Color.LIGHTGREEN);
+    			} else {
+    				commandTransmitter = null;
+    				circleTransmitter.setFill(Color.RED);
+    			}
         	});
         	networkThread.start();
     	}
@@ -187,74 +215,46 @@ public class ServerGUI {
     }
     
     public void setState(String newState) {
-    	Platform.runLater(() -> {
-    		this.lblStateValue.setText(newState);
-    	});
+    	state = new String(newState);
 	}
 
 	public void setIsMoving(String isMoving) {
-		Platform.runLater(() -> {
-			this.lblMovingValue.setText(isMoving);
-		});
+		moving = new String(isMoving);
 	}
 
 	public void setIsCollecting(String isCollecting) {
-		Platform.runLater(() -> {
-			this.lblCollectingValue.setText(isCollecting);
-		});
-	}
-
-	public void setCollisionDetected(String collisionDetected) {
-		Platform.runLater(() -> {
-			this.lblCollisionValue.setText(collisionDetected);
-		});
+		collecting = new String(isCollecting);
 	}
 
 	public void setLastMove(String lastMove) {
-		Platform.runLater(() -> {
-			this.lblMoveValue.setText(lastMove);
-		});
+		moveLast = new String(lastMove);
 	}
 
 	public void setBallLocation(String ballLocation) {
-		Platform.runLater(() -> {
-			this.lblBallLocationValue.setText(ballLocation);
-		});
+		locationBall = new String(ballLocation);
 	}
 
 	public void setBallHeading(String ballHeading) {
-		Platform.runLater(() -> {
-			this.lblBallHeadingValue.setText(ballHeading);
-		});
+		headingBall = new String(ballHeading);
 	}
 
 	public void setBallDistance(String ballDistance) {
-		Platform.runLater(() -> {
-			this.lblBallDistanceValue.setText(ballDistance);
-		});
+		distanceBall = new String(ballDistance);
 	}
 
 	public void setBallsCollected(String ballsCollected) {
-		Platform.runLater(() -> {
-			this.lblCollectedValue.setText(ballsCollected);
-		});
+		collected = new String(ballsCollected);
 	}
 
 	public void setTimer(String timerValue) {
-		Platform.runLater(() -> {
-			this.lblTimerValue.setText(timerValue);
-		});
+		timer = new String(timerValue);
 	}
 	
-	public void setLidarScan(byte[] imageBuffer) {
-		Platform.runLater(() -> {
-			ivLidar.setImage(new Image(new ByteArrayInputStream(imageBuffer))); 
-		});
+	public void setLidarScan(byte[] img) {
+		imgLidar = img.clone();
 	}
 	
-	public void setCamera(byte[] imageBuffer) {
-		Platform.runLater(() -> {
-			ivCamera.setImage(new Image(new ByteArrayInputStream(imageBuffer))); 
-		});
+	public void setLidarAnalyzedScan(byte[] imageBuffer) {
+		imgAnalysed = imageBuffer.clone();
 	}
 }

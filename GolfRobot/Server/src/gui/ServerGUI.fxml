@@ -84,27 +84,6 @@
                      </HBox.margin>
                   </VBox>
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
-                  <VBox fx:id="vbCollision" alignment="CENTER" maxWidth="1.7976931348623157E308">
-                     <children>
-                        <Label fx:id="lblCollisionTitle" text="Collision Detected">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
-                        </Label>
-                        <Label fx:id="lblCollisionValue" text="NaN">
-                           <font>
-                              <Font name="System Italic" size="14.0" />
-                           </font>
-                        </Label>
-                     </children>
-                     <opaqueInsets>
-                        <Insets left="5.0" right="5.0" />
-                     </opaqueInsets>
-                     <HBox.margin>
-                        <Insets left="5.0" right="5.0" />
-                     </HBox.margin>
-                  </VBox>
-                  <Separator orientation="VERTICAL" prefHeight="200.0" />
                   <VBox fx:id="vbMove" alignment="CENTER" maxWidth="1.7976931348623157E308">
                      <children>
                         <Label fx:id="lblMoveTitle" text="Current Move">
@@ -404,7 +383,7 @@
          <children>
             <VBox alignment="TOP_CENTER" prefHeight="2000.0" prefWidth="2000.0">
                <children>
-                  <Label alignment="CENTER" prefWidth="2000.0" text="Lidar Scanning" textAlignment="CENTER">
+                  <Label alignment="CENTER" prefWidth="2000.0" text="Lidar Scan" textAlignment="CENTER">
                      <font>
                         <Font name="System Bold" size="18.0" />
                      </font>
@@ -414,12 +393,12 @@
             </VBox>
             <VBox alignment="TOP_CENTER" prefHeight="2000.0" prefWidth="2000.0">
                <children>
-                  <Label alignment="CENTER" prefWidth="2000.0" text="Camera Frames" textAlignment="CENTER">
+                  <Label alignment="CENTER" prefWidth="2000.0" text="Analyzed Scan" textAlignment="CENTER">
                      <font>
                         <Font name="System Bold" size="18.0" />
                      </font>
                   </Label>
-                  <ImageView fx:id="ivCamera" fitHeight="500.0" fitWidth="500.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView fx:id="ivLidarAnalyzed" fitHeight="500.0" fitWidth="500.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </VBox>
          </children>

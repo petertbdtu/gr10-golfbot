@@ -3,14 +3,14 @@ package blackboard;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import org.opencv.core.Mat;
+
 import communication.CameraReceiver;
 import communication.LegoReceiver;
 import communication.LidarReceiver;
 import gui.ServerGUI;
-import mapping.LidarAnalyser;
 import mapping.LidarScan;
 import mapping.Vision;
-import objects.Point;
 
 public class BlackboardController extends Thread {
 	private volatile ArrayList<BlackboardListener> bbListeners;
@@ -25,13 +25,22 @@ public class BlackboardController extends Thread {
 	private volatile boolean stopBlackboard = false;
 	private long cycle = 0;
 	
-	public BlackboardController(CameraReceiver camera, LegoReceiver lego, LidarReceiver lidar, ServerGUI gui) {
-		this.camera = camera;
-		this.lego = lego;
-		this.lidar = lidar;
+	public BlackboardController(ServerGUI gui) {
 		this.gui = gui;
 		this.bbListeners = new ArrayList<BlackboardListener>();
 		this.bbNewListeners = new LinkedList<BlackboardListener>();
+	}
+	
+	public synchronized void addCameraReceiver(CameraReceiver camera) {
+		this.camera = camera;
+	}
+	
+	public synchronized void addLegoReceiver(LegoReceiver lego) {
+		this.lego = lego;
+	}
+	
+	public synchronized void addLidarReceiver(LidarReceiver lidar) {
+		this.lidar = lidar;
 	}
 	
 	public synchronized void registerListener(BlackboardListener bbListener) {
@@ -81,7 +90,28 @@ public class BlackboardController extends Thread {
 		
 		if(lidar != null) {
 			bbSample.scan = lidar.getScan();
-			gui.setLidarScan(Vision.matToImageBuffer(Vision.scanToPointMap(bbSample.scan)));
+			if(bbSample.scan.scanSize() > 0) {
+				try {
+					Mat map = Vision.scanToPointMap(bbSample.scan);
+//					System.out.println(map.size());
+//					
+//					Mat obstacles = new Mat(map.size(), map.type());
+//					
+//					//Remove shit obstacles
+//					Vision.findWallsAndRemove(map, obstacles);
+//					System.out.println(map.size());
+//					
+//					// Circles plz
+//					Vision.drawCirclesOnMap(map, Vision.findAllBallsLidar(map));
+//					System.out.println(map.size());
+//
+//					
+//					//draw in le GUI
+					gui.setLidarScan(Vision.matToImageBuffer(map));
+//					gui.setLidarAnalyzedScan(Vision.matToImageBuffer(obstacles));
+					
+				} catch (Exception e) { }
+			}
 		} else {
 			bbSample.scan = new LidarScan();
 		}

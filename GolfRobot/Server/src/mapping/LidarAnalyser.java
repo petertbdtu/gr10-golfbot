@@ -58,11 +58,11 @@ public class LidarAnalyser extends Thread {
 			//Vision.drawMoreLinesOnMap(map);
 			Mat circles = Vision.findAllBallsLidar(map);
 			setBalls(Vision.getCircleLocsFromMat(circles));
-			map = Vision.drawCirclesOnMap(map, circles);
+			Vision.drawCirclesOnMap(map, circles);
 			
 			//draw in le GUI
 			serverGUI.setLidarScan(Vision.matToImageBuffer(map));
-			serverGUI.setCamera(Vision.matToImageBuffer(obstacles));
+			serverGUI.setLidarAnalyzedScan(Vision.matToImageBuffer(obstacles));
 		} catch (Exception e) { e.printStackTrace(); }
 	}
 
