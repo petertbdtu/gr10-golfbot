@@ -30,12 +30,12 @@ public class LidarAnalyser extends Thread {
 	
 	@Override
 	public void run() {
-		setScan(new LidarScan());
+		scan = new LidarScan();
 		while(keepAlive) {
 			LidarScan newScan = lidarReceiver.getScan();
 			if(newScan != null) {
 				if(newScan.scanSize() != scan.scanSize()) {
-					analyseData(newScan);
+					serverGUI.setLidarScan(Vision.matToImageBuffer(Vision.scanToPointMap(scan)));
 					scan = new LidarScan(newScan);
 				}
 			}

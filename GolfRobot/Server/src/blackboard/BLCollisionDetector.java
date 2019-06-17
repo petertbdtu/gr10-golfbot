@@ -26,7 +26,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	private int ycords[] = new int[ncords];
 	
 	private BlackboardSample bbSample;
-	private List<objects.Point> newObstacles;
+	private LidarScan newObstacles;
 	
 	private Shape curHull;
 	private Polygon collisionHull;
@@ -79,7 +79,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	}
 	
 	public void checkForCollision() {
-		for (objects.Point point : newObstacles) {
+		for (objects.Point point : newObstacles.getPoints()) {
 			if(curHull.contains(point)) {
 				isDetected = true;
 				break;
@@ -103,12 +103,12 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	
 	@Override
 	public void run() {	
-		List<objects.Point> oldObstacles = new ArrayList<objects.Point>();
+		LidarScan oldObstacles = new LidarScan();
 		while(keepDetecting) {
-			if(bbSample != null && bbSample.obstacles != null) {
-				newObstacles = new ArrayList<objects.Point>(bbSample.obstacles);
-				while(oldObstacles.size() == newObstacles.size()) {
-					newObstacles = new ArrayList<objects.Point>(bbSample.obstacles);
+			if(bbSample != null && bbSample.scan != null) {
+				newObstacles = new LidarScan(bbSample.scan);
+				while(oldObstacles.scanSize() == newObstacles.scanSize()) {
+					newObstacles = new LidarScan(bbSample.scan);
 				}
 				oldObstacles = newObstacles;
 				System.out.println("Checking for collision... ");

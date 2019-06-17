@@ -50,19 +50,19 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	private ServerGUI serverGUI;
 	
 	private CommandTransmitter commandTransmitter;
-	private BLCollisionDetector collisionDetector;
 	private State nextState;
 	private State state;
 	
 	private boolean notDone;
 	private LinkedList<PolarPoint> reverseQueue;
+	private final int FOLLOW_WALL_STEPSIZE = 200;
+	private final int LIDAR_TO_FRONT_LENGTH = 185;
 	
 	private volatile BlackboardSample bbSample;
 	
-	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, BLCollisionDetector collisionDetector, State state) {
+	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, State state) {
 		this.serverGUI = gui;
 		this.commandTransmitter = commandTransmitter;
-		this.collisionDetector = collisionDetector;
 		this.state = state;
 		reverseQueue = new LinkedList<PolarPoint>();
 		notDone = true;
@@ -76,7 +76,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		String curMove = "";
 		State tempState = State.DEBUG;
 		LidarScan wallScanOld = new LidarScan();
-		int startDist = 0;
+		int distRightMax = 0;
 		
 		while(notDone) {
 			
@@ -89,10 +89,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				state = nextState;
 			
 			// Collision detection state overruling
-			if (collisionDetector.isDetected() && state != State.COLLISION_AVOIDANCE) {
-				state = State.COLLISION_AVOIDANCE;
-				curMove = "AVOIDANCE";
-			}
+//			if (collisionDetector.isDetected() && state != State.COLLISION_AVOIDANCE) {
+//				state = State.COLLISION_AVOIDANCE;
+//				curMove = "AVOIDANCE";
+//			}
 			
 			// DEBUG
 			if(state != tempState) {
@@ -108,7 +108,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				serverGUI.setIsCollecting(bbSample.isCollecting + "");
 			}
 
-			serverGUI.setCollisionDetected(collisionDetector.isDetected() + "");
+			//serverGUI.setCollisionDetected(collisionDetector.isDetected() + "");
 			serverGUI.setLastMove(curMove);
 			//serverGUI.setBallLocation(ball != null ? String.format("[%d:%d]", ball.x, ball.y) : "null");
 			//serverGUI.setBallHeading((int)ballAngle + "");
@@ -127,50 +127,72 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				}
 				
 				case FOLLOW_WALL: {
-					startDist = 0;
+					int distForwardMax = 0;
+					distRightMax = 0;
 					if (bbSample != null && bbSample.scan != null) {
 						//System.out.println("Found sample");
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
 						//System.out.println("Sweet scan info: " + wallScanNew.scanSize() + ":" + wallScanOld.scanSize());
 						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
 							//System.out.println("Found new scan");
-							for (LidarSample s : wallScanNew.getSamples()) {
-								if (s.angle > 268.0 && s.angle < 272.0) {
-									startDist = (int)s.distance;
-									break;
+							for (LidarSample sample : wallScanNew.getSamples()) {
+								if (sample.angle > 175.0 && sample.angle < 185.0 && sample.distance > distForwardMax) {
+									distForwardMax = (int) sample.distance;
+								} else if (sample.angle > 268.0 && sample.angle < 272.0 && sample.distance > distRightMax) {
+									distRightMax = (int)sample.distance;
 								}
 							}
 							wallScanOld = wallScanNew;
 						}
 					}
-					if(startDist != 0) {
-						collisionDetector.swapHull(true);
-						commandTransmitter.robotTravel(200.0);
-						curMove = "K:200";
-						nextState = State.WALL_CORRECTION;
-						state = State.WAIT_FOR_MOVE;
+					if(distForwardMax != 0) {
+						if(distForwardMax <= LIDAR_TO_FRONT_LENGTH) {
+							//TURN
+							commandTransmitter.robotTurn(90.0);
+							curMove = "D:90.0";
+							nextState = State.FOLLOW_WALL;
+							state = State.WAIT_FOR_MOVE;
+						} else if(distForwardMax <= LIDAR_TO_FRONT_LENGTH + FOLLOW_WALL_STEPSIZE) {
+							//DRIVE LESS
+							if(distRightMax != 0) {
+								int dist = (LIDAR_TO_FRONT_LENGTH + FOLLOW_WALL_STEPSIZE) - distForwardMax;
+								commandTransmitter.robotTravel(dist);
+								curMove = "K:" + dist;
+								nextState = State.WALL_CORRECTION;
+								state = State.WAIT_FOR_MOVE;
+							}
+						} else {
+							//DRIVE FULL STEP SIZE
+							if(distRightMax != 0) {
+								int dist = FOLLOW_WALL_STEPSIZE;
+								commandTransmitter.robotTravel(dist);
+								curMove = "K:" + dist;
+								nextState = State.WALL_CORRECTION;
+								state = State.WAIT_FOR_MOVE;
+							}
+						}
 					}
 					break;
 				}
 				
 				case WALL_CORRECTION: {
-					int endDist = 0;
+					int distRightMaxEnd = 0;
 					if (bbSample != null && bbSample.scan != null) {
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
 						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
 							for (LidarSample s : wallScanNew.getSamples()) {
-								if (s.angle > 268.0 && s.angle < 272.0) {
-									endDist = (int)s.distance;
-									break;
+								if (s.angle > 268.0 && s.angle < 272.0 && s.distance > distRightMaxEnd) {
+									distRightMaxEnd = (int) s.distance;
 								}
 							}
 							wallScanOld = wallScanNew;
 						}
 					}
-					if(endDist != 0) {
-						double diff = startDist - endDist;
+					
+					if(distRightMaxEnd != 0) {
+						double diff = distRightMax - distRightMaxEnd;
 						double angleDiff = Math.asin(diff/200.0);
-						System.out.println("[Start: "+startDist+", curr: "+endDist+", angle: "+angleDiff+"]");
+						System.out.println("[Start: "+distRightMax+", curr: "+distRightMaxEnd+", angle: "+angleDiff+"]");
 						if (angleDiff > 5.0 && angleDiff < -5.0) {
 							commandTransmitter.robotTurn(angleDiff);
 							curMove = "D:"+angleDiff;
@@ -195,52 +217,51 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					break;
 				}
 				
-				case COLLISION_AVOIDANCE: {
-					commandTransmitter.robotStop();
-					while(bbSample.isMoving); // wait for stop
-					commandTransmitter.robotTravel(-50);
-					while(!bbSample.isMoving); // Wait for move
-					while(bbSample.isMoving); // Wait for stop
-					commandTransmitter.robotTurn(90);
-					while(!bbSample.isMoving); // Wait for move
-					while(bbSample.isMoving); // Wait for stop
-					collisionDetector.setDetected(false);
-					state = State.FOLLOW_WALL;
-					break;
-				}
-				case FIND_BALL: {
-					ball = (bbSample != null && bbSample.balls.size() > 0) ? bbSample.balls.get(0) : null;
-					if(ball != null) {
-						collisionDetector.swapHull(false);
-						
-						//Heading command
-						double angleBefore = ((double) (new Point(-115,0)).angleTo(ball));
-						ballAngle = angleBefore > 0 ? (angleBefore-180) * -1 : (angleBefore + 180) * -1;
-						System.out.println("Angle Calculated: " + ballAngle);
-						
-						if(ballAngle > -4 && ballAngle < 4) {
-							//Distance command
-							ballDistance = (new Point(-155,0)).distance(ball.x, ball.y);				
-							reverseQueue.addFirst(new PolarPoint(0,-ballDistance));
-							commandTransmitter.robotTravel(ballDistance);
-							curMove = "K:" + (int)ballDistance;
-							nextState = State.FETCH_BALL;
-							state = State.WAIT_FOR_MOVE;
-						} else {
-							System.out.println("BALL FOUND AT HEADING: " + angleBefore + " | " + ballAngle);
-							reverseQueue.addFirst(new PolarPoint(-ballAngle, 0));
-							commandTransmitter.robotTurn(ballAngle);
-							curMove = "D:" + (int)ballAngle;
-							nextState = State.FIND_BALL;
-							state = State.WAIT_FOR_MOVE;
-						}
-					} else {
-						collisionDetector.swapHull(true);
-						// Keep exploring
-						state = State.EXPLORE;
-					}
-					break;
-				}
+//				case COLLISION_AVOIDANCE: {
+//					commandTransmitter.robotStop();
+//					while(bbSample.isMoving); // wait for stop
+//					commandTransmitter.robotTravel(-50);
+//					while(!bbSample.isMoving); // Wait for move
+//					while(bbSample.isMoving); // Wait for stop
+//					commandTransmitter.robotTurn(90);
+//					while(!bbSample.isMoving); // Wait for move
+//					while(bbSample.isMoving); // Wait for stop
+//					collisionDetector.setDetected(false);
+//					state = State.FOLLOW_WALL;
+//					break;
+//				}
+				
+//				case FIND_BALL: {
+//					ball = (bbSample != null && bbSample.balls.size() > 0) ? bbSample.balls.get(0) : null;
+//					if(ball != null) {
+//					
+//						//Heading command
+//						double angleBefore = ((double) (new Point(-115,0)).angleTo(ball));
+//						ballAngle = angleBefore > 0 ? (angleBefore-180) * -1 : (angleBefore + 180) * -1;
+//						System.out.println("Angle Calculated: " + ballAngle);
+//						
+//						if(ballAngle > -4 && ballAngle < 4) {
+//							//Distance command
+//							ballDistance = (new Point(-155,0)).distance(ball.x, ball.y);				
+//							reverseQueue.addFirst(new PolarPoint(0,-ballDistance));
+//							commandTransmitter.robotTravel(ballDistance);
+//							curMove = "K:" + (int)ballDistance;
+//							nextState = State.FETCH_BALL;
+//							state = State.WAIT_FOR_MOVE;
+//						} else {
+//							System.out.println("BALL FOUND AT HEADING: " + angleBefore + " | " + ballAngle);
+//							reverseQueue.addFirst(new PolarPoint(-ballAngle, 0));
+//							commandTransmitter.robotTurn(ballAngle);
+//							curMove = "D:" + (int)ballAngle;
+//							nextState = State.FIND_BALL;
+//							state = State.WAIT_FOR_MOVE;
+//						}
+//					} else {
+//						// Keep exploring
+//						state = State.EXPLORE;
+//					}
+//					break;
+//				}
 				
 				case FETCH_BALL: {
 					curMove = "O";
