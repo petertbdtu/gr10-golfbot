@@ -129,6 +129,7 @@ public class Vision {
 		return res;
 	}
 	
+<<<<<<< HEAD
 	
 	/*
 	img = cv2.imread("TestScan.png")
@@ -157,5 +158,60 @@ public class Vision {
 			
 	return img_bw, line_image
 	*/
+=======
+	/**
+	 * Finds lines (walls) and paints them black / erases them
+	 * @param mapInOut map with lines to find and remove
+	 * @param linesOut lines found
+	 */
+	public static void findWallsAndRemove(Mat mapInOut, Mat wallsOut) {
+		Mat lines = findWallLines(mapInOut);
+		
+		for (int i = 0; i < lines.cols(); i++) {
+			double[] l = lines.get(0, i);
+			double x1 = l[0];
+			double y1 = l[1];
+			double x2 = l[2];
+			double y2 = l[3];
+			
+			double a = (y2-y1) / (x2-x1);
+			double b = y1 - a*x1;
+			
+			double y_start = (b); // a*0 + b
+			double y_end = (a*SQ_SIZE + b);
+
+			org.opencv.core.Point pt1 = new org.opencv.core.Point(0, y_start);
+			org.opencv.core.Point pt2 = new org.opencv.core.Point(SQ_SIZE, y_end);
+			
+			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
+			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
+		}
+	}
+	
+	public static Mat findWallLines(Mat map) {
+		// img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+		Mat gray = new Mat();
+		Imgproc.cvtColor(map, gray, Imgproc.COLOR_BGR2GRAY);
+		
+		// img_bw = cv2.threshold(img_gray, 200, 255, cv2.THRESH_BINARY)[1]
+		Mat bw = new Mat();
+		Imgproc.threshold(gray, bw, 200, 255, Imgproc.THRESH_BINARY);
+		
+		// line_image = np.copy(img) * 0  # creating a blank to draw lines on
+
+		int rho = 1;
+		double theta = Math.PI / 180;
+		int threshold = 15;
+		int min_line_length = 30;
+		int max_line_gap = 100;		
+		
+		// ALSO WRITES TO linesOUT
+		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
+		Mat lines = new Mat();
+		Imgproc.HoughLinesP(bw, lines, rho, theta, threshold, min_line_length, max_line_gap);
+		
+		return lines;
+	}
+>>>>>>> branch 'master' of https://github.com/petertbdtu/gr10-golfbot
 
 }
