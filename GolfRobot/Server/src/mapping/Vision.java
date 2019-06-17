@@ -42,14 +42,12 @@ public class Vision {
 	public static Mat findAllBallsLidar(Mat map) {
 		// Convert to binary image
 		int thresh = 200;
-		Mat map_bin = new Mat();
-		Imgproc.threshold(map, map_bin, thresh, 255, Imgproc.THRESH_BINARY);
+		Imgproc.threshold(map, map, thresh, 255, Imgproc.THRESH_BINARY);
 		
 		// Dialate to connect points
 		int dialation_value = 0;
 		Mat dialation_kernel = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
-		Mat map_dial = new Mat();
-		Imgproc.dilate(map_bin, map_dial, dialation_kernel);
+		Imgproc.dilate(map, map, dialation_kernel);
 		
 		// Find circles
 		double dp = 1;
@@ -58,10 +56,9 @@ public class Vision {
 		int centerDetectionParam2 = 8;
 		int minRadius = 15;
 		int maxRadius = 25;
-		Mat circles = new Mat();
-		Imgproc.HoughCircles(map_dial, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
+		Imgproc.HoughCircles(map, map, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
 		
-		return circles;
+		return map;
 	}
 	
 	public static List<objects.Point> getCircleLocsFromMat(Mat circles) {
