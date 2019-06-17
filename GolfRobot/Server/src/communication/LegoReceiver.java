@@ -13,20 +13,14 @@ public class LegoReceiver extends Thread {
 	private InputStream nStream;
 	private InputStream bStream;
 	
-	private volatile boolean movingSwitcher = false;
-	private volatile boolean collectSwitcher = false;
 	private volatile boolean closeConnection = false;
 
-	private Boolean isMoving1;
-	private Boolean isMoving2;
-	private Boolean isCollecting1;
-	private Boolean isCollecting2;
+	private Boolean isMoving;
+	private Boolean isCollecting;
 	
 	public LegoReceiver() {
-		isMoving1 = false;
-		isCollecting1 = false;
-		isMoving2 = false;
-		isCollecting2 = false;
+		isMoving = false;
+		isCollecting = false;
 	}
 	
 	public boolean connect(int port) {
@@ -83,33 +77,23 @@ public class LegoReceiver extends Thread {
 	private void readNavigator() throws IOException {
 		int rec = nStream.read();
 		if (rec != -1) {
-			if (movingSwitcher)
-				isMoving2 = rec == 1;
-			else
-				isMoving1 = rec == 1;
+			isMoving = rec == 1;
 		}
 	}
 	
 	private void readBallCollector() throws IOException {
 		int rec = bStream.read();
 		if (rec != -1) {
-			if (collectSwitcher)
-				isCollecting2 = rec == 1;
-			else
-				isCollecting1 = rec == 1;
+			isCollecting = rec == 1;
 		}
 	}
 
-	public Boolean getIsMoving() {
-		movingSwitcher = !movingSwitcher; 
-		if(movingSwitcher) { return isMoving1; }
-		else { return isMoving2; }
+	public synchronized boolean getIsMoving() {
+		return isMoving;
 	}
 
-	public Boolean getIsCollecting() {
-		collectSwitcher = !collectSwitcher;
-		if(collectSwitcher) { return isCollecting1; }
-		else { return isCollecting2; }
+	public synchronized boolean getIsCollecting() {
+		return isCollecting;
 	}
 
 	public void stopReceiver() {

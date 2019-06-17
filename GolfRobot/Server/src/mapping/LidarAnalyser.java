@@ -14,14 +14,18 @@ public class LidarAnalyser extends Thread {
 	public volatile boolean keepAlive = true;
 	private LidarReceiver lidarReceiver;
 	private ServerGUI serverGUI;
-	private List<Point> obstacles;
-	private List<Point> balls;
-	private Point goal;
-	private LidarScan scan;
+	private volatile List<Point> obstacles;
+	private volatile List<Point> balls;
+	private volatile Point goal;
+	private volatile LidarScan scan;
 	
 	public LidarAnalyser(LidarReceiver lidarReceiver, ServerGUI serverGUI) {
 		this.lidarReceiver = lidarReceiver;
 		this.serverGUI = serverGUI;
+		this.obstacles = new ArrayList<Point>();
+		this.balls = new ArrayList<Point>();
+		this.scan = new LidarScan();
+		this.goal = new Point(0,0);
 	}
 	
 	@Override
@@ -30,9 +34,9 @@ public class LidarAnalyser extends Thread {
 		while(keepAlive) {
 			LidarScan newScan = lidarReceiver.getScan();
 			if(newScan != null) {
-				if(newScan.scanSize() != getScan().scanSize()) {
+				if(newScan.scanSize() != scan.scanSize()) {
 					analyseData(newScan);
-					setScan(new LidarScan(newScan));
+					scan = new LidarScan(newScan);
 				}
 			}
 		}
@@ -40,47 +44,57 @@ public class LidarAnalyser extends Thread {
 	
 	private void analyseData(LidarScan scan) {
 		try {
-			Mat map = Vision.scanToMap(scan);
+			// Create image yes yes yes
+			Mat map = Vision.scanToPointMap(scan);
 			Mat obstacles = new Mat(map.size(), map.type());
+			
+			//Remove shit obstacles
 			Vision.findWallsAndRemove(map, obstacles);
-			List<Point> lidarMap = Vision.
+			
+			//Very nice obstacles
+			this.obstacles = Vision.collisionMapToPoints(obstacles);
+			
+			// Circles plz
+			//Vision.drawMoreLinesOnMap(map);
 			Mat circles = Vision.findAllBallsLidar(map);
 			setBalls(Vision.getCircleLocsFromMat(circles));
 			map = Vision.drawCirclesOnMap(map, circles);
+			
+			//draw in le GUI
 			serverGUI.setLidarScan(Vision.matToImageBuffer(map));
 			serverGUI.setCamera(Vision.matToImageBuffer(obstacles));
 		} catch (Exception e) { e.printStackTrace(); }
 	}
 
-	public synchronized List<Point> getObstacles() {
+	public List<Point> getObstacles() {
 		return new ArrayList<Point>(obstacles);
 	}
 
-	public synchronized void setObstacles(List<Point> obstacles) {
+	public void setObstacles(List<Point> obstacles) {
 		this.obstacles = obstacles;
 	}
 
-	public synchronized List<Point> getBalls() {
+	public List<Point> getBalls() {
 		return new ArrayList<Point>(balls);
 	}
 
-	public synchronized void setBalls(List<Point> balls) {
+	public void setBalls(List<Point> balls) {
 		this.balls = balls;
 	}
 
-	public synchronized Point getGoal() {
+	public Point getGoal() {
 		return new Point(goal);
 	}
 
-	public synchronized void setGoal(Point goal) {
+	public void setGoal(Point goal) {
 		this.goal = goal;
 	}
 	
-	public synchronized LidarScan getScan() {
+	public LidarScan getScan() {
 		return new LidarScan(scan);
 	}
 
-	public synchronized void setScan(LidarScan scan) {
+	public void setScan(LidarScan scan) {
 		this.scan = scan;
 	}
 	

@@ -34,7 +34,7 @@ public class Vision {
 	}
 	
 	public static byte[] getAsImage(LidarScan scan) {
-		Mat map = scanToMap(scan);
+		Mat map = scanToPointMap(scan);
 		map = drawCirclesOnMap(map, findAllBallsLidar(map));
 		return matToImageBuffer(map);
 	}
@@ -55,7 +55,7 @@ public class Vision {
 		double dp = 1;
 		double minDist = 35;
 		int circleCurveParam1 = 300;
-		int centerDetectionParam2 = 9;
+		int centerDetectionParam2 = 8;
 		int minRadius = 15;
 		int maxRadius = 25;
 		Mat circles = new Mat();
@@ -73,7 +73,7 @@ public class Vision {
 		return ps;
 	}
 	
-	public static Mat scanToMap(LidarScan scan) {
+	public static Mat scanToPointMap(LidarScan scan) {
 		List<objects.Point> pts = scan.getPoints();
 		
 		Mat mat = Mat.zeros(SQ_SIZE, SQ_SIZE, CvType.CV_8U);
@@ -87,7 +87,32 @@ public class Vision {
 			}
 		}
 		
-		
+		return mat;
+	}
+	
+	
+	public static Mat scanToLineMap(LidarScan scan) {
+		List<objects.Point> pts = scan.getPoints();
+		Mat mat = Mat.zeros(SQ_SIZE, SQ_SIZE, CvType.CV_8U);
+
+		if (pts.size() >= 1) {
+			objects.Point prevPoint = pts.get(0);
+			for (int i = 1; i < pts.size(); i++) {
+				objects.Point curPoint = pts.get(i);
+				int pxl_x = CENTER_X - curPoint.x;
+				int pxl_y = CENTER_Y - curPoint.y;
+
+				// Draw line between points
+				if (curPoint.distance(prevPoint) <= 20) {
+					Imgproc.line(mat,
+							new Point(CENTER_X - prevPoint.x, CENTER_Y - prevPoint.y),
+							new Point(pxl_x, pxl_y),
+							new Scalar(255), 3);
+				}
+				
+				prevPoint = curPoint;
+			}
+		}
 		
 		return mat;
 	}
@@ -121,7 +146,6 @@ public class Vision {
 	 */
 	public static void findWallsAndRemove(Mat mapInOut, Mat wallsOut) {
 		Mat lines = findLines(mapInOut);
-		System.out.println("Found lines: " + lines.rows());
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
 			double x1 = l[0];
@@ -164,11 +188,33 @@ public class Vision {
 //		}
 	}
 	
+	public static void drawMoreLinesOnMap(Mat map) {
+		int rho = 1;
+		double theta = Math.PI / 180;
+		int threshold = 2;
+		int min_line_length = 2;
+		int max_line_gap = 10;	
+		
+		Mat lines = new Mat();
+		Imgproc.HoughLinesP(map, lines, rho, theta, threshold, min_line_length, max_line_gap);
+		for (int i = 0; i < lines.rows(); i++) {
+			double[] l = lines.get(i, 0);
+			double x1 = l[0];
+			double y1 = l[1];
+			double x2 = l[2];
+			double y2 = l[3];
+			Point pt1 = new Point(x1, y1);
+			Point pt2 = new Point(x2, y2);
+			Imgproc.line(map, pt1, pt2, new Scalar(255,255,255), 2);
+		}
+		
+	}
+	
 	public static Mat findLines(Mat map) {
 		int rho = 1;
 		double theta = Math.PI / 180;
 		int threshold = 2;
-		int min_line_length = 10;
+		int min_line_length = 30;
 		int max_line_gap = 10;		
 		
 		// ALSO WRITES TO linesOUT
@@ -183,7 +229,7 @@ public class Vision {
 		int rho = 1;
 		double theta = Math.PI / 180;
 		int threshold = 150;
-		int min_line_length = 200;
+		int min_line_length = 190;
 		int max_line_gap = 100;		
 		
 		// ALSO WRITES TO linesOUT

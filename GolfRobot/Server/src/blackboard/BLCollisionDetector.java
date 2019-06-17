@@ -4,13 +4,16 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
+import java.util.List;
+
 import mapping.LidarScan;
 import objects.Point;
 
 public class BLCollisionDetector extends Thread implements BlackboardListener {
 	
 	public volatile boolean keepDetecting = true;
-	public volatile boolean isDetected = false;
+	private volatile boolean isDetected = false;
 
 	private final int ROBOT_WIDTH = 160;
 	private final int ROBOT_FRONT_LENGTH = 110;
@@ -23,7 +26,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	private int ycords[] = new int[ncords];
 	
 	private BlackboardSample bbSample;
-	private LidarScan newScan;
+	private List<objects.Point> newObstacles;
 	
 	private Shape curHull;
 	private Polygon collisionHull;
@@ -76,7 +79,7 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	}
 	
 	public void checkForCollision() {
-		for (objects.Point point : newScan.getPoints()) {
+		for (objects.Point point : newObstacles) {
 			if(curHull.contains(point)) {
 				isDetected = true;
 				break;
@@ -89,6 +92,10 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 		isDetected = false;
 	}
 	
+	public boolean isDetected() {
+		return isDetected;
+	}
+	
 	@Override
 	public void blackboardUpdated(BlackboardSample bbSample) {
 		this.bbSample = new BlackboardSample(bbSample);
@@ -96,16 +103,22 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	
 	@Override
 	public void run() {	
-		LidarScan oldScan = new LidarScan();
+		List<objects.Point> oldObstacles = new ArrayList<objects.Point>();
 		while(keepDetecting) {
-			if(bbSample != null && bbSample.scan != null) {
-				newScan = new LidarScan(bbSample.scan);
-				while(oldScan.scanSize() == newScan.scanSize()) {
-					newScan = new LidarScan(bbSample.scan);
+			if(bbSample != null && bbSample.obstacles != null) {
+				newObstacles = new ArrayList<objects.Point>(bbSample.obstacles);
+				while(oldObstacles.size() == newObstacles.size()) {
+					newObstacles = new ArrayList<objects.Point>(bbSample.obstacles);
 				}
-				oldScan = newScan;
+				oldObstacles = newObstacles;
+				System.out.println("Checking for collision... ");
 				checkForCollision();
+				System.out.println("Collision Detection: " + isDetected);
 			}
 		}
+	}
+
+	public void setDetected(boolean detected) {
+		isDetected = detected;
 	}
 }

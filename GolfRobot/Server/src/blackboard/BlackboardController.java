@@ -16,7 +16,7 @@ public class BlackboardController extends Thread {
 	private LegoReceiver lego;
 	private LidarAnalyser lidar;
 
-	private BlackboardSample bbSample;
+	private volatile BlackboardSample bbSample;
 	private volatile boolean stopBlackboard = false;
 	private long cycle = 0;
 	
@@ -80,6 +80,5 @@ public class BlackboardController extends Thread {
 
 	public void removeListener(BlackboardListener bbListener) {
 		bbListeners.remove(bbListener);
-		
 	}
 }

@@ -1,15 +1,11 @@
 package blackboard;
 
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 
-import org.opencv.imgcodecs.Imgcodecs;
 
 import blackboard.BlackboardSample;
 import communication.CommandTransmitter;
 import gui.ServerGUI;
-import mapping.BallDetector;
 import mapping.LidarScan;
 import objects.LidarSample;
 import objects.Point;
@@ -59,10 +55,9 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	private State state;
 	
 	private boolean notDone;
-	private boolean lastMoveState = false;
 	private LinkedList<PolarPoint> reverseQueue;
 	
-	private BlackboardSample bbSample;
+	private volatile BlackboardSample bbSample;
 	
 	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, BLCollisionDetector collisionDetector, State state) {
 		this.serverGUI = gui;
@@ -79,7 +74,6 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		double ballAngle = 0.0;
 		double ballDistance = 0.0;
 		String curMove = "";
-		byte[] curLidarImage = null;
 		State tempState = State.DEBUG;
 		LidarScan wallScanOld = new LidarScan();
 		int startDist = 0;
@@ -95,10 +89,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				state = nextState;
 			
 			// Collision detection state overruling
-			//if (collisionDetector.isDetected && state != State.COLLISION_AVOIDANCE) {
-			//	state = State.COLLISION_AVOIDANCE;
-			//	curMove = "AVOIDANCE";
-			//}
+			if (collisionDetector.isDetected() && state != State.COLLISION_AVOIDANCE) {
+				state = State.COLLISION_AVOIDANCE;
+				curMove = "AVOIDANCE";
+			}
 			
 			// DEBUG
 			if(state != tempState) {
@@ -114,7 +108,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				serverGUI.setIsCollecting(bbSample.isCollecting + "");
 			}
 
-			serverGUI.setCollisionDetected(collisionDetector.isDetected + "");
+			serverGUI.setCollisionDetected(collisionDetector.isDetected() + "");
 			serverGUI.setLastMove(curMove);
 			//serverGUI.setBallLocation(ball != null ? String.format("[%d:%d]", ball.x, ball.y) : "null");
 			//serverGUI.setBallHeading((int)ballAngle + "");
@@ -135,10 +129,13 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				case FOLLOW_WALL: {
 					startDist = 0;
 					if (bbSample != null && bbSample.scan != null) {
+						//System.out.println("Found sample");
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
+						//System.out.println("Sweet scan info: " + wallScanNew.scanSize() + ":" + wallScanOld.scanSize());
 						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
+							//System.out.println("Found new scan");
 							for (LidarSample s : wallScanNew.getSamples()) {
-								if (s.angle > 88.0 && s.angle < 92.0) {
+								if (s.angle > 268.0 && s.angle < 272.0) {
 									startDist = (int)s.distance;
 									break;
 								}
@@ -162,7 +159,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
 						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
 							for (LidarSample s : wallScanNew.getSamples()) {
-								if (s.angle > 88.0 && s.angle < 92.0) {
+								if (s.angle > 268.0 && s.angle < 272.0) {
 									endDist = (int)s.distance;
 									break;
 								}
@@ -207,8 +204,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					commandTransmitter.robotTurn(90);
 					while(!bbSample.isMoving); // Wait for move
 					while(bbSample.isMoving); // Wait for stop
-					collisionDetector.isDetected = false;
-					state = State.EXPLORE;
+					collisionDetector.setDetected(false);
+					state = State.FOLLOW_WALL;
 					break;
 				}
 				case FIND_BALL: {

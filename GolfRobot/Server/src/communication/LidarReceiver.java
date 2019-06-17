@@ -15,8 +15,8 @@ public class LidarReceiver extends Thread {
 	private DatagramSocket socket;
 	private double lastAngle = 0;
 
-	private LidarScan scan = new LidarScan();
-	private LidarScan tempScan = new LidarScan();
+	private volatile LidarScan scan = new LidarScan();
+	private volatile LidarScan tempScan = new LidarScan();
 	
 	public boolean bindSocket(int port) {
 		try { socket = new DatagramSocket(port); } 
@@ -145,11 +145,11 @@ public class LidarReceiver extends Thread {
 		return diff_angle;
 	}
 
-	public synchronized void setScan(LidarScan scan) {
+	public void setScan(LidarScan scan) {
 		this.scan = new LidarScan(scan);
 	}
 	
-	public synchronized LidarScan getScan() {
+	public LidarScan getScan() {
 		return new LidarScan(scan);
 	}
 }

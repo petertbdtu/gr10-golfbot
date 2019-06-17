@@ -3,7 +3,6 @@ package gui;
 import java.io.ByteArrayInputStream;
 
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
 
 import blackboard.BLCollisionDetector;
 import blackboard.BlackboardController;
@@ -21,7 +20,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import mapping.LidarAnalyser;
-import mapping.Vision;
 
 public class ServerGUI {
 
@@ -80,12 +78,14 @@ public class ServerGUI {
     @FXML
     private void onClickPause() 
     {
-        if(stateController != null && stateController.pauseStateMachine) {
-        	stateController.pauseStateMachine = false;
-        	btnPause.setText("Pause Robot");
-        } else {
-        	stateController.pauseStateMachine = true;
-        	btnPause.setText("Resume Robot");
+        if(stateController != null) {
+        	if(stateController.pauseStateMachine) {
+            	stateController.pauseStateMachine = false;
+            	btnPause.setText("Pause Robot");
+            } else {
+            	stateController.pauseStateMachine = true;
+            	btnPause.setText("Resume Robot");
+            }
         }
     }
     

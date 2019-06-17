@@ -5,7 +5,6 @@ import java.util.List;
 
 import mapping.LidarScan;
 import objects.Point;
-import objects.Pose;
 
 public class BlackboardSample {
 	public long cycle;
@@ -21,7 +20,7 @@ public class BlackboardSample {
 		this.scan = new LidarScan(bbSample.scan);
 		this.balls = new ArrayList<Point>(bbSample.balls);
 		this.obstacles = new ArrayList<Point>(bbSample.obstacles);
-		this.goal = new Point(goal);
+		this.goal = new Point(bbSample.goal);
 		this.isMoving = bbSample.isMoving;
 		this.isCollecting = bbSample.isCollecting;
 	}
