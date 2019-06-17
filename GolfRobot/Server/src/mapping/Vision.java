@@ -1,5 +1,6 @@
 package mapping;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.opencv.core.CvType;
@@ -22,35 +23,6 @@ public class Vision {
 	public static Mat readImageFromFile(String filePath) {
 		Mat mat = Imgcodecs.imread(filePath, Imgcodecs.IMREAD_GRAYSCALE);
 		Imgproc.threshold(mat, mat, 200, 255, Imgproc.THRESH_BINARY);
-		return mat;
-	}
-	
-	public static Mat findLines(Mat mat) {
-		Mat lines = new Mat();
-		Mat matLines = new Mat();
-		int rho = 1;
-		double theta = Math.PI / 180;
-		int threshold = 5;
-		int min_line_length = 14;
-		int max_line_gap = 30;		
-		Imgproc.HoughLinesP(mat, lines, rho, theta, threshold, min_line_length, max_line_gap);
-		//Drawing lines on the image
-		System.out.println("Lines found: " + lines.cols());
-        for (int i = 0; i < lines.cols(); i++) {
-            double[] points = lines.get(0, i);
-            double x1, y1, x2, y2;
-
-            x1 = points[0];
-            y1 = points[1];
-            x2 = points[2];
-            y2 = points[3];
-
-            Point pt1 = new Point(x1, y1);
-            Point pt2 = new Point(x2, y2);
-
-            //Drawing lines on an image
-            Imgproc.line(mat, pt1, pt2, new Scalar(255, 0, 0), 4);
-        }
 		return mat;
 	}
 	
@@ -91,6 +63,15 @@ public class Vision {
 		return circles;
 	}
 	
+	public static List<objects.Point> getCircleLocsFromMat(Mat circles) {
+		List<objects.Point> ps = new ArrayList<objects.Point>();
+		for (int i = 0; i < circles.cols(); i++) {
+			double[] c = circles.get(0, i);
+			ps.add(new objects.Point((int) c[0], (int) c[1]));
+		}
+		return ps;
+	}
+	
 	public static Mat scanToMap(LidarScan scan) {
 		List<objects.Point> pts = scan.getPoints();
 		
@@ -105,11 +86,14 @@ public class Vision {
 			}
 		}
 		
-		// (0, 0) cross which points at 0 degrees.
-		Imgproc.line(mat, new org.opencv.core.Point(CENTER_X-10, CENTER_Y), new org.opencv.core.Point(CENTER_X+30, CENTER_Y), new Scalar(127), 3, Imgproc.LINE_AA, 0);
-		Imgproc.line(mat, new org.opencv.core.Point(CENTER_X, CENTER_Y-10), new org.opencv.core.Point(CENTER_X, CENTER_Y+10), new Scalar(127), 3, Imgproc.LINE_AA, 0);
+		
 		
 		return mat;
+	}
+	
+	public static void drawRobotMarker(Mat map) {
+		Imgproc.line(map, new Point(CENTER_X-10, CENTER_Y), new Point(CENTER_X+30, CENTER_Y), new Scalar(127), 3, Imgproc.LINE_AA, 0);
+		Imgproc.line(map, new Point(CENTER_X, CENTER_Y-10), new Point(CENTER_X, CENTER_Y+10), new Scalar(127), 3, Imgproc.LINE_AA, 0);
 	}
 	
 	public static Mat drawCirclesOnMap(Mat map, Mat circles) {
@@ -118,7 +102,7 @@ public class Vision {
 		
 		for (int i = 0; i < circles.cols(); i++) {
 			double[] c = circles.get(0, i);
-            org.opencv.core.Point center = new org.opencv.core.Point(Math.round(c[0]), Math.round(c[1]));
+            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
             // circle center
             Imgproc.circle(res, center, 1, new Scalar(0,100,100), 3, 8, 0 );
             // circle outline
@@ -129,46 +113,30 @@ public class Vision {
 		return res;
 	}
 	
-<<<<<<< HEAD
-	
-	/*
-	img = cv2.imread("TestScan.png")
-	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-	img_bw = cv2.threshold(img_gray, 200, 255, cv2.THRESH_BINARY)[1]
-	line_image = np.copy(img) * 0  # creating a blank to draw lines on
-	
-	# Get lines
-	rho = 1  # distance resolution in pixels of the Hough grid
-	theta = np.pi / 180  # angular resolution in radians of the Hough grid
-	threshold = 15  # minimum number of votes (intersections in Hough grid cell)
-	min_line_length = 30  # minimum number of pixels making up a line
-	max_line_gap = 100  # maximum gap in pixels between connectable line segments
-	img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
-	for line in img_lines:
-	    for x1,y1,x2,y2 in line:
-	        print(line_angle(x1, y1, x2, y2))
-	        ang = (y2-y1)/(x2-x1)
-	        b = y1-ang*x1
-	        
-	        y_start = int(ang*0 + b)
-	        y_end = int(ang*4000 + b)
-	        
-	        cv2.line(img_bw,(0,y_start),(4000,y_end),(0,0,0),20)
-			cv2.line(line_image,(0,y_start),(4000,y_end),(0,0,0),20)
-			
-	return img_bw, line_image
-	*/
-=======
 	/**
 	 * Finds lines (walls) and paints them black / erases them
 	 * @param mapInOut map with lines to find and remove
 	 * @param linesOut lines found
 	 */
 	public static void findWallsAndRemove(Mat mapInOut, Mat wallsOut) {
-		Mat lines = findWallLines(mapInOut);
+		Mat lines = findLines(mapInOut);
 		
-		for (int i = 0; i < lines.cols(); i++) {
-			double[] l = lines.get(0, i);
+		Mat tmp = new Mat(mapInOut.size(), mapInOut.type());
+		System.out.println("Found lines: " + lines.rows());
+		for (int i = 0; i < lines.rows(); i++) {
+			double[] l = lines.get(i, 0);
+			double x1 = l[0];
+			double y1 = l[1];
+			double x2 = l[2];
+			double y2 = l[3];
+			Point pt1 = new Point(x1, y1);
+			Point pt2 = new Point(x2, y2);
+			Imgproc.line(tmp, pt1, pt2, new Scalar(255,255,255), 15);
+		}
+		
+		lines = findWallLines(tmp);
+		for (int i = 0; i < lines.rows(); i++) {
+			double[] l = lines.get(i, 0);
 			double x1 = l[0];
 			double y1 = l[1];
 			double x2 = l[2];
@@ -180,38 +148,41 @@ public class Vision {
 			double y_start = (b); // a*0 + b
 			double y_end = (a*SQ_SIZE + b);
 
-			org.opencv.core.Point pt1 = new org.opencv.core.Point(0, y_start);
-			org.opencv.core.Point pt2 = new org.opencv.core.Point(SQ_SIZE, y_end);
+			Point pt1 = new Point(0, y_start);
+			Point pt2 = new Point(SQ_SIZE, y_end);
 			
 			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
 			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
 		}
 	}
 	
-	public static Mat findWallLines(Mat map) {
-		// img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-		Mat gray = new Mat();
-		Imgproc.cvtColor(map, gray, Imgproc.COLOR_BGR2GRAY);
-		
-		// img_bw = cv2.threshold(img_gray, 200, 255, cv2.THRESH_BINARY)[1]
-		Mat bw = new Mat();
-		Imgproc.threshold(gray, bw, 200, 255, Imgproc.THRESH_BINARY);
-		
-		// line_image = np.copy(img) * 0  # creating a blank to draw lines on
-
+	public static Mat findLines(Mat map) {
 		int rho = 1;
 		double theta = Math.PI / 180;
-		int threshold = 15;
+		int threshold = 10;
 		int min_line_length = 30;
-		int max_line_gap = 100;		
+		int max_line_gap = 150;		
 		
 		// ALSO WRITES TO linesOUT
 		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
 		Mat lines = new Mat();
-		Imgproc.HoughLinesP(bw, lines, rho, theta, threshold, min_line_length, max_line_gap);
+		Imgproc.HoughLinesP(map, lines, rho, theta, threshold, min_line_length, max_line_gap);
 		
 		return lines;
 	}
->>>>>>> branch 'master' of https://github.com/petertbdtu/gr10-golfbot
-
+	
+	public static Mat findWallLines(Mat map) {
+		int rho = 1;
+		double theta = Math.PI / 180;
+		int threshold = 360;
+		int min_line_length = 300;
+		int max_line_gap = 1800;		
+		
+		// ALSO WRITES TO linesOUT
+		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
+		Mat lines = new Mat();
+		Imgproc.HoughLinesP(map, lines, rho, theta, threshold, min_line_length, max_line_gap);
+		
+		return lines;
+	}
 }

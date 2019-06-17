@@ -270,4 +270,10 @@ public class ServerGUI {
 			ivLidar.setImage(new Image(new ByteArrayInputStream(imageBuffer))); 
 		});
 	}
+	
+	public void setCamera(byte[] imageBuffer) {
+		Platform.runLater(() -> {
+			ivCamera.setImage(new Image(new ByteArrayInputStream(imageBuffer))); 
+		});
+	}
 }

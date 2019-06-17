@@ -3,6 +3,8 @@ package mapping;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Mat;
+
 import communication.LidarReceiver;
 import gui.ServerGUI;
 import objects.Point;
@@ -27,29 +29,27 @@ public class LidarAnalyser extends Thread {
 		setScan(new LidarScan());
 		while(keepAlive) {
 			LidarScan newScan = lidarReceiver.getScan();
-			if(newScan != null && newScan.scanSize() != getScan().scanSize()) {
-				analyseData(newScan);
-				setScan(new LidarScan(newScan));
+			if(newScan != null) {
+				if(newScan.scanSize() != getScan().scanSize()) {
+					analyseData(newScan);
+					setScan(new LidarScan(newScan));
+				}
 			}
 		}
 	}
 	
 	private void analyseData(LidarScan scan) {
-		try { serverGUI.setLidarScan(Vision.getAsImage(scan)); } 
-		catch (Exception e) { e.printStackTrace(); }
+		try {
+			Mat map = Vision.scanToMap(scan);
+			Mat obstacles = new Mat(map.size(), map.type());
+			Vision.findWallsAndRemove(map, obstacles);
+			Mat circles = Vision.findAllBallsLidar(map);
+			setBalls(Vision.getCircleLocsFromMat(circles));
+			map = Vision.drawCirclesOnMap(map, circles);
+			serverGUI.setLidarScan(Vision.matToImageBuffer(map));
+			serverGUI.setCamera(Vision.matToImageBuffer(obstacles));
+		} catch (Exception e) { e.printStackTrace(); }
 	}
-	
-	private void getRectangle() {
-		
-	}
-	
-	
-	
-	
-	
-	
-	
-	
 
 	public synchronized List<Point> getObstacles() {
 		return new ArrayList<Point>(obstacles);
