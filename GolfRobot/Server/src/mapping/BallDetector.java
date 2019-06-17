@@ -105,14 +105,31 @@ public class BallDetector {
 		
 		Mat mat = Mat.zeros(SQ_SIZE, SQ_SIZE, CvType.CV_8U);
 		
-		for (int i = 0; i < pts.size(); i++) {
-			Point p = pts.get(i);
-			int pxl_x = CENTER_X - p.x;
-			int pxl_y = CENTER_Y - p.y;
-			if (0 <= pxl_x && pxl_x <= SQ_SIZE && 0 <= pxl_y && pxl_y <= SQ_SIZE) {
-				mat.put(pxl_y, pxl_x, new byte[] {(byte)255});
+		if (pts.size() >= 1) {
+			Point prevPoint = pts.get(0);
+			
+			for (int i = 0; i < pts.size(); i++) {
+				Point curPoint = pts.get(i);
+				int pxl_x = CENTER_X - curPoint.x;
+				int pxl_y = CENTER_Y - curPoint.y;
+				
+				// Draw point
+				//if (0 <= pxl_x && pxl_x <= SQ_SIZE && 0 <= pxl_y && pxl_y <= SQ_SIZE) {
+				//	mat.put(pxl_y, pxl_x, new byte[] {(byte)255});
+				//}
+				
+				// Draw line between points
+				if (curPoint.distance(prevPoint) <= 20) {
+					Imgproc.line(mat,
+							new org.opencv.core.Point(CENTER_X - prevPoint.x, CENTER_Y - prevPoint.y),
+							new org.opencv.core.Point(pxl_x, pxl_y),
+							new org.opencv.core.Scalar(255), 3);
+				}
+				
+				prevPoint = curPoint;
 			}
 		}
+		
 		
 		// (0, 0) cross which points at 0 degrees.
 		Imgproc.line(mat, new org.opencv.core.Point(CENTER_X-10, CENTER_Y), new org.opencv.core.Point(CENTER_X+30, CENTER_Y), new Scalar(127), 3, Imgproc.LINE_AA, 0);
