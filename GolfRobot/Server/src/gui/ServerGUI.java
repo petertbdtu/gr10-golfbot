@@ -3,6 +3,7 @@ package gui;
 import java.io.ByteArrayInputStream;
 
 import org.opencv.core.Core;
+import org.opencv.core.Mat;
 
 import blackboard.BLCollisionDetector;
 import blackboard.BlackboardController;
@@ -19,6 +20,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import mapping.LidarAnalyser;
+import mapping.Vision;
 
 public class ServerGUI {
 
@@ -44,6 +47,7 @@ public class ServerGUI {
 
     private Thread networkThread;
 	private LidarReceiver lidarReceiver;
+	private LidarAnalyser lidarAnalyser;
 	private LegoReceiver legoReceiver;
 	private CommandTransmitter commandTransmitter;
 	private BlackboardController bController;
@@ -55,23 +59,33 @@ public class ServerGUI {
     @FXML
     private void initialize() {
     	cbStartState.getItems().setAll(BLStateController.State.values());
+    	Mat mat = Vision.readImageFromFile("hammer.jpg");
+    	setLidarScan(Vision.matToImageBuffer(mat));
     }
+    
+  
+	@FXML
+	private void onClickStart() {
+    	Mat mat = Vision.readImageFromFile("TestImage.png");
+    	Mat lines = Vision.findLines(mat);
+    	setLidarScan(Vision.matToImageBuffer(lines));
+	}
      
-    @FXML
-    private void onClickStart() 
-    {
-		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
-    	
-    	collisionDetector = new BLCollisionDetector();
-    	bController.registerListener(collisionDetector);
-    	
-    	stateController = new BLStateController(this, commandTransmitter, collisionDetector, cbStartState.getValue());
-    	bController.registerListener(stateController);
-    	
-		bController.start();
-    	stateController.start();
-    	collisionDetector.start();
-    }
+//    @FXML
+//    private void onClickStart() 
+//    {
+//		bController = new BlackboardController(null, legoReceiver, lidarReceiver);
+//    	
+//    	collisionDetector = new BLCollisionDetector();
+//    	bController.registerListener(collisionDetector);
+//    	
+//    	stateController = new BLStateController(this, commandTransmitter, collisionDetector, cbStartState.getValue());
+//    	bController.registerListener(stateController);
+//    	
+//		bController.start();
+//    	stateController.start();
+//    	collisionDetector.start();
+//    }
     
     @FXML
     private void onClickPause() 
@@ -129,12 +143,15 @@ public class ServerGUI {
         	circleLidar.setFill(Color.YELLOW);
         	circleLego.setFill(Color.YELLOW);
         	circleTransmitter.setFill(Color.YELLOW);
+        	ServerGUI tmpGUI = this;
         	networkThread = new Thread(new Runnable() {
         		@Override
         		public void run() {
         			lidarReceiver = new LidarReceiver();
         			if(lidarReceiver.bindSocket(5000)) {
 	        			lidarReceiver.start();
+	        			lidarAnalyser = new LidarAnalyser(lidarReceiver, tmpGUI);
+	        			lidarAnalyser.start();
 	        	    	circleLidar.setFill(Color.LIGHTGREEN);
         			} else {
         				lidarReceiver = null;
@@ -172,6 +189,11 @@ public class ServerGUI {
         	networkThread = null;
     	}
     		
+    	if(lidarAnalyser != null) {
+    		lidarAnalyser.keepAlive = false;
+    		lidarAnalyser = null;
+    	}
+    	
     	if(lidarReceiver != null) {
     		lidarReceiver.stopReceiver();
     		lidarReceiver = null;

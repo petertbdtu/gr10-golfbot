@@ -77,7 +77,7 @@ public class BallDetector {
 				Point closest = findClosestPointToPoint(ps, origo);
 				
 				markedMap = drawCirclesOnMap(map, circles);
-				Imgcodecs.imwrite("Scanning" + counter++ + ".png", markedMap);
+				//Imgcodecs.imwrite("Scanning" + counter++ + ".png", markedMap);
 
 				return subtractPoints(closest, origo);
 			}
