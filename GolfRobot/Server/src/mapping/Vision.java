@@ -30,7 +30,9 @@ public class Vision {
 	public static byte[] matToImageBuffer(Mat mat) {
 		MatOfByte byteMat = new MatOfByte();
 		Imgcodecs.imencode(".bmp", mat, byteMat);
-		return byteMat.toArray();
+		byte[] res = byteMat.toArray();
+		byteMat.release();
+		return res;
 	}
 	
 	public static byte[] getAsImage(LidarScan scan) {

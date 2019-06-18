@@ -107,8 +107,10 @@ public class BlackboardController extends Thread {
 //
 //					
 //					//draw in le GUI
-					gui.setLidarScan(Vision.matToImageBuffer(map));
+					byte[] img = Vision.matToImageBuffer(map);
+					gui.setLidarScan(img);
 //					gui.setLidarAnalyzedScan(Vision.matToImageBuffer(obstacles));
+					map.release();
 					
 				} catch (Exception e) { }
 			}

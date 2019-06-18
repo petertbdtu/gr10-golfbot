@@ -96,7 +96,6 @@ public class LidarReceiver extends Thread {
 			angle = angle % 360;
 			
 			if(debug) { System.out.println("Calculated angle: " + angle); }
-
 			if( 	!(angle > 115.0 && angle < 160.0) 	// Venstre Forhjul
 				&& 	!(angle > 200.0 && angle < 245.0) 	// Højre Forhjul (måske)
 				&& 	!(angle > 325.0 || angle < 35.0) 	// Baghjul

@@ -8,6 +8,7 @@ import communication.CommandTransmitter;
 import gui.ServerGUI;
 import mapping.LidarScan;
 import objects.LidarSample;
+import objects.Point;
 import objects.PolarPoint;
 
 public class BLStateController extends Thread implements BlackboardListener  {
@@ -15,6 +16,9 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	public volatile int ballCollectedCount = -1;
 	public volatile boolean pauseStateMachine = false;
 	public volatile boolean stopStateMachine = false;
+	
+	private final int FOLLOW_WALL_STEPSIZE = 200;
+	private final int LIDAR_TO_FRONT_LENGTH = 300;
 	
 	public static enum State {
 		DEBUG,
@@ -28,6 +32,9 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		
 		FOLLOW_WALL,
 		WALL_CORRECTION,
+		WALL_CORRECTION_TURNIN,
+		WALL_CORRECTION_TURNBACK,
+		WALL_CORRECTION_TRAVEL,
 		
 		FIND_BALL,
 		VALIDATE_BALL,
@@ -54,8 +61,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	
 	private boolean notDone;
 	private LinkedList<PolarPoint> reverseQueue;
-	private final int FOLLOW_WALL_STEPSIZE = 200;
-	private final int LIDAR_TO_FRONT_LENGTH = 210;
+
 	
 	private volatile BlackboardSample bbSample;
 	
@@ -75,19 +81,19 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		State tempState = State.DEBUG;
 		LidarScan wallScanOld = new LidarScan();
 		int distRightMax = 0;
+		double lengthToCorrect = 0;
+		double angleToCorrectIn = 0;
+		double angleToCorrectBack = 0;
+		
 		incrementBallsFetched();
 		
 		while(notDone) {
 			
 			// Pause
-			if(pauseStateMachine && state != State.IS_MOVING && state != State.IS_COLLECTING) {
+			if(pauseStateMachine && state != State.IS_MOVING && state != State.IS_COLLECTING && state != State.PAUSE) {
 				nextState = state;
 				state = State.PAUSE;
-			}
-			
-			// Unpause
-			if(!pauseStateMachine && state == State.PAUSE)
-				state = nextState;
+			}			
 			
 			// Update GUI
 			serverGUI.setState(state.toString());
@@ -98,6 +104,13 @@ public class BLStateController extends Thread implements BlackboardListener  {
 
 			// State switcher
 			switch(state) {
+			
+				case PAUSE: {
+					if(!pauseStateMachine) {
+						state = nextState;
+					} 
+					break;
+				}
 			
 				/*
 				 * State where the robot turns 45 degrees continously
@@ -115,43 +128,42 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				 */
 				case FOLLOW_WALL: {
 					int distForwardMax = 0;
-					distRightMax = 0;
+					// Scan found
 					if (bbSample != null && bbSample.scan != null) {
-						//System.out.println("Found sample");
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
-						//System.out.println("Sweet scan info: " + wallScanNew.scanSize() + ":" + wallScanOld.scanSize());
+						// New Scan
 						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
-							//System.out.println("Found new scan");
+							
 							for (LidarSample sample : wallScanNew.getSamples()) {
+								// Infront of Robot & max distForward
 								if (sample.angle > 175.0 && sample.angle < 185.0 && sample.distance > distForwardMax) {
 									distForwardMax = (int) sample.distance;
-								} else if (sample.angle > 268.0 && sample.angle < 272.0 && sample.distance > distRightMax) {
-									distRightMax = (int)sample.distance;
-								}
 							}
 							wallScanOld = wallScanNew;
 						}
 					}
 					if(distForwardMax != 0) {
+						System.out.println("DIST FOUND: " + distForwardMax);
 						if(distForwardMax <= LIDAR_TO_FRONT_LENGTH) {
 							//TURN
+							System.out.println("FOLLOW TURN: " + distForwardMax + " <= " + LIDAR_TO_FRONT_LENGTH);
 							commandTransmitter.robotTurn(90.0);
 							curMove = "D:90.0";
 							nextState = State.FOLLOW_WALL;
 							state = State.WAIT_FOR_MOVE;
 						} else if(distForwardMax <= LIDAR_TO_FRONT_LENGTH + FOLLOW_WALL_STEPSIZE) {
 							//DRIVE LESS
-							if(distRightMax != 0) {
-								int dist = (LIDAR_TO_FRONT_LENGTH + FOLLOW_WALL_STEPSIZE) - distForwardMax;
-								commandTransmitter.robotTravel(dist);
-								curMove = "K:" + dist;
-								nextState = State.FOLLOW_WALL;
-								state = State.WAIT_FOR_MOVE;
-							}
+							int dist = distForwardMax - LIDAR_TO_FRONT_LENGTH;
+							commandTransmitter.robotTravel(dist);
+							curMove = "K:" + dist;
+							nextState = State.FOLLOW_WALL;
+							state = State.WAIT_FOR_MOVE;
 						} else {
 							//DRIVE FULL STEP SIZE
+							System.out.println("FOLLOW STEP");
 							if(distRightMax != 0) {
 								int dist = FOLLOW_WALL_STEPSIZE;
+								System.out.println("FOLLOW STEP: " + dist);
 								commandTransmitter.robotTravel(dist);
 								curMove = "K:" + dist;
 								nextState = State.WALL_CORRECTION;
@@ -171,7 +183,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
 						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
 							for (LidarSample s : wallScanNew.getSamples()) {
-								if (s.angle > 268.0 && s.angle < 272.0 && s.distance > distRightMaxEnd) {
+								if (s.angle > 88.0 && s.angle < 92.0 && s.distance > distRightMaxEnd) {
 									distRightMaxEnd = (int) s.distance;
 								}
 							}
@@ -179,19 +191,43 @@ public class BLStateController extends Thread implements BlackboardListener  {
 						}
 					}
 					
-					if(distRightMaxEnd != 0) {
-						double diff = distRightMax - distRightMaxEnd;
-						double angleDiff = Math.asin(diff/200.0);
-						System.out.println("[Start: "+distRightMax+", curr: "+distRightMaxEnd+", angle: "+angleDiff+"]");
-						if (angleDiff > 5.0 && angleDiff < -5.0) {
-							commandTransmitter.robotTurn(angleDiff);
-							curMove = "D:"+angleDiff;
-							nextState = State.FOLLOW_WALL;
-							state = State.WAIT_FOR_MOVE;
-						} else {
+					if(distRightMaxEnd != 0) {					
+						System.out.println("??????????:" + distRightMaxEnd);
+						lengthToCorrect = distRightMaxEnd - 210;
+						System.out.println("LENGTH TO CORRECT: " + lengthToCorrect);
+						angleToCorrectIn = (Math.toDegrees(Math.asin(lengthToCorrect/FOLLOW_WALL_STEPSIZE)) + 90) * -1;
+						angleToCorrectBack = 90;
+						System.out.println("ANGLE TO CORRECT: " + angleToCorrectIn);
+						System.out.println("ANGLE TO CORRECT: " + angleToCorrectBack);
+						if((angleToCorrectIn < -95 || angleToCorrectIn > -85) && distRightMaxEnd < 300)
+							state = State.WALL_CORRECTION_TURNIN;
+						else 
 							state = State.FOLLOW_WALL;
-						}
 					}
+					break;
+				}
+				
+				case WALL_CORRECTION_TURNIN: {
+					curMove = "D:" + angleToCorrectIn;
+					commandTransmitter.robotTurn(angleToCorrectIn);
+					nextState = State.WALL_CORRECTION_TRAVEL;
+					state = State.WAIT_FOR_MOVE;
+					break;
+				}
+				
+				case WALL_CORRECTION_TRAVEL: {
+					curMove = "K:" + lengthToCorrect;
+					commandTransmitter.robotTravel(lengthToCorrect);
+					nextState = State.WALL_CORRECTION_TURNBACK;
+					state = State.WAIT_FOR_MOVE;
+					break;
+				}
+				
+				case WALL_CORRECTION_TURNBACK: {
+					curMove = "D:" + angleToCorrectBack;
+					commandTransmitter.robotTurn(angleToCorrectBack);
+					nextState = State.FOLLOW_WALL;
+					state = State.WAIT_FOR_MOVE;
 					break;
 				}
 
@@ -329,11 +365,6 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				case COMPLETED: {
 					notDone = false;
 					break;	
-				}
-	
-				default: {
-					state = State.EXPLORE;
-					break;
 				}
 			}
 		}
