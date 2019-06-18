@@ -1,16 +1,22 @@
 package mapping;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
+
+import objects.LidarSample;
 
 //import objects.Point;
 
@@ -54,13 +60,12 @@ public class Vision {
 		// Find circles
 		double dp = 1;
 		double minDist = 35;
-		int circleCurveParam1 = 300;
-		int centerDetectionParam2 = 8;
+		int circleCurveParam1 = 150;
+		int centerDetectionParam2 = 9;
 		int minRadius = 15;
 		int maxRadius = 25;
 		Mat circles = new Mat();
 		Imgproc.HoughCircles(map, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
-		map.release();
 		return circles;
 	}
 	
@@ -68,7 +73,7 @@ public class Vision {
 		List<objects.Point> ps = new ArrayList<objects.Point>();
 		for (int i = 0; i < circles.cols(); i++) {
 			double[] c = circles.get(0, i);
-			ps.add(new objects.Point((int) c[0], (int) c[1]));
+			ps.add(new objects.Point((int) c[0] - CENTER_X, (int) c[1] - CENTER_Y));
 		}
 		return ps;
 	}
@@ -112,8 +117,7 @@ public class Vision {
 				
 				prevPoint = curPoint;
 			}
-		}
-		
+		}		
 		return mat;
 	}
 	
@@ -134,7 +138,6 @@ public class Vision {
 	            Imgproc.circle(map, center, radius, new Scalar(255,0,255), 3, 8, 0 );
 			}
 		}
-		circles.release();
 	}
 	
 	/**
@@ -152,31 +155,31 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
+			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 10);
 			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
 		}
 		
 		
-		lines = findWallLines(wallsOut);
-		for (int i = 0; i < lines.rows(); i++) {
-			double[] l = lines.get(i, 0);
-			double x1 = l[0];
-			double y1 = l[1];
-			double x2 = l[2];
-			double y2 = l[3];
-			
-			double a = (y2-y1) / (x2-x1);
-			double b = y1 - a*x1;
-			
-			double y_start = (b); // a*0 + b
-			double y_end = (a*SQ_SIZE + b);
-
-			Point pt1 = new Point(0, y_start);
-			Point pt2 = new Point(SQ_SIZE, y_end);
-			
-			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 2);
-		}
+//		lines = findWallLines(wallsOut);
+//		for (int i = 0; i < lines.rows(); i++) {
+//			double[] l = lines.get(i, 0);
+//			double x1 = l[0];
+//			double y1 = l[1];
+//			double x2 = l[2];
+//			double y2 = l[3];
+//			
+//			double a = (y2-y1) / (x2-x1);
+//			double b = y1 - a*x1;
+//			
+//			double y_start = (b); // a*0 + b
+//			double y_end = (a*SQ_SIZE + b);
+//
+//			Point pt1 = new Point(0, y_start);
+//			Point pt2 = new Point(SQ_SIZE, y_end);
+//			
+//			//Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
+//			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
+//		}
 		lines.release();
 		
 //		MatOfPoint corners = new MatOfPoint();
@@ -213,8 +216,8 @@ public class Vision {
 	public static Mat findLines(Mat map) {
 		int rho = 1;
 		double theta = Math.PI / 180;
-		int threshold = 2;
-		int min_line_length = 30;
+		int threshold = 30;
+		int min_line_length = 45;
 		int max_line_gap = 10;		
 		
 		// ALSO WRITES TO linesOUT
@@ -229,7 +232,7 @@ public class Vision {
 		int rho = 1;
 		double theta = Math.PI / 180;
 		int threshold = 150;
-		int min_line_length = 190;
+		int min_line_length = 220;
 		int max_line_gap = 100;		
 		
 		// ALSO WRITES TO linesOUT
@@ -252,5 +255,58 @@ public class Vision {
 		}
 		
 		return points;
+	}
+	
+	public static void saveScan(LidarScan scan) {
+		Imgcodecs.imwrite("help.jpg", scanToPointMap(scan));
+	}
+	
+	/**
+	 * Scans a picture for orange balls
+	 * @param image picture to search in
+	 * @return whether there is a ball in the picture
+	 */
+	public static boolean detectBallInImage(byte[] image) {
+		Mat frame = Imgcodecs.imdecode(new MatOfByte(image), Imgcodecs.IMREAD_COLOR);
+		
+		int erosion_value = 0; 
+		int dialation_value = 0;
+		
+		// Convert image to HSV format
+		Mat hsv = new Mat();
+		Imgproc.cvtColor(frame, hsv, Imgproc.COLOR_BGR2HSV);
+		
+		// Look for orange colors
+		Scalar lower = new Scalar(10,140,120);
+		Scalar upper = new Scalar(60,220,200);
+		Mat orangemask = new Mat();
+		Core.inRange(hsv, lower, upper, orangemask);
+		Mat orange_output = new Mat();
+		Core.bitwise_and(frame, frame, orange_output, orangemask);
+		
+		// Erode to get rid of noise
+		Mat kernel = Mat.ones(erosion_value, erosion_value, CvType.CV_8U);
+		Mat erosion = new Mat();
+		Imgproc.erode(orangemask, erosion, kernel);
+
+		// Dilate to undo erosion
+		Mat kernel_dialation = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
+		Mat dialationNerosion = new Mat();
+		Imgproc.dilate(erosion, dialationNerosion, kernel_dialation);
+
+		// Crop to region of interest
+		Rect roi = new Rect(280, 10, 50, 440);
+		Mat ball_roi = new Mat(dialationNerosion, roi);
+		
+		// Adaptive threshold image into two colors
+		Mat thresh = new Mat();
+		Imgproc.adaptiveThreshold(ball_roi, thresh, 127, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 40);
+		
+		// Find contours (balls are contours)
+		List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
+		Mat hierarchy = new Mat();
+		Imgproc.findContours(thresh, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
+
+		return contours.size() != 0;
 	}
 }

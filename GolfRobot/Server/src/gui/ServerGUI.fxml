@@ -312,6 +312,23 @@
                         </HBox>
                         <HBox alignment="CENTER_LEFT">
                            <children>
+                              <Circle fx:id="circleCamera" fill="RED" radius="5.0" stroke="BLACK" strokeType="INSIDE">
+                                 <HBox.margin>
+                                    <Insets left="5.0" />
+                                 </HBox.margin>
+                              </Circle>
+                              <Label text="Camera Receiver">
+                                 <font>
+                                    <Font name="System Bold" size="14.0" />
+                                 </font>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                              </Label>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                           <children>
                               <Circle fx:id="circleLego" fill="RED" radius="5.0" stroke="BLACK" strokeType="INSIDE">
                                  <HBox.margin>
                                     <Insets left="5.0" />
@@ -327,7 +344,7 @@
                               </Label>
                            </children>
                            <VBox.margin>
-                              <Insets bottom="5.0" top="5.0" />
+                              <Insets top="5.0" />
                            </VBox.margin>
                         </HBox>
                         <HBox alignment="CENTER_LEFT">
@@ -393,12 +410,12 @@
             </VBox>
             <VBox alignment="TOP_CENTER" prefHeight="2000.0" prefWidth="2000.0">
                <children>
-                  <Label alignment="CENTER" prefWidth="2000.0" text="Analyzed Scan" textAlignment="CENTER">
+                  <Label alignment="CENTER" prefWidth="2000.0" text="Camera Frame" textAlignment="CENTER">
                      <font>
                         <Font name="System Bold" size="18.0" />
                      </font>
                   </Label>
-                  <ImageView fx:id="ivLidarAnalyzed" fitHeight="500.0" fitWidth="500.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView fx:id="ivCamera" fitHeight="500.0" fitWidth="500.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </VBox>
          </children>

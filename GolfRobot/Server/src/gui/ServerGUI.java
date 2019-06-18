@@ -6,6 +6,7 @@ import org.opencv.core.Core;
 
 import blackboard.BlackboardController;
 import blackboard.BLStateController;
+import communication.CameraReceiver;
 import communication.CommandTransmitter;
 import communication.LegoReceiver;
 import communication.LidarReceiver;
@@ -33,20 +34,21 @@ public class ServerGUI {
     				btnStartNetwork, btnStopNetwork;
     
     @FXML
-    private Circle circleLidar, circleLego, circleTransmitter;
+    private Circle circleLidar, circleCamera, circleLego, circleTransmitter;
     
     @FXML
-    private ImageView ivLidar, ivLidarAnalyzed;
+    private ImageView ivLidar, ivCamera;
     private BLStateController stateController;
 
     private Thread networkThread;
+	private CameraReceiver cameraReceiver;
 	private LidarReceiver lidarReceiver;
 	private LegoReceiver legoReceiver;
 	private CommandTransmitter commandTransmitter;
 	private BlackboardController bbController;
 	private ServerGUI serverGUI;
 	private volatile byte[] imgLidar = new byte[1];
-	private volatile byte[] imgAnalysed = new byte[1];
+	private volatile byte[] imgCamera = new byte[1];
 	private String timer = "";
 	private String collected = "";
 	private String distanceBall = "";
@@ -57,6 +59,7 @@ public class ServerGUI {
 	private String moving = "";
 	private String state = "";
 	Thread updater;
+
     
     public ServerGUI() {
     	System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -122,13 +125,14 @@ public class ServerGUI {
     {
     	if(networkThread == null || !networkThread.isAlive()) {
         	circleLidar.setFill(Color.YELLOW);
+//        	circleCamera.setFill(Color.YELLOW);
         	circleLego.setFill(Color.YELLOW);
         	circleTransmitter.setFill(Color.YELLOW);
         	
         	updater = new Thread(() -> {
 	    		while(true) {
     				ivLidar.setImage(new Image(new ByteArrayInputStream(imgLidar)));
-    				ivLidarAnalyzed.setImage(new Image(new ByteArrayInputStream(imgAnalysed)));
+    				ivCamera.setImage(new Image(new ByteArrayInputStream(imgCamera)));
     				Platform.runLater(() -> lblBallDistanceValue.setText(distanceBall));
     				Platform.runLater(() -> lblBallHeadingValue.setText(headingBall));
     				Platform.runLater(() -> lblBallLocationValue.setText(locationBall));
@@ -147,6 +151,16 @@ public class ServerGUI {
         	networkThread = new Thread(() -> {
     			bbController = new BlackboardController(serverGUI);
     			bbController.start();
+    			
+//    			cameraReceiver = new CameraReceiver();
+//    			if(cameraReceiver.connect(6000)) {
+//    				bbController.addCameraReceiver(cameraReceiver);
+//    				cameraReceiver.start();
+//    				circleCamera.setFill(Color.LIGHTGREEN);
+//    			} else {
+//    				cameraReceiver = null;
+//    				circleCamera.setFill(Color.RED);
+//    			}
     			
     			lidarReceiver = new LidarReceiver();
     			if(lidarReceiver.bindSocket(5000)) {
@@ -194,6 +208,11 @@ public class ServerGUI {
     	}
     	circleLidar.setFill(Color.RED);
 
+    	if(cameraReceiver != null) {
+    		cameraReceiver.stopReceiver();
+    		cameraReceiver = null;
+    	}
+    	circleLidar.setFill(Color.RED);
     	
     	if(legoReceiver != null) {
     		legoReceiver.stopReceiver();
@@ -254,7 +273,7 @@ public class ServerGUI {
 		imgLidar = img.clone();
 	}
 	
-	public void setLidarAnalyzedScan(byte[] imageBuffer) {
-		imgAnalysed = imageBuffer.clone();
+	public void setCameraFrame(byte[] imageBuffer) {
+		imgCamera = imageBuffer.clone();
 	}
 }

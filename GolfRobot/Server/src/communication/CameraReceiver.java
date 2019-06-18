@@ -1,136 +1,94 @@
 package communication;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
-import java.util.Arrays;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.ByteBuffer;
 
-import javax.imageio.ImageIO;
 
-import mapping.LidarScan;
-
-import mapping.LidarScan;
 
 public class CameraReceiver extends Thread {
 
-	private DatagramSocket socket;
-	private boolean debug;
-	private double lastAngle = 0;
-	private boolean switcher = false;
-	private boolean newData = false;
-	private BufferedImage img1;
-	private BufferedImage img2;
-	private BufferedImage tempImg;
+	private ServerSocket serverSocket;
+	private Socket socket;
+	private InputStream is;
+	private OutputStream os;
+	private volatile byte[] img = new byte[1];
+	private volatile boolean keepAlive = true;
 	
-	public CameraReceiver() {
-		this.debug = false;
-	}
-	
-	public CameraReceiver(boolean debug) {
-		this.debug = debug;
-	}
-	
-	public boolean bindSocket(int port) {
-		try { socket = new DatagramSocket(port); } 
-		catch (SocketException e) { return false; }
+	public boolean connect(int port) {
+		try { 
+			serverSocket = new ServerSocket(port);
+			socket = serverSocket.accept();
+			is = socket.getInputStream();
+			os = socket.getOutputStream();
+		} catch (Exception e) { 
+			return false; 
+		}
 		return true;
 	}
 	
 	@Override
 	public void run() {
-		while(socket != null && socket.isBound()) {
-			byte[] buffer = new byte[5];
-			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-			try { socket.receive(packet); } 
-			catch (IOException e) { break; }
-		
-			int packetSize = 1024;
-			
-			byte[] tis = new byte[5];
-			
-			tis = packet.getData();
-			
-			if((tis[0] & 0xFF) == 255) {
-				int bytesToRead = getBytesAsInt(tis,1);
-				System.out.println(bytesToRead);
-				
-				decryptPacket(bytesToRead, packetSize);
-			}
-			
-		}
-	}
+		while(keepAlive) {
+				try {
+				byte[] size_buff = new byte[4];
+	            is.read(size_buff);
+	            int size = ByteBuffer.wrap(size_buff).asIntBuffer().get();
+	            os.write(size_buff);
+	            
+	            byte[] msg_buff = new byte[1024];
+	            byte[] img_buff = new byte[size];
+	            int img_offset = 0;
+	            while(true) {
+	                int bytes_read = is.read(msg_buff, 0, msg_buff.length);
+	                if(bytes_read == -1) { break; }
 	
-	public static void main(String[] args) {
-		System.out.println("test");
-		CameraReceiver meme = new CameraReceiver();
-		meme.bindSocket(6000);
-		meme.run();
-		
+	                // Copy bytes into img_buff
+	                System.arraycopy(msg_buff, 0, img_buff, img_offset, bytes_read);
+	                img_offset += bytes_read;	
+	                if(img_offset >= size) { break; }
+	            }
+	            
+	            img = img_buff.clone();
+	            
+	            byte[] OK = new byte[] {0x4F, 0x4B};
+				os.write(OK);
+			} catch (IOException e) { e.printStackTrace(); }
+		}
 	}
 	
 	private int getBytesAsInt(byte[] bytes, int start) {
-				
 		int tmp = ((bytes[start] & 0xff) << 24) | ((bytes[start+1] & 0xff) << 16) | ((bytes[start+2] & 0xff) << 8) | (bytes[start+3] & 0xff);
-		
 		return tmp;
 	}
 	
-	private int decryptPacket(int bytesToRead, int packetSize) {
-		byte[] imgBuffer = new byte[bytesToRead];
-		
-		int count = 0, retval = 0;
-		
-		for(int i = 0; i < bytesToRead; i+=packetSize) {
-			byte[] tmpBuf = new byte[packetSize];
-			
-			DatagramPacket packet = new DatagramPacket(tmpBuf, packetSize);
-			try { socket.receive(packet); } 
-			catch (IOException e) {
-				retval = -1;
-				e.printStackTrace();
-			}
-			
-			for(int j = count*packetSize; j < Math.min((count+1)*packetSize,bytesToRead); j++) {
-				imgBuffer[j] = packet.getData()[j%packetSize];
-			}
-			
-			count++;
-			
-		}
-		
-		
-		InputStream bis = new ByteArrayInputStream(imgBuffer);
-		
-	    try {
-	    	
-			if(switcher) {
-				img1 = ImageIO.read(bis);
-				if(!newData) { newData = true; }
-			} else {
-				img2 = ImageIO.read(bis);
-				if(!newData) { newData = true; }
-			}
-//		    ImageIO.write(bImage2, "jpg", new File("output.jpg") );
-		    System.out.println("Wrote Image");
-		} catch (Exception e) {
-			retval = -1;
-			e.printStackTrace();
-		}
-	    
-	    return retval;
-	}
+//	private void decryptPacket(int bytesToRead, int packetSize) {
+//		byte[] imgBuffer = new byte[bytesToRead];
+//		int count = 0;
+//		
+//		for(int i = 0; i < bytesToRead; i+=packetSize, count++) {
+//			byte[] tmpBuf = new byte[packetSize];
+//			
+//			DatagramPacket packet = new DatagramPacket(tmpBuf, packetSize);
+//			try { socket.receive(packet); } 
+//			catch (IOException e) {}
+//			
+//			for(int j = count*packetSize; j < Math.min((count+1)*packetSize,bytesToRead); j++) {
+//				imgBuffer[j] = packet.getData()[j%packetSize];
+//			}			
+//		}
+//		
+//		img = imgBuffer.clone();
+//	}
 	
-	public BufferedImage getImage() {
-		if(newData) {
-			switcher = !switcher;
-			newData = false;
-		}
-		if (switcher) {	return img1; }
-		else { return img2; }
+	public byte[] getImage() {
+		return img;
+	}
+
+	public void stopReceiver() {
+		keepAlive = false;
 	}
 }

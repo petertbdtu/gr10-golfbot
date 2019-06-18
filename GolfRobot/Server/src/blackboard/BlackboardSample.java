@@ -1,6 +1,5 @@
 package blackboard;
 
-
 import mapping.LidarScan;
 
 public class BlackboardSample {

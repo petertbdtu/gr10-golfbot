@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 
 import communication.CameraReceiver;
 import communication.LegoReceiver;
@@ -70,10 +71,14 @@ public class BlackboardController extends Thread {
 	private void newBlackboardValues() {
 		bbSample = new BlackboardSample();
 		bbSample.cycle = cycle++;
-		
-		if(camera != null) {
-			//TODO ADD FRAME???
-		}
+//	
+//		if(camera != null) {
+//			bbSample.frame = camera.getImage();
+//			if (bbSample.frame.length > 20) {
+//			gui.setIsCollecting(Vision.detectBallInImage(bbSample.frame) + "");
+//			gui.setCameraFrame(bbSample.frame);
+//			}
+//		}
 		
 		if(lego != null) {
 			bbSample.isMoving = lego.getIsMoving();
@@ -91,26 +96,39 @@ public class BlackboardController extends Thread {
 		if(lidar != null) {
 			bbSample.scan = lidar.getScan();
 			if(bbSample.scan.scanSize() > 0) {
-				try {
-					Mat map = Vision.scanToPointMap(bbSample.scan);
-//					System.out.println(map.size());
-//					
-//					Mat obstacles = new Mat(map.size(), map.type());
-//					
-//					//Remove shit obstacles
-//					Vision.findWallsAndRemove(map, obstacles);
-//					System.out.println(map.size());
-//					
-//					// Circles plz
-//					Vision.drawCirclesOnMap(map, Vision.findAllBallsLidar(map));
-//					System.out.println(map.size());
-//
-//					
-//					//draw in le GUI
-					byte[] img = Vision.matToImageBuffer(map);
-					gui.setLidarScan(img);
-//					gui.setLidarAnalyzedScan(Vision.matToImageBuffer(obstacles));
+				try {					
+					Mat mat = Vision.scanToLineMap(bbSample.scan);
+					Mat map = mat.clone();
+					Mat obstacles = new Mat(map.size(), map.type());
+					
+					//Remove shit obstacles
+					Vision.findWallsAndRemove(map, obstacles);
+					
+					// Circles plz
+					Vision.drawCirclesOnMap(mat, Vision.findAllBallsLidar(map));
+					
+					//draw in le GUI
+					Vision.drawRobotMarker(mat);
+
+					Rect roi = new Rect(1000, 1000, 2000, 2000);
+					mat = new Mat(mat, roi);
+					obstacles = new Mat(obstacles, roi);
+					
+					LidarScan frontScans = BLStateController.getFrontScans(bbSample.scan);
+					Mat frontDirectionMap = Vision.scanToLineMap(frontScans);
+					Vision.drawCirclesOnMap(frontDirectionMap, Vision.findAllBallsLidar(frontDirectionMap));
+					Vision.drawRobotMarker(frontDirectionMap);
+					frontDirectionMap = new Mat(frontDirectionMap, roi);
+
+					
+					gui.setLidarScan(Vision.matToImageBuffer(mat));
+					gui.setCameraFrame(Vision.matToImageBuffer(frontDirectionMap));
+					
+					//Memory ?????????
 					map.release();
+					obstacles.release();
+					mat.release();
+					frontDirectionMap.release();
 					
 				} catch (Exception e) { }
 			}

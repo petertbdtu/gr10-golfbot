@@ -62,7 +62,7 @@ public class LidarAnalyser extends Thread {
 			
 			//draw in le GUI
 			serverGUI.setLidarScan(Vision.matToImageBuffer(map));
-			serverGUI.setLidarAnalyzedScan(Vision.matToImageBuffer(obstacles));
+			serverGUI.setCameraFrame(Vision.matToImageBuffer(obstacles));
 		} catch (Exception e) { e.printStackTrace(); }
 	}
 
