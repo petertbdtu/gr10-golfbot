@@ -59,9 +59,9 @@ public class Vision {
 		
 		// Find circles
 		double dp = 1;
-		double minDist = 35;
-		int circleCurveParam1 = 150;
-		int centerDetectionParam2 = 9;
+		double minDist = 45;
+		int circleCurveParam1 = 1000;
+		int centerDetectionParam2 = 5;
 		int minRadius = 15;
 		int maxRadius = 25;
 		Mat circles = new Mat();
@@ -127,8 +127,8 @@ public class Vision {
 	}
 	
 	public static void drawCirclesOnMap(Mat map, Mat circles) {
-		for (int i = 0; i < circles.rows(); i++) {
-			double[] c = circles.get(i, 0);
+		for (int i = 0; i < circles.cols(); i++) {
+			double[] c = circles.get(0, i);
 			if(c.length > 1) {
 	            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
 	            // circle center
@@ -155,31 +155,29 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 10);
+			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
 			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
 		}
-		
-		
-//		lines = findWallLines(wallsOut);
-//		for (int i = 0; i < lines.rows(); i++) {
-//			double[] l = lines.get(i, 0);
-//			double x1 = l[0];
-//			double y1 = l[1];
-//			double x2 = l[2];
-//			double y2 = l[3];
-//			
-//			double a = (y2-y1) / (x2-x1);
-//			double b = y1 - a*x1;
-//			
-//			double y_start = (b); // a*0 + b
-//			double y_end = (a*SQ_SIZE + b);
-//
-//			Point pt1 = new Point(0, y_start);
-//			Point pt2 = new Point(SQ_SIZE, y_end);
-//			
-//			//Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
-//			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
-//		}
+		lines = findWallLines(wallsOut);
+		for (int i = 0; i < lines.rows(); i++) {
+			double[] l = lines.get(i, 0);
+			double x1 = l[0];
+			double y1 = l[1];
+			double x2 = l[2];
+			double y2 = l[3];
+			
+			double a = (y2-y1) / (x2-x1);
+			double b = y1 - a*x1;
+			
+			double y_start = (b); // a*0 + b
+			double y_end = (a*SQ_SIZE + b);
+
+			Point pt1 = new Point(0, y_start);
+			Point pt2 = new Point(SQ_SIZE, y_end);
+			
+			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
+			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
+		}
 		lines.release();
 		
 //		MatOfPoint corners = new MatOfPoint();
@@ -216,9 +214,9 @@ public class Vision {
 	public static Mat findLines(Mat map) {
 		int rho = 1;
 		double theta = Math.PI / 180;
-		int threshold = 30;
-		int min_line_length = 45;
-		int max_line_gap = 10;		
+		int threshold = 42;
+		int min_line_length = 36;
+		int max_line_gap = 60;		
 		
 		// ALSO WRITES TO linesOUT
 		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)

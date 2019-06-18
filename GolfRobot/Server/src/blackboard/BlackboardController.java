@@ -114,21 +114,21 @@ public class BlackboardController extends Thread {
 					mat = new Mat(mat, roi);
 					obstacles = new Mat(obstacles, roi);
 					
-					LidarScan frontScans = BLStateController.getFrontScans(bbSample.scan);
-					Mat frontDirectionMap = Vision.scanToLineMap(frontScans);
-					Vision.drawCirclesOnMap(frontDirectionMap, Vision.findAllBallsLidar(frontDirectionMap));
-					Vision.drawRobotMarker(frontDirectionMap);
-					frontDirectionMap = new Mat(frontDirectionMap, roi);
+//					LidarScan frontScans = BLStateController.getFrontScans(bbSample.scan);
+//					Mat frontDirectionMap = Vision.scanToLineMap(frontScans);
+//					Vision.drawCirclesOnMap(frontDirectionMap, Vision.findAllBallsLidar(frontDirectionMap));
+//					Vision.drawRobotMarker(frontDirectionMap);
+//					frontDirectionMap = new Mat(frontDirectionMap, roi);
 
 					
 					gui.setLidarScan(Vision.matToImageBuffer(mat));
-					gui.setCameraFrame(Vision.matToImageBuffer(frontDirectionMap));
+					gui.setCameraFrame(Vision.matToImageBuffer(obstacles));
 					
 					//Memory ?????????
 					map.release();
 					obstacles.release();
 					mat.release();
-					frontDirectionMap.release();
+//					frontDirectionMap.release();
 					
 				} catch (Exception e) { }
 			}
