@@ -1,10 +1,13 @@
 package mapping;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
+import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfPoint;
@@ -149,10 +152,10 @@ public class Vision {
 			if(c.length > 1) {
 	            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
 	            // circle center
-	            Imgproc.circle(map, center, 1, new Scalar(0,100,100), 3, 8, 0 );
+	            Imgproc.circle(map, center, 1, new Scalar(100,100,0), 3, 8, 0 );
 	            // circle outline
 	            int radius = (int) Math.round(c[2]);
-	            Imgproc.circle(map, center, radius, new Scalar(255,0,255), 3, 8, 0 );
+	            Imgproc.circle(map, center, radius, new Scalar(255,255,0), 3, 8, 0 );
 			}
 		}
 	}
@@ -173,11 +176,11 @@ public class Vision {
 	
 	/**
 	 * Finds lines (walls) and paints them black / erases them
-	 * @param mapInOut map with lines to find and remove
+	 * @param mapblackInOut map with lines to find and remove
 	 * @param linesOut lines found
 	 */
-	public static void findWallsAndRemove(Mat mapInOut, Mat wallsOut) {
-		Mat lines = findLines(mapInOut);
+	public static void findWallsAndRemove(Mat mapblackInOut, Mat maporangeInOut,  Mat wallsOut) {
+		Mat lines = findLines(mapblackInOut);
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
 			double x1 = l[0];
@@ -186,8 +189,10 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 10);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 10);
+
+			Imgproc.line(mapblackInOut, pt1, pt2, new Scalar(0,0,0), 20);
+			Imgproc.line(maporangeInOut, pt1, pt2, new Scalar(0,0,255), 20);
+			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
 		}
 		lines = findWallLines(wallsOut);
 		for (int i = 0; i < lines.rows(); i++) {
@@ -206,8 +211,9 @@ public class Vision {
 			Point pt1 = new Point(0, y_start);
 			Point pt2 = new Point(SQ_SIZE, y_end);
 			
-			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 10);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 10);
+			Imgproc.line(mapblackInOut, pt1, pt2, new Scalar(0,0,0), 20);
+			Imgproc.line(maporangeInOut, pt1, pt2, new Scalar(0,0,255), 20);
+			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
 		}
 		lines.release();
 		
@@ -337,5 +343,71 @@ public class Vision {
 		Imgproc.findContours(thresh, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE);
 
 		return contours.size() != 0;
+	}
+	public static objects.Point findGoal(Mat map) {
+		// res is meant to output drawing of points, unused.
+		//Mat res = map.clone();
+		
+		// ONLY LOOKS TO THE RIGHT OF THE ROBOT, ADJUST!
+		Mat roi = map.clone();
+		Point a = new Point(SQ_SIZE-100, SQ_SIZE-400);
+		Point b = new Point(SQ_SIZE-200, SQ_SIZE+50);
+		roiWithoutCrop(roi, a, b);
+		
+		// Maybe dialate?
+		
+		// HoughLines?
+		
+		MatOfPoint corners = new MatOfPoint();
+		Imgproc.goodFeaturesToTrack(roi, corners, 4, 0.5, 20.0);
+		List<Point> cornerList = corners.toList();
+		corners.release();
+		
+		// Draw corners (ostensibly goals)
+		//for (Point c : cornerList) {
+		//	Imgproc.circle(res, c, 10, new Scalar(255), -1);
+		//}
+		
+		//return res; // return drawing of corners
+		
+		if (cornerList.size() == 4) {
+			System.out.println("Goal detected");
+			
+			
+			Collections.sort(cornerList, new Comparator<Point>() {
+				@Override
+				public int compare(Point p1, Point p2) {
+					if (p1.x < p2.x)
+						return -1;
+					if (p1.x > p2.x)
+						return 1;
+					return 0;
+				}
+			});
+			
+			for (Point c : cornerList) {
+				System.out.println(c.toString());
+			}
+			
+			// Take middle two points (goal edges) and take average (goal center)
+			Point c1 = cornerList.get(1);
+			Point c2 = cornerList.get(2);
+			Point avg = new Point((c1.x+c2.x)/2, (c1.y+c2.y)/2);
+			objects.Point goal = new objects.Point((int)(avg.x-CENTER_X), (int)(avg.y-CENTER_Y));
+			return goal;
+		}
+		
+		return null;
+	}
+
+	public static void roiWithoutCrop(Mat map, Point a, Point b) {
+		Mat mask = Mat.zeros(SQ_SIZE, SQ_SIZE, CvType.CV_8U);
+		Imgproc.rectangle(mask, a, b, new Scalar(255), -1, 8, 0);
+		Core.bitwise_and(map, mask, map);
+	}
+	
+	public static void drawGoalPoint(Mat map, objects.Point goal) {
+		Point g = new Point(goal.x+CENTER_X, goal.y+CENTER_Y);
+        Imgproc.circle(map, g, 10, new Scalar(0,255,0), -1);
 	}
 }
