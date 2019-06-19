@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import blackboard.BlackboardSample;
 import communication.CommandTransmitter;
@@ -476,20 +478,19 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		serverGUI.setBallsCollected(++ballCollectedCount + "");
 	}
 	
-	private Point getNearestBall(LidarScan scan) {	
+	private Point getNearestBall(LidarScan scan) {
 		Mat map = Vision.scanToLineMap(scan);
 		Mat obstacles = new Mat(map.size(), map.type());
 		
 		//Remove shit obstacles
-		Vision.findWallsAndRemove(map, obstacles);
-		obstacles.release();
+		Mat obstacleFreeMap = map.clone();
+		// gross method that blacks out obstacles in the first map and draws them in red on the second
+		Vision.findWallsAndRemove(obstacleFreeMap, map, obstacles);
 		
 		//BAlls plz
-		Mat ballMat = Vision.findAllBallsLidar(map);
-		
-		// roi
-		Rect roi = new Rect(1500, 1500, 1000, 1000);
-		map = new Mat(map, roi);
+		Mat ballMat = Vision.findAllBallsLidar(obstacleFreeMap);
+		obstacleFreeMap.release();
+		obstacles.release();
 		
 		// Circles plz
 		Vision.drawCirclesOnMap(map, ballMat);
@@ -530,5 +531,25 @@ public class BLStateController extends Thread implements BlackboardListener  {
 			}
 		}
 		return directionalScan;
+	}
+	public Point findGoal(LidarScan scan) {
+		Mat map = Vision.scanToLineMap(scan);
+		
+		Point goal = Vision.findGoal(map);
+		
+		// draw obstacles
+		Mat unused = map.clone();
+		Vision.findWallsAndRemove(unused, map, unused);
+		unused.release();
+		
+		// draw goal
+		Vision.drawGoalPoint(map, goal);
+		
+		//Gui
+		serverGUI.setCameraFrame(Vision.matToImageBuffer(map));
+		
+		map.release();
+		
+		return goal;
 	}
 }
