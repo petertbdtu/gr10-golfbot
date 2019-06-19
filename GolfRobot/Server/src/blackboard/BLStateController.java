@@ -644,4 +644,18 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		
 		return goal;
 	}
+	
+	public boolean detectGoal(LidarScan scan) {
+		double minAngle = 88;
+		double maxAngle = 92;
+		double minDist = 1000;
+		
+		for (LidarSample sample : scan.getSamples()) {
+			if (sample.angle > minAngle && sample.angle < maxAngle && sample.distance > minDist) {
+				return true;				
+			}
+		}
+		
+		return false;
+	}
 }
