@@ -1,4 +1,4 @@
-package mapping;
+package deprecated;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +17,7 @@ import org.opencv.imgproc.Imgproc;
 
 import blackboard.BlackboardListener;
 import blackboard.BlackboardSample;
+import mapping.LidarScan;
 import objects.LidarSample;
 import objects.Point;
 

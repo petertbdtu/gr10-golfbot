@@ -1,4 +1,4 @@
-package mapping;
+package deprecated;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,8 @@ import org.opencv.core.Mat;
 
 import communication.LidarReceiver;
 import gui.ServerGUI;
+import mapping.LidarScan;
+import mapping.Vision;
 import objects.Point;
 
 public class LidarAnalyser extends Thread {

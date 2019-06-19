@@ -1,4 +1,4 @@
-package blackboard;
+package deprecated;
 
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -7,6 +7,8 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.List;
 
+import blackboard.BlackboardListener;
+import blackboard.BlackboardSample;
 import mapping.LidarScan;
 import objects.Point;
 
@@ -34,7 +36,6 @@ public class BLCollisionDetector extends Thread implements BlackboardListener {
 	
 	public BLCollisionDetector(){
 		  buildCoordsFromOrigin2();
-		  //trans.rotate(Math.toRadians(10),collisionHull.xpoints[0],collisionHull.ypoints[0]);
 		  collisionHull = new Polygon(xcords, ycords, ncords);
 		  ballCollectHull = new Rectangle(xcords[4],ycords[4],xcords[2]-xcords[4],ycords[3]-ycords[4]); //??? XD
 		  curHull = collisionHull;

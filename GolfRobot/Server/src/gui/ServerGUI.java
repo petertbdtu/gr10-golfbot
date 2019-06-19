@@ -6,10 +6,10 @@ import org.opencv.core.Core;
 
 import blackboard.BlackboardController;
 import blackboard.BLStateController;
-import communication.CameraReceiver;
 import communication.CommandTransmitter;
 import communication.LegoReceiver;
 import communication.LidarReceiver;
+import deprecated.CameraReceiver;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -131,19 +131,20 @@ public class ServerGUI {
         	
         	updater = new Thread(() -> {
 	    		while(true) {
-    				ivLidar.setImage(new Image(new ByteArrayInputStream(imgLidar)));
-    				ivCamera.setImage(new Image(new ByteArrayInputStream(imgCamera)));
-    				Platform.runLater(() -> lblBallDistanceValue.setText(distanceBall));
-    				Platform.runLater(() -> lblBallHeadingValue.setText(headingBall));
-    				Platform.runLater(() -> lblBallLocationValue.setText(locationBall));
-    				Platform.runLater(() -> lblCollectedValue.setText(collected));
-    				Platform.runLater(() -> lblCollectingValue.setText(collecting));
-    				Platform.runLater(() -> lblMoveValue.setText(moveLast));
-    				Platform.runLater(() -> lblMovingValue.setText(moving));
-    				Platform.runLater(() -> lblStateValue.setText(state));
-    				Platform.runLater(() -> lblTimerValue.setText(timer));
-    				try { Thread.sleep(250); } 
-    				catch (InterruptedException e) { }
+	    			try { 
+	    				ivLidar.setImage(new Image(new ByteArrayInputStream(imgLidar)));
+	    				ivCamera.setImage(new Image(new ByteArrayInputStream(imgCamera)));
+	    				Platform.runLater(() -> lblBallDistanceValue.setText(distanceBall));
+	    				Platform.runLater(() -> lblBallHeadingValue.setText(headingBall));
+	    				Platform.runLater(() -> lblBallLocationValue.setText(locationBall));
+	    				Platform.runLater(() -> lblCollectedValue.setText(collected));
+	    				Platform.runLater(() -> lblCollectingValue.setText(collecting));
+	    				Platform.runLater(() -> lblMoveValue.setText(moveLast));
+	    				Platform.runLater(() -> lblMovingValue.setText(moving));
+	    				Platform.runLater(() -> lblStateValue.setText(state));
+	    				Platform.runLater(() -> lblTimerValue.setText(timer));
+	    				Thread.sleep(250); 
+    				} catch (InterruptedException e) { }
 	    		}
         	});
         	updater.start();

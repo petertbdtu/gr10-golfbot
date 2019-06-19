@@ -6,9 +6,9 @@ import java.util.LinkedList;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 
-import communication.CameraReceiver;
 import communication.LegoReceiver;
 import communication.LidarReceiver;
+import deprecated.CameraReceiver;
 import gui.ServerGUI;
 import mapping.LidarScan;
 import mapping.Vision;
@@ -96,37 +96,38 @@ public class BlackboardController extends Thread {
 		if(lidar != null) {
 			bbSample.scan = lidar.getScan();
 			if(bbSample.scan.scanSize() > 0) {
-				try {					
+				try {			
 					Mat mat = Vision.scanToLineMap(bbSample.scan);
-					Mat map = mat.clone();
-					Mat obstacles = new Mat(map.size(), map.type());
-					
-					//Remove shit obstacles
-					Vision.findWallsAndRemove(map, obstacles);
-					
-					// Circles plz
-					Vision.drawCirclesOnMap(mat, Vision.findAllBallsLidar(map));
-					
-					//draw in le GUI
-					Vision.drawRobotMarker(mat);
-
-					Rect roi = new Rect(1000, 1000, 2000, 2000);
-					mat = new Mat(mat, roi);
-					obstacles = new Mat(obstacles, roi);
-					
 //					LidarScan frontScans = BLStateController.getFrontScans(bbSample.scan);
 //					Mat frontDirectionMap = Vision.scanToLineMap(frontScans);
-//					Vision.drawCirclesOnMap(frontDirectionMap, Vision.findAllBallsLidar(frontDirectionMap));
-//					Vision.drawRobotMarker(frontDirectionMap);
-//					frontDirectionMap = new Mat(frontDirectionMap, roi);
+//					Mat map = mat.clone();
+//					Mat obstacles = new Mat(map.size(), map.type());
+					
+					//Remove shit obstacles
+//					Vision.findWallsAndRemove(map, obstacles);
+//					Vision.findWallsAndRemove(frontDirectionMap, obstacles);
 
+					// roi
+					Rect roi = new Rect(1500, 1500, 1000, 1000);
+//					frontDirectionMap = new Mat(frontDirectionMap, roi);
+					mat = new Mat(mat, roi);
+//					map = new Mat(map, roi);
+//					obstacles = new Mat(obstacles, roi);
+					
+					// Circles plz
+//					Vision.drawCirclesOnMap(mat, Vision.findAllBallsLidar(map));
+//					Vision.drawCirclesOnMap(frontDirectionMap, Vision.findAllBallsLidar(frontDirectionMap));
+					
+					//draw in le GUI
+//					Vision.drawRobotMarker(mat);
+//					Vision.drawRobotMarker(frontDirectionMap);
 					
 					gui.setLidarScan(Vision.matToImageBuffer(mat));
-					gui.setCameraFrame(Vision.matToImageBuffer(obstacles));
+//					gui.setCameraFrame(Vision.matToImageBuffer(frontDirectionMap));
 					
 					//Memory ?????????
-					map.release();
-					obstacles.release();
+//					map.release();
+//					obstacles.release();
 					mat.release();
 //					frontDirectionMap.release();
 					

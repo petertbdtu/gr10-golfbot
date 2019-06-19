@@ -14,10 +14,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
-import objects.LidarSample;
-
 //import objects.Point;
-
 public class Vision {
 
 	private static final int SQ_SIZE = 4000;
@@ -58,10 +55,32 @@ public class Vision {
 		// Find circles
 		double dp = 1;
 		double minDist = 45;
-		int circleCurveParam1 = 1000;
-		int centerDetectionParam2 = 5;
+		int circleCurveParam1 = 1200;
+		int centerDetectionParam2 = 8;
 		int minRadius = 15;
-		int maxRadius = 25;
+		int maxRadius = 35;
+		Mat circles = new Mat();
+		Imgproc.HoughCircles(map, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
+		return circles;
+	}
+	
+	public static Mat findCirclesThatAreNotCircles(Mat map) {
+		// Convert to binary image
+		int thresh = 200;
+		Imgproc.threshold(map, map, thresh, 255, Imgproc.THRESH_BINARY);
+		
+		// Dialate to connect points
+		int dialation_value = 0;
+		Mat dialation_kernel = Mat.ones(dialation_value, dialation_value, CvType.CV_8U);
+		Imgproc.dilate(map, map, dialation_kernel);
+		
+		// Find circles
+		double dp = 1;
+		double minDist = 45;
+		int circleCurveParam1 = 1200;
+		int centerDetectionParam2 = 8;
+		int minRadius = 15;
+		int maxRadius = 35;
 		Mat circles = new Mat();
 		Imgproc.HoughCircles(map, circles, Imgproc.HOUGH_GRADIENT, dp, minDist, circleCurveParam1, centerDetectionParam2, minRadius, maxRadius);
 		return circles;
@@ -134,6 +153,20 @@ public class Vision {
 	            // circle outline
 	            int radius = (int) Math.round(c[2]);
 	            Imgproc.circle(map, center, radius, new Scalar(255,0,255), 3, 8, 0 );
+			}
+		}
+	}
+	
+	public static void removeCirclesFromMat(Mat map, Mat circles) {
+		for (int i = 0; i < circles.cols(); i++) {
+			double[] c = circles.get(0, i);
+			if(c.length > 1) {
+	            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
+	            // circle center
+	            Imgproc.circle(map, center, 1, new Scalar(0,0,0), 3, 8, 0 );
+	            // circle outline
+	            int radius = (int) Math.round(c[2]);
+	            Imgproc.circle(map, center, radius, new Scalar(0,0,0), -1, 8, 0 );
 			}
 		}
 	}

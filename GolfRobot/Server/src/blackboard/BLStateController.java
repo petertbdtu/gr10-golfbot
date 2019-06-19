@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.opencv.core.Mat;
+import org.opencv.core.Rect;
 
 import blackboard.BlackboardSample;
 import communication.CommandTransmitter;
@@ -23,8 +24,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 
 	
 	private final int FOLLOW_WALL_STEPSIZE = 200;
-	private final int LIDAR_TO_FRONT_LENGTH = 360;
-	private final int LIDAR_TO_RIGHT_LENGTH = 230;
+	private final int LIDAR_TO_FRONT_LENGTH = 380;
+	private final int LIDAR_TO_RIGHT_LENGTH = 250;
 	private final int BALL_VALIDATION_MAX_COUNT = 3;
 	private final int BALL_FINDING_MAX_COUNT = 3;
 	private final Point ORIGIN_WHEEL = new Point(107,0);
@@ -213,25 +214,25 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				 */
 				case WALL_CORRECTION: {
 					System.out.println("Entering WALL CORRECTION");
-					int distRightMaxEnd = 0;
+					int distRightMaxEnd = Integer.MAX_VALUE;
 					if (bbSample != null && bbSample.scan != null) { // Scan present in BBSample
 						System.out.println("If bbSample not null");
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
 						if(wallScanNew.scanSize() != wallScanOld.scanSize()) { // Scan in BBSample is new
 							System.out.println("If sample is new");
 							for (LidarSample s : wallScanNew.getSamples()) {
-								if (s.angle > 88.0 && s.angle < 92.0 && s.distance > distRightMaxEnd) { // Points found to the right
+								if (s.angle > 88.0 && s.angle < 115.0 && s.distance < distRightMaxEnd) { // Points found to the right
 									distRightMaxEnd = (int) s.distance;
 									System.out.println("if angle between 88-92");
 								}
 							}
 							wallScanOld = wallScanNew;
 							
-							if(distRightMaxEnd != 0 && distRightMaxEnd < 300) {		
-								System.out.println("if distRightMax not 0 and < 300");
+							if(distRightMaxEnd != 0 && distRightMaxEnd < 500) {		
+								System.out.println("if distRightMax not 0 and < 500");
 								lengthToCorrect = distRightMaxEnd - LIDAR_TO_RIGHT_LENGTH;
 								angleToCorrectIn = (Math.toDegrees(Math.asin(lengthToCorrect/FOLLOW_WALL_STEPSIZE))) * -1;
-								if((angleToCorrectIn < -5 || angleToCorrectIn > 5) && distRightMaxEnd < 300) {
+								if((angleToCorrectIn < -5 || angleToCorrectIn > 5) && distRightMaxEnd < 500) {
 									System.out.println("If angleCorrect between -5 and 5");
 									state = State.WALL_CORRECTION_TURNSTRAIGHT;
 								} else {
@@ -239,7 +240,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 									state = State.FOLLOW_WALL;
 								}
 							} else {
-								System.out.println("if distRightMax 0 or > 300");
+								System.out.println("if distRightMax 0 or > 500");
 								state = State.FOLLOW_WALL;
 							}
 						}
@@ -332,6 +333,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 							if(nearestBall != null){	
 								System.out.println("If nearestBall not null");
 								double ballAngle = ORIGIN_WHEEL.angleTo(nearestBall);
+								serverGUI.setBallHeading((int) ballAngle + "");
 								reverseAngle += -ballAngle;
 								commandTransmitter.robotTurn(ballAngle);
 								curMove = "D:" + (int)ballAngle;
@@ -366,7 +368,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 								if(ballAngle > -4 && ballAngle < 4) { //Distance command
 									System.out.println("If ballAngle between -4 and 4");
 									ballValidationCount = 0;
-									double ballDistance = ORIGIN_TUBE.distance(nearestBall.x, nearestBall.y);				
+									double ballDistance = ORIGIN_TUBE.distance(nearestBall.x, nearestBall.y);	
+									System.out.println((int) ballDistance + "");
 									reverseDistance += -ballDistance;
 									commandTransmitter.robotTravel(ballDistance);
 									curMove = "K:" + (int)ballDistance;
@@ -472,12 +475,19 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	}
 	
 	private Point getNearestBall(LidarScan scan) {	
-		Mat map = Vision.scanToPointMap(scan);
+		Mat map = Vision.scanToLineMap(scan);
 		Mat obstacles = new Mat(map.size(), map.type());
+		
 		//Remove shit obstacles
 		Vision.findWallsAndRemove(map, obstacles);
 		obstacles.release();
+		
+		//BAlls plz
 		Mat ballMat = Vision.findAllBallsLidar(map);
+		
+		// roi
+		Rect roi = new Rect(1500, 1500, 1000, 1000);
+		map = new Mat(map, roi);
 		
 		// Circles plz
 		Vision.drawCirclesOnMap(map, ballMat);
@@ -498,6 +508,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				nearestDist = calcDist;
 			}
 		}
+		if(nearestBall != null)
+			serverGUI.setBallLocation(nearestBall.x + ":" + nearestBall.y);
 		
 		return nearestBall;
 	}

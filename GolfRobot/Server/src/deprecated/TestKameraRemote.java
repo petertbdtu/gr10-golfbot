@@ -1,4 +1,4 @@
-package communication;
+package deprecated;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -7,8 +7,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-
-import objects.FrameSample;
 
 
 public class TestKameraRemote {

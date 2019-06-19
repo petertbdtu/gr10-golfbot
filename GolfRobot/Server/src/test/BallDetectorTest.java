@@ -9,7 +9,7 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
 
-import mapping.BallDetector;
+import deprecated.BallDetector;
 import mapping.LidarScan;
 import objects.Point;
 
