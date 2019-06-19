@@ -16,6 +16,7 @@ import deprecated.CameraReceiver;
 import gui.ServerGUI;
 import mapping.LidarScan;
 import mapping.Vision;
+import objects.LidarSample;
 import objects.Point;
 
 public class BlackboardController extends Thread {
@@ -101,34 +102,45 @@ public class BlackboardController extends Thread {
 		if(lidar != null) {
 			bbSample.scan = lidar.getScan();
 			if(bbSample.scan.scanSize() > 0) {
-				try {			
-					Mat mat = Vision.scanToLineMap(bbSample.scan);
-					gui.setLidarScan(Vision.matToImageBuffer(mat));
-					mat.release();
+				try {	
+//					LidarScan fewerAngles = new LidarScan();
+//					for(LidarSample s : bbSample.scan.getSamples()) {
+//						if(s.angle > 45.0 && s.angle < 115.0 && s.distance < 1000)
+//							fewerAngles.addSample(s);
+//					}
+					
+					Mat map = Vision.scanToLineMap(bbSample.scan);
+//					Mat print = new Mat();
+					//gui.setLidarScan(Vision.matToImageBuffer(mat));
+				//	mat.release();
 //					
-//					Mat map = Vision.scanToLineMap(bbSample.scan);
+//					Mat map = Vision.scanToLineMap(scan);
 //					Mat mapToShow = new Mat();
 //					Imgproc.cvtColor(map, mapToShow, Imgproc.COLOR_GRAY2BGR); // ALLOW COLORS
-//
-//					// obstacles
-//					Mat obstacles = Vision.findWalls(map);
+//					Imgproc.cvtColor(map, print, Imgproc.COLOR_GRAY2BGR); // ALLOW COLORS
+
+					// Masks
+//					Mat blackMat = Mat.zeros(map.size(), map.type());
 //					Mat redMat = mapToShow.clone().setTo(new Scalar(0,0,255));
+					
+					// obstacles
+//					Mat obstacles = Vision.findWalls(map);
 //					redMat.copyTo(mapToShow, obstacles);
-//						
-//					// Goal
-//					Mat roi = map.clone();
-//					Point goal = Vision.findGoal(map);
+						
+					// Goal
+//					Point goal = Vision.findGoal(map, print);
 //					if (goal != null)  Vision.drawGoalPoint(mapToShow, goal);
-//					
-//					// Send to GUI
-//					gui.setLidarScan(Vision.matToImageBuffer(roi));
-//					gui.setCameraFrame(Vision.matToImageBuffer(map));
-//					
-//					// Memory fix
+					
+					// Send to GUI
+					//gui.setCameraFrame(Vision.matToImageBuffer(mapToShow));
+					gui.setLidarScan(Vision.matToImageBuffer(map));
+					
+					// Memory fix
 //					map.release();
 //					mapToShow.release();
+//					blackMat.release();
 //					redMat.release();
-				} catch (Exception e) { }
+				} catch (Exception e) { e.printStackTrace(); }
 			}
 		} else {
 			bbSample.scan = new LidarScan();

@@ -17,7 +17,7 @@ import objects.LidarSample;
 import objects.Point;
 import objects.PolarPoint;
 
-public class BLStateController extends Thread implements BlackboardListener  {
+public class BLStateController2 extends Thread implements BlackboardListener  {
 	
 	public volatile int ballCollectedCount = -1;
 	public volatile boolean pauseStateMachine = false;
@@ -81,7 +81,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	private boolean findGoal = false;
 
 	
-	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, State state) {
+	public BLStateController2(ServerGUI gui, CommandTransmitter commandTransmitter, State state) {
 		this.serverGUI = gui;
 		this.commandTransmitter = commandTransmitter;
 		this.state = state;
