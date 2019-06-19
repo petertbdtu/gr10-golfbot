@@ -541,19 +541,20 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		return directionalScan;
 	}
 	public Point findGoal(LidarScan scan) {
+		// Make map
 		Mat map = Vision.scanToLineMap(scan);
 		
+		// Find obstacles & goal
+		Mat obstacles = Vision.findWalls(map);
 		Point goal = Vision.findGoal(map);
 		
-		// draw obstacles
-		Mat unused = map.clone();
-		Vision.findWallsAndRemove(unused, map, unused);
-		unused.release();
+		// Draw obstacles & goal
+		obstacles.copyTo(map);
+		if (goal != null) {
+			Vision.drawGoalPoint(map, goal);
+		}
 		
-		// draw goal
-		Vision.drawGoalPoint(map, goal);
-		
-		//Gui
+		// Send to GUI
 		serverGUI.setCameraFrame(Vision.matToImageBuffer(map));
 		
 		map.release();

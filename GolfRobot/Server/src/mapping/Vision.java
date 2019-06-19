@@ -175,12 +175,14 @@ public class Vision {
 	}
 	
 	/**
-	 * Finds lines (walls) and paints them black / erases them
-	 * @param mapblackInOut map with lines to find and remove
-	 * @param linesOut lines found
+	 * Finds walls / lines and returns a mask of their position
+	 * @param map Map to search in
+	 * @return Mask of walls
 	 */
-	public static void findWallsAndRemove(Mat mapblackInOut, Mat maporangeInOut,  Mat wallsOut) {
-		Mat lines = findLines(mapblackInOut);
+	public static Mat findWalls(Mat map) {
+		Mat walls = Mat.zeros(map.size(), map.type());
+		
+		Mat lines = findLines(map);
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
 			double x1 = l[0];
@@ -189,12 +191,11 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-
-			Imgproc.line(mapblackInOut, pt1, pt2, new Scalar(0,0,0), 20);
-			Imgproc.line(maporangeInOut, pt1, pt2, new Scalar(0,0,255), 20);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
+			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 10);
 		}
-		lines = findWallLines(wallsOut);
+		lines.release();
+		
+		lines = findWallLines(walls);
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
 			double x1 = l[0];
@@ -211,19 +212,11 @@ public class Vision {
 			Point pt1 = new Point(0, y_start);
 			Point pt2 = new Point(SQ_SIZE, y_end);
 			
-			Imgproc.line(mapblackInOut, pt1, pt2, new Scalar(0,0,0), 20);
-			Imgproc.line(maporangeInOut, pt1, pt2, new Scalar(0,0,255), 20);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
+			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 10);
 		}
 		lines.release();
-		
-//		MatOfPoint corners = new MatOfPoint();
-//		Imgproc.goodFeaturesToTrack(wallsOut, corners, 4, 0.5, 900.0);
-//		for (int i = 0; i < corners.rows(); i++) {
-//			double[] corner = corners.get(i,0);
-//			System.out.println("ehhhh: " + corner[0] + ":" + corner[1]);
-//			Imgproc.circle(wallsOut, new Point(corner[0],corner[1]), 100, new Scalar(255,255,255), -1);
-//		}
+
+		return walls;
 	}
 	
 	public static void drawMoreLinesOnMap(Mat map) {
