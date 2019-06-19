@@ -1,12 +1,15 @@
 package robot;
 
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 
 import Knowledgesource.KSBallManagement;
 import Knowledgesource.KSNavigation;
+import lejos.hardware.Sound;
+import lejos.utility.Delay;
 
 public class CommandReceiver extends Thread {
 	
@@ -58,6 +61,9 @@ public class CommandReceiver extends Thread {
 					break;
 				case 5:
 					manager.deliverBalls();
+					Delay.msDelay(3000);
+					Sound.setVolume(100);
+					Sound.playSample(new File("flot.wav"));
 					break;
 				case 0:
 					//filler byte
