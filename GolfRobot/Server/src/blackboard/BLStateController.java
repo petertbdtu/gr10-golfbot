@@ -100,6 +100,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		int ballFindingCount = 0;
 		State tempState = State.DEBUG;
 		incrementBallsFetched();
+		boolean findGoal = false;
 		
 		while(notDone) {
 			
@@ -191,21 +192,21 @@ public class BLStateController extends Thread implements BlackboardListener  {
 							followWallTurnState = !followWallTurnState;
 							commandTransmitter.robotTurn(45.0);
 							curMove = "D:90.0";
-							nextState = State.FIND_BALL;
+							nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
 							state = State.WAIT_FOR_MOVE;
 						} else if(distForwardMax <= LIDAR_TO_FRONT_LENGTH + FOLLOW_WALL_STEPSIZE) { // SMALL STEP
 							System.out.println("If dist <= LIDAR FRONT LENGTH + STEPSIZE");
 							int dist = distForwardMax - LIDAR_TO_FRONT_LENGTH;
 							commandTransmitter.robotTravel(dist);
 							curMove = "K:" + dist;
-							nextState = State.FIND_BALL;
+							nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
 							state = State.WAIT_FOR_MOVE;
 						} else { // FULL STEP
 							System.out.println("If dist too large");
 							int dist = FOLLOW_WALL_STEPSIZE;
 							commandTransmitter.robotTravel(dist);
 							curMove = "K:" + dist;
-							nextState = State.FIND_BALL;
+							nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
 							state = State.WAIT_FOR_MOVE;
 						}
 					}
@@ -438,7 +439,9 @@ public class BLStateController extends Thread implements BlackboardListener  {
 						System.out.println("If reverseAngle+Distance null");
 						if(ballCollectedCount >= 10) {
 							System.out.println("If collected 10+ balls");
-							state = State.COMPLETED;
+							findGoal = true;
+							if(followWallTurnState) nextNextState = State.FOLLOW_WALL;
+							else nextNextState = State.WALL_CORRECTION;
 						} else {
 							System.out.println("If collected less than 10 balls");
 							state = nextNextState;						
@@ -449,7 +452,19 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				}
 				
 				case FIND_GOAL: {
-					// TODO IMPLEMENT
+					if (bbSample != null && bbSample.scan != null) {
+						LidarScan wallScanNew = new LidarScan(bbSample.scan);
+						if(wallScanNew.scanSize() != wallScanOld.scanSize()) { // New Scan	
+							Point goal = findGoal(wallScanNew);
+							if(goal != null) {	
+								state = State.COMPLETED;
+							} else {
+								if(followWallTurnState) nextNextState = State.FOLLOW_WALL;
+								else nextNextState = State.WALL_CORRECTION;
+							}
+							wallScanOld = wallScanNew;						
+						}
+					}
 					break;
 				}
 					
@@ -542,7 +557,6 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	}
 	public Point findGoal(LidarScan scan) {
 		Mat map = Vision.scanToLineMap(scan);
-		
 		Point goal = Vision.findGoal(map);
 		
 		// draw obstacles

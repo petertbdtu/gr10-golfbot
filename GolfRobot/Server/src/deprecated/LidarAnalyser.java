@@ -51,7 +51,7 @@ public class LidarAnalyser extends Thread {
 			Mat obstacles = new Mat(map.size(), map.type());
 			
 			//Remove shit obstacles
-			Vision.findWallsAndRemove(map, obstacles);
+			//Vision.findWallsAndRemove(map, obstacles);
 			
 			//Very nice obstacles
 			this.obstacles = Vision.collisionMapToPoints(obstacles);
