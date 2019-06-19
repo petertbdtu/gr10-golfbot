@@ -2,9 +2,13 @@ package blackboard;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import communication.LegoReceiver;
 import communication.LidarReceiver;
@@ -12,6 +16,7 @@ import deprecated.CameraReceiver;
 import gui.ServerGUI;
 import mapping.LidarScan;
 import mapping.Vision;
+import objects.Point;
 
 public class BlackboardController extends Thread {
 	private volatile ArrayList<BlackboardListener> bbListeners;
@@ -98,39 +103,31 @@ public class BlackboardController extends Thread {
 			if(bbSample.scan.scanSize() > 0) {
 				try {			
 					Mat mat = Vision.scanToLineMap(bbSample.scan);
-//					LidarScan frontScans = BLStateController.getFrontScans(bbSample.scan);
-//					Mat frontDirectionMap = Vision.scanToLineMap(frontScans);
-//					Mat map = mat.clone();
-//					Mat obstacles = new Mat(map.size(), map.type());
-					
-					//Remove shit obstacles
-//					Vision.findWallsAndRemove(map, obstacles);
-//					Vision.findWallsAndRemove(frontDirectionMap, obstacles);
-
-					// roi
-					Rect roi = new Rect(1500, 1500, 1000, 1000);
-//					frontDirectionMap = new Mat(frontDirectionMap, roi);
-					mat = new Mat(mat, roi);
-//					map = new Mat(map, roi);
-//					obstacles = new Mat(obstacles, roi);
-					
-					// Circles plz
-//					Vision.drawCirclesOnMap(mat, Vision.findAllBallsLidar(map));
-//					Vision.drawCirclesOnMap(frontDirectionMap, Vision.findAllBallsLidar(frontDirectionMap));
-					
-					//draw in le GUI
-//					Vision.drawRobotMarker(mat);
-//					Vision.drawRobotMarker(frontDirectionMap);
-					
 					gui.setLidarScan(Vision.matToImageBuffer(mat));
-//					gui.setCameraFrame(Vision.matToImageBuffer(frontDirectionMap));
-					
-					//Memory ?????????
-//					map.release();
-//					obstacles.release();
 					mat.release();
-//					frontDirectionMap.release();
-					
+//					
+//					Mat map = Vision.scanToLineMap(bbSample.scan);
+//					Mat mapToShow = new Mat();
+//					Imgproc.cvtColor(map, mapToShow, Imgproc.COLOR_GRAY2BGR); // ALLOW COLORS
+//
+//					// obstacles
+//					Mat obstacles = Vision.findWalls(map);
+//					Mat redMat = mapToShow.clone().setTo(new Scalar(0,0,255));
+//					redMat.copyTo(mapToShow, obstacles);
+//						
+//					// Goal
+//					Mat roi = map.clone();
+//					Point goal = Vision.findGoal(map);
+//					if (goal != null)  Vision.drawGoalPoint(mapToShow, goal);
+//					
+//					// Send to GUI
+//					gui.setLidarScan(Vision.matToImageBuffer(roi));
+//					gui.setCameraFrame(Vision.matToImageBuffer(map));
+//					
+//					// Memory fix
+//					map.release();
+//					mapToShow.release();
+//					redMat.release();
 				} catch (Exception e) { }
 			}
 		} else {

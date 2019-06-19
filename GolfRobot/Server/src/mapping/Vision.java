@@ -175,12 +175,14 @@ public class Vision {
 	}
 	
 	/**
-	 * Finds lines (walls) and paints them black / erases them
-	 * @param mapblackInOut map with lines to find and remove
-	 * @param linesOut lines found
+	 * Finds walls / lines and returns a mask of their position
+	 * @param map Map to search in
+	 * @return Mask of walls
 	 */
-	public static void findWallsAndRemove(Mat mapblackInOut, Mat maporangeInOut,  Mat wallsOut) {
-		Mat lines = findLines(mapblackInOut);
+	public static Mat findWalls(Mat map) {
+		Mat walls = Mat.zeros(map.size(), map.type());
+		
+		Mat lines = findLines(map);
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
 			double x1 = l[0];
@@ -189,11 +191,12 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-			Imgproc.line(mapblackInOut, pt1, pt2, new Scalar(0,0,0), 5);
-			Imgproc.line(maporangeInOut, pt1, pt2, new Scalar(0,0,255), 5);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 5);
+
+			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 10);
 		}
-		lines = findWallLines(wallsOut);
+		lines.release();
+		
+		lines = findWallLines(walls);
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
 			double x1 = l[0];
@@ -209,12 +212,11 @@ public class Vision {
 
 			Point pt1 = new Point(0, y_start);
 			Point pt2 = new Point(SQ_SIZE, y_end);
-			
-			Imgproc.line(mapblackInOut, pt1, pt2, new Scalar(0,0,0), 5);
-			Imgproc.line(maporangeInOut, pt1, pt2, new Scalar(0,0,255), 5);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 5);
+
+			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 10);
 		}
 		lines.release();
+		return walls;
 	}
 	
 	public static void drawMoreLinesOnMap(Mat map) {
@@ -341,8 +343,8 @@ public class Vision {
 		
 		// ONLY LOOKS TO THE RIGHT OF THE ROBOT, ADJUST!
 		Mat roi = map.clone();
-		Point a = new Point(SQ_SIZE-100, SQ_SIZE-400);
-		Point b = new Point(SQ_SIZE-200, SQ_SIZE+50);
+		Point a = new Point((SQ_SIZE/2)-100, (SQ_SIZE/2)-400);
+		Point b = new Point((SQ_SIZE/2)+200, (SQ_SIZE/2)+50);
 		roiWithoutCrop(roi, a, b);
 		
 		// Maybe dialate?
@@ -350,9 +352,10 @@ public class Vision {
 		// HoughLines?
 		
 		MatOfPoint corners = new MatOfPoint();
-		Imgproc.goodFeaturesToTrack(roi, corners, 4, 0.5, 20.0);
+		Imgproc.goodFeaturesToTrack(roi, corners, 4, 0.5, 60.0);
 		List<Point> cornerList = corners.toList();
 		corners.release();
+		System.out.println("FOUND CORNERS: " + cornerList.size());
 		
 		// Draw corners (ostensibly goals)
 		//for (Point c : cornerList) {
