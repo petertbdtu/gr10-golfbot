@@ -186,8 +186,8 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
+			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 10);
+			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 10);
 		}
 		lines = findWallLines(wallsOut);
 		for (int i = 0; i < lines.rows(); i++) {
@@ -206,8 +206,8 @@ public class Vision {
 			Point pt1 = new Point(0, y_start);
 			Point pt2 = new Point(SQ_SIZE, y_end);
 			
-			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 20);
-			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 20);
+			Imgproc.line(mapInOut, pt1, pt2, new Scalar(0,0,0), 10);
+			Imgproc.line(wallsOut, pt1, pt2, new Scalar(255,255,255), 10);
 		}
 		lines.release();
 		

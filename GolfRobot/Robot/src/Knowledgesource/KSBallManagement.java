@@ -13,7 +13,8 @@ public class KSBallManagement extends KnowledgeSource {
 	public KSBallManagement(Port tubeMotorPort, Port scoopMotorPort) {
 		this.tubeMotor = new EV3MediumRegulatedMotor(tubeMotorPort);
 		this.scoopMotor = new EV3MediumRegulatedMotor(scoopMotorPort);
-		this.tubeMotor.setSpeed(360);;
+		this.tubeMotor.setSpeed(tubeMotor.getMaxSpeed());
+		this.scoopMotor.setSpeed(scoopMotor.getMaxSpeed());
 	}
 	
 	public void pickup() {
@@ -30,9 +31,11 @@ public class KSBallManagement extends KnowledgeSource {
 	}
 	
 	public void deliverBalls() {
-		scoopMotor.rotate(-45);
+		tubeMotor.rotate(400);
+		scoopMotor.rotate(-52);
+		tubeMotor.rotate(-420);
 		Delay.msDelay(2000);
-		scoopMotor.rotate(45);
+		scoopMotor.rotate(52);
 	}
 
 	@Override

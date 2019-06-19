@@ -22,10 +22,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	public volatile boolean stopStateMachine = false;
 	private volatile BlackboardSample bbSample;
 
-	
+	private final int MAX_BALL_DISTANCE = 300;
 	private final int FOLLOW_WALL_STEPSIZE = 200;
 	private final int LIDAR_TO_FRONT_LENGTH = 380;
-	private final int LIDAR_TO_RIGHT_LENGTH = 250;
+	private final int LIDAR_TO_RIGHT_LENGTH = 260;
 	private final int BALL_VALIDATION_MAX_COUNT = 3;
 	private final int BALL_FINDING_MAX_COUNT = 3;
 	private final Point ORIGIN_WHEEL = new Point(107,0);
@@ -89,6 +89,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		String curMove = "";
 		LidarScan wallScanOld = new LidarScan();
 		LidarScan ballScanOld = new LidarScan();
+		boolean followWallTurnState = false;
 		double lengthToCorrect = 0;
 		double lengthToTravel = 0;
 		double angleToCorrectIn = 0;
@@ -183,9 +184,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					}
 					if(distForwardMax != 0) {
 						System.out.println("If distForwardMax not 0");
-						if(distForwardMax <= LIDAR_TO_FRONT_LENGTH) { // TURN
+						if(followWallTurnState || distForwardMax <= LIDAR_TO_FRONT_LENGTH) { // TURN
 							System.out.println("If dist <= LIDAR TO FRONT LENGTH");
-							commandTransmitter.robotTurn(90.0);
+							followWallTurnState = !followWallTurnState;
+							commandTransmitter.robotTurn(45.0);
 							curMove = "D:90.0";
 							nextState = State.FIND_BALL;
 							state = State.WAIT_FOR_MOVE;
@@ -282,7 +284,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					}
 					if(distForwardMax != 0) {
 						System.out.println("If distForwardMax not 0");
-						double distForward = distForwardMax > FOLLOW_WALL_STEPSIZE ? FOLLOW_WALL_STEPSIZE / 2.0 : distForwardMax / 2.0;
+						double distForward = distForwardMax > FOLLOW_WALL_STEPSIZE ? FOLLOW_WALL_STEPSIZE / 3.0 : distForwardMax / 3.0;
 						angleToCorrectBack = (Math.toDegrees(Math.atan(lengthToCorrect / distForward))) * -1;
 						lengthToTravel = Math.sqrt(Math.pow(lengthToCorrect, 2) + Math.pow(distForward, 2));
 						curMove = "D:" + angleToCorrectBack;
@@ -318,7 +320,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					System.out.println("Entering FIND BALL");
 					if(ballFindingCount >= BALL_FINDING_MAX_COUNT) {
 						System.out.println("If found max number of balls");
-						nextNextState = State.WALL_CORRECTION;
+						if(followWallTurnState)
+							nextNextState = State.FOLLOW_WALL;
+						else
+							nextNextState = State.WALL_CORRECTION;
 						state = State.GO_TO_STARTING_POINT;
 						ballFindingCount = 0;
 					} else if(bbSample != null && bbSample.scan != null) {
@@ -330,15 +335,17 @@ public class BLStateController extends Thread implements BlackboardListener  {
 							Point nearestBall = getNearestBall(ballScanNew);
 							ballFindingCount++;
 							
-							if(nearestBall != null){	
+							if(nearestBall != null){
 								System.out.println("If nearestBall not null");
 								double ballAngle = ORIGIN_WHEEL.angleTo(nearestBall);
-								serverGUI.setBallHeading((int) ballAngle + "");
-								reverseAngle += -ballAngle;
-								commandTransmitter.robotTurn(ballAngle);
-								curMove = "D:" + (int)ballAngle;
-								nextState = State.VALIDATE_BALL;
-								state = State.WAIT_FOR_MOVE;
+								if((ballAngle > 70 || ballAngle < -70) && ORIGIN_WHEEL.distance(nearestBall) < MAX_BALL_DISTANCE) {
+									serverGUI.setBallHeading((int) ballAngle + "");
+									reverseAngle += -ballAngle;
+									commandTransmitter.robotTurn(ballAngle);
+									curMove = "D:" + (int)ballAngle;
+									nextState = State.VALIDATE_BALL;
+									state = State.WAIT_FOR_MOVE;
+								}
 							} 
 							
 							ballScanOld = ballScanNew;						
@@ -365,7 +372,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 							if(nearestBall != null) {
 								System.out.println("If nearestBall not null");
 								double ballAngle = ORIGIN_WHEEL.angleTo(nearestBall);
-								if(ballAngle > -4 && ballAngle < 4) { //Distance command
+								serverGUI.setBallHeading((int) ballAngle + "");
+								if(ballAngle > -3 && ballAngle < 3) { //Distance command
 									System.out.println("If ballAngle between -4 and 4");
 									ballValidationCount = 0;
 									double ballDistance = ORIGIN_TUBE.distance(nearestBall.x, nearestBall.y);	
