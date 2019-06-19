@@ -35,6 +35,7 @@ public class KSNavigation extends KnowledgeSource {
 		movePilot.setAngularSpeed(40);
 		movePilot.setAngularAcceleration(15);
 		
+		Delay.msDelay(2000);
 		this.gyro = new EV3GyroSensor(SensorPort.S2);
 		this.sampleProvider = gyro.getAngleMode();
 

@@ -456,6 +456,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				case DELIVER_BALLS: {
 					curMove = "A";
 					commandTransmitter.robotDeliverBalls();
+					state = State.COMPLETED;
+					break;
 				}
 					
 				case COMPLETED: {

@@ -88,7 +88,7 @@ public class CommandTransmitter {
 	public void robotDeliverBalls() {
 		//Build Packet
 		byte[] cmd = new byte[4];
-		cmd[0] = cmdBytes[0];
+		cmd[0] = cmdBytes[4];
 		cmd[1] = (byte)(0 & 0xff);
 		cmd[2] = (byte)((0 >> 8) & 0xff);
 		

@@ -61,9 +61,9 @@ public class CommandReceiver extends Thread {
 					break;
 				case 5:
 					manager.deliverBalls();
-					Delay.msDelay(3000);
-					Sound.setVolume(100);
-					Sound.playSample(new File("flot.wav"));
+					//Delay.msDelay(3000);
+					//Sound.setVolume(100);
+					//Sound.playSample(new File("flot.wav"), Sound.VOL_MAX);
 					break;
 				case 0:
 					//filler byte

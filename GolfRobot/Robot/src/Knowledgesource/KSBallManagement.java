@@ -30,9 +30,9 @@ public class KSBallManagement extends KnowledgeSource {
 	}
 	
 	public void deliverBalls() {
-		scoopMotor.rotate(-60);
+		scoopMotor.rotate(-45);
 		Delay.msDelay(2000);
-		scoopMotor.rotate(60);
+		scoopMotor.rotate(45);
 	}
 
 	@Override
