@@ -7,8 +7,9 @@ import lejos.utility.Delay;
 
 public class KSBallManagement extends KnowledgeSource {
 
-	EV3MediumRegulatedMotor tubeMotor;
-	EV3MediumRegulatedMotor scoopMotor;
+	private EV3MediumRegulatedMotor tubeMotor;
+	private EV3MediumRegulatedMotor scoopMotor;
+	
 	
 	public KSBallManagement(Port tubeMotorPort, Port scoopMotorPort) {
 		this.tubeMotor = new EV3MediumRegulatedMotor(tubeMotorPort);
@@ -21,13 +22,6 @@ public class KSBallManagement extends KnowledgeSource {
 		tubeMotor.rotate(400);
 		scoopMotor.rotate(360);
 		tubeMotor.rotate(-400);
-		//scoopMotor.rotate(20);
-		//tubeMotor.rotate(-200);
-		//scoopMotor.rotate(20);
-		//tubeMotor.rotate(-400);
-		
-		//tubeMotor.backward();
-		//while(!tubeMotor.isStalled());
 	}
 	
 	public void deliverBalls() {

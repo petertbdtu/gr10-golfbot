@@ -183,7 +183,7 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 10);
+			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 7);
 		}
 		lines.release();
 		
@@ -202,7 +202,7 @@ public class Vision {
 
 			Point pt1 = new Point(0, y_start);
 			Point pt2 = new Point(SQ_SIZE, y_end);
-			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 10);
+			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 7);
 		}
 		lines.release();
 		return walls;

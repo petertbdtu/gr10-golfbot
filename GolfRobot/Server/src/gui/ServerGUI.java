@@ -49,7 +49,8 @@ public class ServerGUI {
 	private ServerGUI serverGUI;
 	private volatile byte[] imgLidar = new byte[1];
 	private volatile byte[] imgLidarAnalyzed = new byte[1];
-	private long timer = 0;
+	private long stopTime = 0;
+	private long startTime = 0;
 	private String collected = "";
 	private String distanceBall = "";
 	private String headingBall = "";
@@ -146,7 +147,9 @@ public class ServerGUI {
 	    				Platform.runLater(() -> lblMovingValue.setText(moving));
 	    				Platform.runLater(() -> lblStateValue.setText(state));
 	    				if(timer_isRunning) {
-		    				Platform.runLater(() -> lblTimerValue.setText(String.format("%02d:%02d", ((System.currentTimeMillis() - timer) / 1000) / 60, ((System.currentTimeMillis() - timer) / 1000) % 60)));
+		    				Platform.runLater(() -> lblTimerValue.setText(String.format("%02d:%02d", ((System.currentTimeMillis() - startTime) / 1000) / 60, ((System.currentTimeMillis() - startTime) / 1000) % 60)));
+	    				} else {
+		    				Platform.runLater(() -> lblTimerValue.setText(String.format("%02d:%02d", ((stopTime - startTime) / 1000) / 60, ((stopTime - startTime) / 1000) % 60)));
 	    				}
 	 
 	    				Thread.sleep(250); 
@@ -271,10 +274,15 @@ public class ServerGUI {
 	public void setBallsCollected(String ballsCollected) {
 		collected = new String(ballsCollected);
 	}
-
-	public void setTimer(long timerValue) {
-		timer = timerValue;
+	
+	public void setStartTime(long timerValue) {
+		startTime = timerValue;
 		timer_isRunning = true;
+	}
+	
+	public void setStopTime(long timeValue) {
+		stopTime = timeValue;
+		timer_isRunning = false;
 	}
 	
 	public void setLidarScan(byte[] img) {

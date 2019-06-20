@@ -25,13 +25,15 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	private volatile boolean findGoal = false;
 	private volatile BlackboardSample bbSample;
 	
-	private final int MAX_BALL_DISTANCE = 300;
+	private final int MAX_BALL_DISTANCE = 400;
+	private final int MAX_BALL_DISTANCE_FRONT = 250;
 	private final int LIDAR_TO_FRONT_LENGTH = 360;
+	private final int WALL_CORRECTION_STEPSIZE = 60;
 	private final int LIDAR_TO_RIGHT_LENGTH = 260;
 	private final int GOAL_DISTANCE_CORRECTION = 100;
-	private final int BALL_DISTANCE_CORRECTION = -5;
+	private final int BALL_DISTANCE_CORRECTION = -9;
 	private final int BALL_VALIDATION_MAX_COUNT = 3;
-	private final int BALL_FINDING_MAX_COUNT = 3;
+	private final int BALL_FINDING_MAX_COUNT = 2;
 	private final Point ORIGIN_WHEEL = new Point(107,0);
 	private final Point ORIGIN_TUBE = new Point(155,0);
 	
@@ -73,7 +75,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	private boolean notDone;
 	private double reverseAngle;
 	private double reverseDistance;
-	private double followWallStepSize = 200;
+	private double followWallStepSize = 250;
 	
 	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, State state) {
 		this.serverGUI = gui;
@@ -82,14 +84,13 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		if(state == State.FIND_GOAL) {
 			followWallStepSize = 100;
 			findGoal = true;
+			gui.setGoalFinding("true");
 		}
 			
 		startTime = System.currentTimeMillis();
 		endTime = startTime + 8 * 60 * 1000;
-		goalTime = startTime + 6 * 60 * 1000;
-		
-		this.serverGUI.setGoalFinding(findGoal + "");
-		this.serverGUI.setTimer(startTime);
+		goalTime = startTime + 5 * 60 * 1000 + 30000;
+		this.serverGUI.setStartTime(startTime);
 		notDone = true;
 	}	
 	
@@ -101,6 +102,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		boolean followWallTurnState = false;
 		int ballValidationCount = 0;
 		int ballFindingCount = 0;
+		int followWallCount = 0;
 		State tempState = State.DEBUG;
 		incrementBallsFetched();
 		int distToGoalX = 0;
@@ -114,14 +116,18 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		
 		while(notDone) {
 			
+			// Goal Timeout
 			if(System.currentTimeMillis() > goalTime && !findGoal) {
 				findGoal = true;
+				followWallStepSize = 100;
 				serverGUI.setGoalFinding(findGoal + "");
 			}
 			
-			if(System.currentTimeMillis() > endTime - 6000) {
+			// Stop Timeout
+			if((System.currentTimeMillis() > endTime - 6000) && state != State.DELIVER_BALLS && state != State.COMPLETED) {
 				state = State.DELIVER_BALLS;
 			}
+			
 			// Pause
 			if(state != tempState && state != State.IS_MOVING && state != State.WAIT_FOR_MOVE) {
 				tempState = state;
@@ -168,8 +174,13 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				 */
 				case FOLLOW_WALL: {
 					int distForwardMax = 0;
-					
-					if (bbSample != null && bbSample.scan != null) { // Scan found
+					if(followWallCount >= 10) {
+						followWallCount = 0;
+						commandTransmitter.robotTravel(60);
+						curMove = "K:" + 60;
+						nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
+						state = State.WAIT_FOR_MOVE;
+					} else if (bbSample != null && bbSample.scan != null) { // Scan found
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
 						if(wallScanNew.scanSize() != oldScan.scanSize()) { // New Scan
 							for (LidarSample sample : wallScanNew.getSamples()) {
@@ -178,26 +189,29 @@ public class BLStateController extends Thread implements BlackboardListener  {
 								}
 							}
 							oldScan = wallScanNew;
-						}
-					}
-					if(distForwardMax != 0) {
-						if(followWallTurnState || distForwardMax <= LIDAR_TO_FRONT_LENGTH) { // TURN
-							followWallTurnState = !followWallTurnState;
-							commandTransmitter.robotTurn(45.0);
-							curMove = "D:90.0";
-							nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
-							state = State.WAIT_FOR_MOVE;
-						} else if(distForwardMax <= LIDAR_TO_FRONT_LENGTH + followWallStepSize) { // SMALL STEP
-							int dist = distForwardMax - LIDAR_TO_FRONT_LENGTH;
-							commandTransmitter.robotTravel(dist);
-							curMove = "K:" + dist;
-							nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
-							state = State.WAIT_FOR_MOVE;
-						} else { // FULL STEP
-							curMove = "K:" + (int) followWallStepSize;
-							commandTransmitter.robotTravel(followWallStepSize);
-							nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
-							state = State.WAIT_FOR_MOVE;
+							if(distForwardMax != 0) {
+								followWallCount = 0;
+								if(followWallTurnState || distForwardMax <= LIDAR_TO_FRONT_LENGTH) { // TURN
+									followWallTurnState = !followWallTurnState;
+									commandTransmitter.robotTurn(45.0);
+									curMove = "D:90.0";
+									nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
+									state = State.WAIT_FOR_MOVE;
+								} else if(distForwardMax <= LIDAR_TO_FRONT_LENGTH + followWallStepSize) { // SMALL STEP
+									int dist = distForwardMax - LIDAR_TO_FRONT_LENGTH + 20;
+									commandTransmitter.robotTravel(dist);
+									curMove = "K:" + dist;
+									nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
+									state = State.WAIT_FOR_MOVE;
+								} else { // FULL STEP
+									curMove = "K:" + (int) followWallStepSize;
+									commandTransmitter.robotTravel(followWallStepSize);
+									nextState = findGoal ? State.FIND_GOAL : State.FIND_BALL;
+									state = State.WAIT_FOR_MOVE;
+								}
+							} else {
+								followWallCount++;
+							}
 						}
 					}
 					break;
@@ -261,24 +275,23 @@ public class BLStateController extends Thread implements BlackboardListener  {
 								double correctionError = distRight - LIDAR_TO_RIGHT_LENGTH;
 								
 								// Wanted location
-								Point correctionPoint = new Point( (int) (ORIGIN_WHEEL.x-(followWallStepSize/3)) , (int) (correctionError * -1) );
-								System.out.println("CORRECTION POINT: " + correctionPoint.x + ":" + correctionPoint.y);
+								Point correctionPoint = new Point( (int) (ORIGIN_WHEEL.x-(WALL_CORRECTION_STEPSIZE)) , (int) (correctionError * -1) );
 								
 								// Turn In
 								correctionTurnIn = ORIGIN_WHEEL.angleTo(correctionPoint);
-								System.out.println("TURN IN: " + correctionTurnIn);
+								
 								correctionTurnIn = correctionTurnIn > 0 ? correctionTurnIn-180 : 180+correctionTurnIn;
-								System.out.println("TURN IN: " + correctionTurnIn);
+								
 								
 								// Travel distance
 								correctionTravel = ORIGIN_WHEEL.distance(correctionPoint) * -1;
-								System.out.println("TRAVEL: " + correctionTravel);
+								
 								
 								// Turn Back
 								correctionTurnBack = Math.toDegrees(Math.acos((ORIGIN_WHEEL.x-correctionPoint.x)/correctionTravel));
-								System.out.println("TURN BACK: " + correctionTurnBack);
+								
 								correctionTurnBack = correctionError > 0 ? (180-correctionTurnBack) * -1 : 180-correctionTurnBack;
-								System.out.println("TURN BACK: " + correctionTurnBack);
+								
 								
 								// Test straightness
 								if(correctionTurnIn < -10 || correctionTurnIn > 10) {
@@ -325,18 +338,16 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					} else if(bbSample != null && bbSample.scan != null) {
 						LidarScan ballScanNew = new LidarScan(bbSample.scan);
 						if(ballScanNew.scanSize() != oldScan.scanSize()) { // New Scan
-							Point nearestBall = getNearestBall(ballScanNew);
+							Point nearestBall = getNearestBall(getBallScans(ballScanNew));
 							ballFindingCount++;
 							if(nearestBall != null){
 								double ballAngle = ORIGIN_WHEEL.angleTo(nearestBall);
-								if((ballAngle > 70 || ballAngle < -70) && ORIGIN_WHEEL.distance(nearestBall) < MAX_BALL_DISTANCE) {
 									serverGUI.setBallHeading((int) ballAngle + "");
 									reverseAngle += -ballAngle;
 									commandTransmitter.robotTurn(ballAngle);
 									curMove = "D:" + (int)ballAngle;
 									nextState = State.VALIDATE_BALL;
 									state = State.WAIT_FOR_MOVE;
-								}
 							} 
 							oldScan = ballScanNew;						
 						}			
@@ -391,13 +402,13 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				}
 				
 				case GO_TO_STARTING_POINT: {
-					if(reverseDistance != 0.0) {
+					if(reverseDistance > 3 || reverseDistance < -3) {
 						curMove = "K:" + (int) reverseDistance;
 						commandTransmitter.robotTravel(reverseDistance);
 						reverseDistance = 0.0;
 						state = State.WAIT_FOR_MOVE;
 						nextState = State.GO_TO_STARTING_POINT;
-					} else if(reverseAngle != 0.0) {
+					} else if(reverseAngle > 3 || reverseAngle < -3) {
 						reverseAngle %= 360;
 						curMove = "D:" + (int) reverseAngle;
 						commandTransmitter.robotTurn(reverseAngle);
@@ -422,8 +433,31 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					if (bbSample != null && bbSample.scan != null) {
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
 						if(wallScanNew.scanSize() != oldScan.scanSize()) { // New Scan	
-							goal = findGoal(wallScanNew);
-							if(goal != null) {	
+							Point nearestBall = getNearestBall(getGoalScans(wallScanNew));
+							goal = findGoal(getGoalScans(wallScanNew));
+							if(goal != null && nearestBall == null) {	
+								distToGoalX = goal.x - ORIGIN_WHEEL.x;
+								distToGoalY = ORIGIN_WHEEL.y - goal.y;
+								Point angleToTurnGoal = new Point(distToGoalX, distToGoalY);
+								angleToGoal = angleToTurnGoal.angleTo(goal);
+								state = State.VALIDATE_GOAL;
+							} else {
+								if(followWallTurnState) state = State.FOLLOW_WALL;
+								else state = State.WALL_CORRECTION;
+							}
+							oldScan = wallScanNew;						
+						}
+					}
+					break;
+				}
+				
+				case VALIDATE_GOAL: {
+					if (bbSample != null && bbSample.scan != null) {
+						LidarScan wallScanNew = new LidarScan(bbSample.scan);
+						if(wallScanNew.scanSize() != oldScan.scanSize()) { // New Scan	
+							Point nearestBall = getNearestBall(getGoalScans(wallScanNew));
+							goal = findGoal(getGoalScans(wallScanNew));
+							if(goal != null && nearestBall == null) {	
 								distToGoalX = goal.x - ORIGIN_WHEEL.x;
 								distToGoalY = ORIGIN_WHEEL.y - goal.y;
 								Point angleToTurnGoal = new Point(distToGoalX, distToGoalY);
@@ -467,6 +501,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				}
 					
 				case COMPLETED: {
+					serverGUI.setStopTime(System.currentTimeMillis());
 					notDone = false;
 					break;	
 				}
@@ -533,6 +568,20 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		return getNearestBall(directionalScan);
 	}
 	
+	public LidarScan getBallScans(LidarScan scan) {
+		double lowerFront = 170, upperFront = 190;
+		double lowerLeft = 245, upperRight = 115;
+		LidarScan directionalScan = new LidarScan();
+		for (LidarSample sample : scan.getSamples()) {
+			if (sample.angle > lowerFront && sample.angle < upperFront && sample.distance < MAX_BALL_DISTANCE_FRONT) {
+				directionalScan.addSample(sample);
+			} else if ((sample.angle > lowerLeft || sample.angle < upperRight) && sample.distance < MAX_BALL_DISTANCE) {
+				directionalScan.addSample(sample);
+			}
+		}
+		return directionalScan;
+	}
+	
 	public static LidarScan getFrontScans(LidarScan scan) {
 		double lower = 165, upper = 195;
 		LidarScan directionalScan = new LidarScan();
@@ -543,16 +592,19 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		}
 		return directionalScan;
 	}
-	public Point findGoal(LidarScan scan) {
-		// Remove Angles
+	
+	public static LidarScan getGoalScans(LidarScan scan) {
 		LidarScan fewerAngles = new LidarScan();
-		for(LidarSample s : bbSample.scan.getSamples()) {
+		for(LidarSample s : scan.getSamples()) {
 			if(s.angle > 45.0 && s.angle < 115.0 && s.distance < 1000)
 				fewerAngles.addSample(s);
 		}
-		
+		return fewerAngles;
+	}
+	
+	public Point findGoal(LidarScan scan) {	
 		// Make map
-		Mat map = Vision.scanToLineMap(fewerAngles);
+		Mat map = Vision.scanToLineMap(scan);
 		Mat mapToShow = new Mat();
 		Imgproc.cvtColor(map, mapToShow, Imgproc.COLOR_GRAY2BGR); // ALLOW COLORS
 		

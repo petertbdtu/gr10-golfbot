@@ -17,6 +17,7 @@ public class KSNavigation extends KnowledgeSource {
 	private volatile boolean isMoving;
 	private final double offset = 78; //distance between the two wheels divided by 2 in mm
 	private final double wheelDiamater = 30; //Diameter of wheels in mm
+	private final double GYRO_OFFSET = 1;
 	
 	private Wheel leftWheel;
 	private Wheel rightWheel;
@@ -32,8 +33,8 @@ public class KSNavigation extends KnowledgeSource {
 		this.chassis = new WheeledChassis(new Wheel[] {leftWheel, rightWheel}, WheeledChassis.TYPE_DIFFERENTIAL);
 		this.movePilot = new MovePilot(chassis);
 		movePilot.setLinearSpeed(150);
-		movePilot.setAngularSpeed(40);
-		movePilot.setAngularAcceleration(15);
+		movePilot.setAngularSpeed(55);
+		movePilot.setAngularAcceleration(30);
 		
 		Delay.msDelay(2000);
 		this.gyro = new EV3GyroSensor(SensorPort.S2);
@@ -66,10 +67,10 @@ public class KSNavigation extends KnowledgeSource {
 					@Override
 					public void run() {
 						if(angle > 0) {
-							while(getGyroAngle() < angle) {
+							while(getGyroAngle() < angle - GYRO_OFFSET) {
 							}
 						} else {
-							while(getGyroAngle() > angle) {
+							while(getGyroAngle() > angle + GYRO_OFFSET) {
 							}
 						}
 						movePilot.stop();
