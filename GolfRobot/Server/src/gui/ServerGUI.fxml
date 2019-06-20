@@ -65,12 +65,12 @@
                   <Separator orientation="VERTICAL" prefHeight="200.0" />
                   <VBox fx:id="vbCollecting" alignment="CENTER" maxWidth="1.7976931348623157E308">
                      <children>
-                        <Label fx:id="lblCollectingTitle" text="Robot Collecting">
+                        <Label fx:id="lblCollectingTitle" text="Goal Finding">
                            <font>
                               <Font name="System Bold" size="16.0" />
                            </font>
                         </Label>
-                        <Label fx:id="lblCollectingValue" text="NaN">
+                        <Label fx:id="lblGoalValue" text="NaN">
                            <font>
                               <Font name="System Italic" size="14.0" />
                            </font>
@@ -203,23 +203,20 @@
          <children>
             <VBox prefWidth="200.0">
                <children>
-                  <VBox>
+                  <HBox alignment="CENTER_LEFT">
                      <children>
                         <Label prefWidth="2000.0" text="Timer" textAlignment="CENTER">
-                           <VBox.margin>
-                              <Insets left="5.0" right="5.0" top="5.0" />
-                           </VBox.margin>
                            <font>
-                              <Font name="System Bold" size="14.0" />
+                              <Font name="System Bold" size="30.0" />
                            </font>
                         </Label>
-                        <Label fx:id="lblTimerValue" text="00:00">
-                           <VBox.margin>
-                              <Insets bottom="5.0" left="5.0" right="5.0" />
-                           </VBox.margin>
+                        <Label fx:id="lblTimerValue" prefWidth="2000.0" text="00:00">
+                           <font>
+                              <Font name="System Bold" size="30.0" />
+                           </font>
                         </Label>
                      </children>
-                  </VBox>
+                  </HBox>
                   <VBox>
                      <children>
                         <Label prefWidth="2000.0" text="Choose Start State" textAlignment="CENTER">
@@ -307,25 +304,8 @@
                               </Label>
                            </children>
                            <VBox.margin>
-                              <Insets bottom="5.0" top="5.0" />
+                              <Insets top="5.0" />
                            </VBox.margin>
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT">
-                           <children>
-                              <Circle fx:id="circleCamera" fill="RED" radius="5.0" stroke="BLACK" strokeType="INSIDE">
-                                 <HBox.margin>
-                                    <Insets left="5.0" />
-                                 </HBox.margin>
-                              </Circle>
-                              <Label text="Camera Receiver">
-                                 <font>
-                                    <Font name="System Bold" size="14.0" />
-                                 </font>
-                                 <HBox.margin>
-                                    <Insets left="10.0" />
-                                 </HBox.margin>
-                              </Label>
-                           </children>
                         </HBox>
                         <HBox alignment="CENTER_LEFT">
                            <children>
@@ -400,7 +380,7 @@
          <children>
             <VBox alignment="TOP_CENTER" prefHeight="2000.0" prefWidth="2000.0">
                <children>
-                  <Label alignment="CENTER" prefWidth="2000.0" text="Lidar Scan" textAlignment="CENTER">
+                  <Label alignment="CENTER" prefWidth="2000.0" text="Live Lidar" textAlignment="CENTER">
                      <font>
                         <Font name="System Bold" size="18.0" />
                      </font>
@@ -410,12 +390,12 @@
             </VBox>
             <VBox alignment="TOP_CENTER" prefHeight="2000.0" prefWidth="2000.0">
                <children>
-                  <Label alignment="CENTER" prefWidth="2000.0" text="Camera Frame" textAlignment="CENTER">
+                  <Label alignment="CENTER" prefWidth="2000.0" text="Analyzed Lidar" textAlignment="CENTER">
                      <font>
                         <Font name="System Bold" size="18.0" />
                      </font>
                   </Label>
-                  <ImageView fx:id="ivCamera" fitHeight="500.0" fitWidth="500.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView fx:id="ivLidarAnalyzed" fitHeight="500.0" fitWidth="500.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </VBox>
          </children>

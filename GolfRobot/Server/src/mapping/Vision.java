@@ -1,13 +1,10 @@
 package mapping;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
-import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfPoint;
@@ -25,7 +22,6 @@ public class Vision {
 	private static final int SQ_SIZE = 4000;
 	private static final int CENTER_X = SQ_SIZE / 2;
 	private static final int CENTER_Y = SQ_SIZE / 2;
-	private static final objects.Point CENTER = new objects.Point(CENTER_X, CENTER_Y);
 	
 	public static Mat readImageFromFile(String filePath) {
 		Mat mat = Imgcodecs.imread(filePath, Imgcodecs.IMREAD_GRAYSCALE);
@@ -153,9 +149,6 @@ public class Vision {
 			double[] c = circles.get(0, i);
 			if(c.length > 1) {
 	            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
-	            // circle center
-//	            Imgproc.circle(map, center, 1, new Scalar(100,100,0), 3, 8, 0 );
-	            // circle outline
 	            int radius = (int) Math.round(c[2]);
 	            Imgproc.circle(map, center, radius, new Scalar(255,255,0), -1, 8, 0 );
 			}
@@ -167,9 +160,6 @@ public class Vision {
 			double[] c = circles.get(0, i);
 			if(c.length > 1) {
 	            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
-	            // circle center
-	            Imgproc.circle(map, center, 1, new Scalar(0,0,0), 3, 8, 0 );
-	            // circle outline
 	            int radius = (int) Math.round(c[2]);
 	            Imgproc.circle(map, center, radius, new Scalar(0,0,0), -1, 8, 0 );
 			}
@@ -193,7 +183,6 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-
 			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 10);
 		}
 		lines.release();
@@ -208,13 +197,11 @@ public class Vision {
 			
 			double a = (y2-y1) / (x2-x1);
 			double b = y1 - a*x1;
-			
 			double y_start = (b); // a*0 + b
 			double y_end = (a*SQ_SIZE + b);
 
 			Point pt1 = new Point(0, y_start);
 			Point pt2 = new Point(SQ_SIZE, y_end);
-
 			Imgproc.line(walls, pt1, pt2, new Scalar(255,255,255), 10);
 		}
 		lines.release();
@@ -249,12 +236,8 @@ public class Vision {
 		int threshold = 42;
 		int min_line_length = 36;
 		int max_line_gap = 60;		
-		
-		// ALSO WRITES TO linesOUT
-		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
 		Mat lines = new Mat();
 		Imgproc.HoughLinesP(map, lines, rho, theta, threshold, min_line_length, max_line_gap);
-		
 		return lines;
 	}
 	
@@ -264,18 +247,13 @@ public class Vision {
 		int threshold = 150;
 		int min_line_length = 220;
 		int max_line_gap = 100;		
-		
-		// ALSO WRITES TO linesOUT
-		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
 		Mat lines = new Mat();
 		Imgproc.HoughLinesP(map, lines, rho, theta, threshold, min_line_length, max_line_gap);
-		
 		return lines;
 	}
 	
 	public static List<objects.Point> collisionMapToPoints(Mat map) {
 		List<objects.Point> points = new ArrayList<objects.Point>();
-		
 		for (int x = 0; x < SQ_SIZE; x++) {
 			for (int y = 0; y < SQ_SIZE; y++) {
 				if (map.get(x,y)[0] == 255) {
@@ -283,7 +261,6 @@ public class Vision {
 				}
 			}
 		}
-		
 		return points;
 	}
 	
@@ -339,10 +316,7 @@ public class Vision {
 
 		return contours.size() != 0;
 	}
-	public static objects.Point findGoal(Mat map, Mat print) {
-		// res is meant to output drawing of points, unused.
-		//Mat res = map.clone();
-		
+	public static objects.Point findGoal(Mat map, Mat print) {		
 		// ONLY LOOKS TO THE RIGHT OF THE ROBOT, ADJUST!
 		Mat roi = map.clone();
 		Point a = new Point((SQ_SIZE/2)-300, (SQ_SIZE/2)-700);
@@ -363,10 +337,8 @@ public class Vision {
 		int max_line_gap = 70;		
 		
 		// ALSO WRITES TO linesOUT
-		// img_lines = cv2.HoughLinesP(img_bw, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
 		Mat lines = new Mat();
 		Imgproc.HoughLinesP(roi, lines, rho, theta, threshold, min_line_length, max_line_gap);
-		//roi = new Mat(roi.size(), roi.type());
 		for (int i = 0; i < lines.rows(); i++) {
 			double[] l = lines.get(i, 0);
 			double x1 = l[0];
@@ -375,7 +347,6 @@ public class Vision {
 			double y2 = l[3];
 			Point pt1 = new Point(x1, y1);
 			Point pt2 = new Point(x2, y2);
-
 			Imgproc.line(roi, pt1, pt2, new Scalar(255,255,255), 5);
 		}
 				
@@ -387,32 +358,20 @@ public class Vision {
 		Imgproc.goodFeaturesToTrack(roi, corners, 4, 0.50, 45.0);
 		List<Point> cornerList = corners.toList();
 		
-		System.out.println("FOUND CORNERS: " + cornerList.size());
 		// Draw corners (ostensibly goals)
 		for (Point c : cornerList) {
 			Imgproc.circle(print, c, 20, new Scalar(0,255,255), -1);
 		}
 		corners.release();
-		//return res; // return drawing of corners
 		
 		if (cornerList.size() == 4) {
-			System.out.println("Goal detected");
-			
-			
-			Collections.sort(cornerList, new Comparator<Point>() {
-				@Override
-				public int compare(Point p1, Point p2) {
-					if (p1.x < p2.x)
-						return -1;
-					if (p1.x > p2.x)
-						return 1;
-					return 0;
-				}
+			cornerList.sort( (Point p1, Point p2) -> {
+				if (p1.x < p2.x)
+					return -1;
+				if (p1.x > p2.x)
+					return 1;
+				return 0;
 			});
-			
-			for (Point c : cornerList) {
-				System.out.println(c.toString());
-			}
 			
 			// Take middle two points (goal edges) and take average (goal center)
 			Point c1 = cornerList.get(1);

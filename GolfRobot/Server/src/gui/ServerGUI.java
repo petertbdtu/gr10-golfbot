@@ -23,7 +23,7 @@ import javafx.scene.shape.Circle;
 public class ServerGUI {
 
     @FXML
-    private Label 	lblStateValue, lblMovingValue, lblCollectingValue, lblMoveValue, 
+    private Label 	lblStateValue, lblMovingValue, lblGoalValue, lblMoveValue, 
     				lblBallLocationValue, lblBallHeadingValue, lblBallDistanceValue, lblCollectedValue, lblTimerValue;
     
 	@FXML
@@ -34,10 +34,10 @@ public class ServerGUI {
     				btnStartNetwork, btnStopNetwork;
     
     @FXML
-    private Circle circleLidar, circleCamera, circleLego, circleTransmitter;
+    private Circle circleLidar, circleLego, circleTransmitter;
     
     @FXML
-    private ImageView ivLidar, ivCamera;
+    private ImageView ivLidar, ivLidarAnalyzed;
     private BLStateController stateController;
 
     private Thread networkThread;
@@ -48,16 +48,18 @@ public class ServerGUI {
 	private BlackboardController bbController;
 	private ServerGUI serverGUI;
 	private volatile byte[] imgLidar = new byte[1];
-	private volatile byte[] imgCamera = new byte[1];
-	private String timer = "";
+	private volatile byte[] imgLidarAnalyzed = new byte[1];
+	private long timer = 0;
 	private String collected = "";
 	private String distanceBall = "";
 	private String headingBall = "";
 	private String locationBall = "";
 	private String moveLast = "";
-	private String collecting = "";
+	private String goalFinding = "";
 	private String moving = "";
 	private String state = "";
+	
+	private boolean timer_isRunning = false;
 	Thread updater;
 
     
@@ -131,18 +133,22 @@ public class ServerGUI {
         	
         	updater = new Thread(() -> {
 	    		while(true) {
-	    			try { 
+	    			try {
+	    				
 	    				ivLidar.setImage(new Image(new ByteArrayInputStream(imgLidar)));
-	    				ivCamera.setImage(new Image(new ByteArrayInputStream(imgCamera)));
+	    				ivLidarAnalyzed.setImage(new Image(new ByteArrayInputStream(imgLidarAnalyzed)));
 	    				Platform.runLater(() -> lblBallDistanceValue.setText(distanceBall));
 	    				Platform.runLater(() -> lblBallHeadingValue.setText(headingBall));
 	    				Platform.runLater(() -> lblBallLocationValue.setText(locationBall));
 	    				Platform.runLater(() -> lblCollectedValue.setText(collected));
-	    				Platform.runLater(() -> lblCollectingValue.setText(collecting));
+	    				Platform.runLater(() -> lblGoalValue.setText(goalFinding));
 	    				Platform.runLater(() -> lblMoveValue.setText(moveLast));
 	    				Platform.runLater(() -> lblMovingValue.setText(moving));
 	    				Platform.runLater(() -> lblStateValue.setText(state));
-	    				Platform.runLater(() -> lblTimerValue.setText(timer));
+	    				if(timer_isRunning) {
+		    				Platform.runLater(() -> lblTimerValue.setText(String.format("%02d:%02d", ((System.currentTimeMillis() - timer) / 1000) / 60, ((System.currentTimeMillis() - timer) / 1000) % 60)));
+	    				}
+	 
 	    				Thread.sleep(250); 
     				} catch (InterruptedException e) { }
 	    		}
@@ -242,8 +248,8 @@ public class ServerGUI {
 		moving = new String(isMoving);
 	}
 
-	public void setIsCollecting(String isCollecting) {
-		collecting = new String(isCollecting);
+	public void setGoalFinding(String isGoalFinding) {
+		goalFinding = new String(isGoalFinding);
 	}
 
 	public void setLastMove(String lastMove) {
@@ -266,15 +272,16 @@ public class ServerGUI {
 		collected = new String(ballsCollected);
 	}
 
-	public void setTimer(String timerValue) {
-		timer = new String(timerValue);
+	public void setTimer(long timerValue) {
+		timer = timerValue;
+		timer_isRunning = true;
 	}
 	
 	public void setLidarScan(byte[] img) {
 		imgLidar = img.clone();
 	}
 	
-	public void setCameraFrame(byte[] imageBuffer) {
-		imgCamera = imageBuffer.clone();
+	public void setLidarAnalyzedFrame(byte[] imageBuffer) {
+		imgLidarAnalyzed = imageBuffer.clone();
 	}
 }
