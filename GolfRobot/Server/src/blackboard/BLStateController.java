@@ -79,7 +79,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	private double reverseDistance;
 	private int followWallStepSize = 200;
 	private boolean findGoal = false;
-
+	private double correctionAngle2;
+	private double correctionDistance;
+	private double correctionAngle4;
+	private float correctionAngle1;
 	
 	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, State state) {
 		this.serverGUI = gui;
@@ -98,11 +101,10 @@ public class BLStateController extends Thread implements BlackboardListener  {
 		String curMove = "";
 		LidarScan wallScanOld = new LidarScan();
 		LidarScan ballScanOld = new LidarScan();
+		double correctionBackDist = 1;
+		double correctionVinkel4 = 1;
+		double correctionVinkel3 = 1;
 		boolean followWallTurnState = false;
-		double lengthToCorrect = 0;
-		double lengthToTravel = 0;
-		double angleToCorrectIn = 0;
-		double angleToCorrectBack = 0;
 		int ballValidationCount = 0;
 		int ballFindingCount = 0;
 		State tempState = State.DEBUG;
@@ -229,33 +231,38 @@ public class BLStateController extends Thread implements BlackboardListener  {
 				 */
 				case WALL_CORRECTION: {
 					System.out.println("Entering WALL CORRECTION");
-					int distRightMaxEnd = Integer.MAX_VALUE;
+					int distRight = Integer.MAX_VALUE;
 					if (bbSample != null && bbSample.scan != null) { // Scan present in BBSample
 						System.out.println("If bbSample not null");
 						LidarScan wallScanNew = new LidarScan(bbSample.scan);
 						if(wallScanNew.scanSize() != wallScanOld.scanSize()) { // Scan in BBSample is new
 							System.out.println("If sample is new");
 							for (LidarSample s : wallScanNew.getSamples()) {
-								if (s.angle > 88.0 && s.angle < 115.0 && s.distance < distRightMaxEnd) { // Points found to the right
-									distRightMaxEnd = (int) s.distance;
-									System.out.println("if angle between 88-92");
+								if (s.angle > 88.0 && s.angle < 92.0 && s.distance < distRight) { // Points found to the right
+									distRight = (int) s.distance;
 								}
 							}
 							wallScanOld = wallScanNew;
-							
-							if(distRightMaxEnd != 0 && distRightMaxEnd < 500) {		
-								System.out.println("if distRightMax not 0 and < 500");
-								lengthToCorrect = distRightMaxEnd - LIDAR_TO_RIGHT_LENGTH;
-								angleToCorrectIn = (Math.toDegrees(Math.asin(lengthToCorrect/followWallStepSize))) * -1;
-								if((angleToCorrectIn < -5 || angleToCorrectIn > 5) && distRightMaxEnd < 500) {
-									System.out.println("If angleCorrect between -5 and 5");
-									state = State.WALL_CORRECTION_TURNSTRAIGHT;
+							if(distRight != 0 && distRight < 1000) {	
+								System.out.println("if distRightMax not 0 and < 1000");
+								int correctionError = distRight - LIDAR_TO_RIGHT_LENGTH;
+								Point correctionPoint = new Point(ORIGIN_WHEEL.x-(followWallStepSize/3), correctionError * -1);
+								correctionAngle1 = ORIGIN_WHEEL.angleTo(correctionPoint);
+								correctionAngle1 = correctionAngle1 > 0 ? correctionAngle1-180 : 180+correctionAngle1;
+								System.out.println("Angle1: " + correctionAngle1);
+								System.out.println("Angle2: " + correctionAngle2);
+								correctionDistance = ORIGIN_WHEEL.distance(correctionPoint) * -1;
+								System.out.println("Distance: " + correctionDistance);
+								double correctionAngle3 = Math.toDegrees(Math.asin(correctionPoint.x/correctionDistance));
+								System.out.println("Angle3: " + correctionAngle3);
+								correctionAngle4 = correctionAngle3 * -1;//correctionAngle3 > 0 ? 90-correctionAngle3 : 90+correctionAngle3;
+								System.out.println("Angle4: " + correctionAngle4);
+								if(correctionAngle1 < -10 || correctionAngle1 > 10) {
+									state = State.WALL_CORRECTION_TURNIN;
 								} else {
-									System.out.println("if angleCorrect not between -5 and 5");
 									state = State.FOLLOW_WALL;
 								}
 							} else {
-								System.out.println("if distRightMax 0 or > 500");
 								state = State.FOLLOW_WALL;
 							}
 						}
@@ -264,68 +271,30 @@ public class BLStateController extends Thread implements BlackboardListener  {
 					break;
 				}
 				
-				case WALL_CORRECTION_TURNSTRAIGHT: {
-					System.out.println("Entering WALL CORRECTION STRAIGHT");
-					curMove = "D:" + angleToCorrectIn;
-					commandTransmitter.robotTurn(angleToCorrectIn);
-					nextState = State.WALL_CORRECTION_TURNIN;
-					state = State.WAIT_FOR_MOVE;
-					System.out.println("Leaving WALL CORRECTION STRAIGHT");
-					break;
-				}
-				
 				case WALL_CORRECTION_TURNIN: {
 					System.out.println("Entering WALL CORRECTION TURNIN");
-					double distForwardMax = 0;
-					// Scan found
-					if (bbSample != null && bbSample.scan != null) {
-						System.out.println("If bbSample not null");
-						LidarScan wallScanNew = new LidarScan(bbSample.scan);
-						// New Scan
-						if(wallScanNew.scanSize() != wallScanOld.scanSize()) {
-							System.out.println("If scan is new");
-							
-							for (LidarSample sample : wallScanNew.getSamples()) {
-								// Infront of Robot & max distForward
-								if (sample.angle > 175.0 && sample.angle < 185.0 && sample.distance > distForwardMax) {
-									System.out.println("If angle between 175-185");
-									distForwardMax = sample.distance;
-								}
-							}
-							wallScanOld = wallScanNew;						
-						}
-					}
-					if(distForwardMax != 0) {
-						System.out.println("If distForwardMax not 0");
-						double distForward = distForwardMax > followWallStepSize ? followWallStepSize / 3.0 : distForwardMax / 3.0;
-						angleToCorrectBack = (Math.toDegrees(Math.atan(lengthToCorrect / distForward))) * -1;
-						lengthToTravel = Math.sqrt(Math.pow(lengthToCorrect, 2) + Math.pow(distForward, 2));
-						curMove = "D:" + angleToCorrectBack;
-						commandTransmitter.robotTurn(angleToCorrectBack);
-						nextState = State.WALL_CORRECTION_TRAVEL;
-						state = State.WAIT_FOR_MOVE;
-					}
-					System.out.println("Leaving WALL CORRECTION TURNIN");
+					curMove = "D:" + (int)correctionAngle1;
+					commandTransmitter.robotTurn(correctionAngle1);
+					nextState = State.WALL_CORRECTION_TRAVEL;
+					state = State.WAIT_FOR_MOVE;
 					break;
 				}
 				
 				case WALL_CORRECTION_TRAVEL: {
 					System.out.println("Entering WALL CORRECTION TRAVEL");
-					curMove = "K:" + lengthToTravel;
-					commandTransmitter.robotTravel(lengthToTravel);
+					curMove = "K:" + (int)correctionDistance;
+					commandTransmitter.robotTravel(correctionDistance);
 					nextState = State.WALL_CORRECTION_TURNBACK;
 					state = State.WAIT_FOR_MOVE;
-					System.out.println("Leaving WALL CORRECTION TRAVEL");
 					break;
 				}
 				
 				case WALL_CORRECTION_TURNBACK: {
 					System.out.println("Entering WALL CORRECTION TURNBACK");
-					curMove = "D:" + angleToCorrectBack * -1;
-					commandTransmitter.robotTurn(angleToCorrectBack * -1);
-					nextState = State.FOLLOW_WALL;
+					curMove = "D:" + (int)correctionAngle4;
+					commandTransmitter.robotTurn(correctionAngle4);
+					nextState = State.COMPLETED;
 					state = State.WAIT_FOR_MOVE;
-					System.out.println("Leaving WALL CORRECTION TURNBACK");
 					break;
 				}
 
