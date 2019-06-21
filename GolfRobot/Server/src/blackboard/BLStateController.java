@@ -76,13 +76,15 @@ public class BLStateController extends Thread implements BlackboardListener  {
 	private double reverseAngle;
 	private double reverseDistance;
 	private double followWallStepSize = 250;
+	private int wall_correction = 20;
 	
 	public BLStateController(ServerGUI gui, CommandTransmitter commandTransmitter, State state) {
 		this.serverGUI = gui;
 		this.commandTransmitter = commandTransmitter;
 		this.state = state;
 		if(state == State.FIND_GOAL) {
-			followWallStepSize = 100;
+			followWallStepSize = 125;
+			wall_correction = 20;
 			findGoal = true;
 			gui.setGoalFinding("true");
 		}
@@ -119,7 +121,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 			// Goal Timeout
 			if(System.currentTimeMillis() > goalTime && !findGoal) {
 				findGoal = true;
-				followWallStepSize = 100;
+				followWallStepSize = 125;
+				wall_correction = 20;
 				serverGUI.setGoalFinding(findGoal + "");
 			}
 			
@@ -294,7 +297,7 @@ public class BLStateController extends Thread implements BlackboardListener  {
 								
 								
 								// Test straightness
-								if(correctionTurnIn < -10 || correctionTurnIn > 10) {
+								if(correctionTurnIn < (wall_correction * -1) || correctionTurnIn > wall_correction) {
 									curMove = "D:" + (int)correctionTurnIn;
 									commandTransmitter.robotTurn(correctionTurnIn);
 									nextState = State.WALL_CORRECTION_TRAVEL;
@@ -419,7 +422,8 @@ public class BLStateController extends Thread implements BlackboardListener  {
 						if(ballCollectedCount >= 10) {
 							findGoal = true;
 							serverGUI.setGoalFinding(findGoal + "");
-							followWallStepSize = 100;
+							wall_correction = 20;
+							followWallStepSize = 125;
 							if(followWallTurnState) state = State.FOLLOW_WALL;
 							else state = State.WALL_CORRECTION;
 						} else {
